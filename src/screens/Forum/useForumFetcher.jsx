@@ -3,11 +3,8 @@ import apiClient from '../ApiClient';
 import { Dimensions } from 'react-native';
 import { fetchForumReactionsRaw } from '../helperComponents.jsx/ForumReactions';
 import { fetchCommentCount } from '../AppUtils/CommentCount';
-
-const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
-const MAX_HEIGHT = Math.floor(deviceHeight * 0.7);
-const MAX_WIDTH = deviceWidth;
-const MIN_ASPECT_RATIO = 0.8;
+import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 const withTimeout = (promise, timeout = 10000) => {
   return Promise.race([
@@ -16,87 +13,149 @@ const withTimeout = (promise, timeout = 10000) => {
   ]);
 };
 
+export const enrichForumPost = async (post, myId) => {
+  const forumId = post.forum_id;
+  const fileKey = post?.fileKey;
+  const authorFileKey = post?.author_fileKey;
+  const thumbnailFileKey = post?.thumbnail_fileKey;
+
+  const [reactionData, commentCount, fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
+    fetchForumReactionsRaw(forumId, myId),
+    fetchCommentCount(forumId),
+    fileKey ? getSignedUrl(forumId, fileKey) : Promise.resolve({}),
+    authorFileKey ? getSignedUrl(forumId, authorFileKey) : Promise.resolve({}),
+    thumbnailFileKey ? getSignedUrl(forumId, thumbnailFileKey) : Promise.resolve({}),
+  ]);
+
+  const authorImageUri = authorFileKey
+    ? authorSignedUrl[forumId] || ''
+    : generateAvatarFromName(post.author || 'U');
+
+  return {
+    ...post,
+    commentCount: commentCount || 0,
+    reactionsCount: reactionData.reactionsCount || {},
+    totalReactions: reactionData.totalReactions || 0,
+    userReaction: reactionData.userReaction || null,
+    fileKeySignedUrl: fileKeySignedUrl[forumId] || '',
+    thumbnailSignedUrl: thumbnailSignedUrl[forumId] || '',
+    authorSignedUrl: authorSignedUrl[forumId] || '',
+    authorImageUri,
+  };
+};
+
+
 export default function useForumFetcher({ command, type, fetchLimit = 10, isConnected = true, preloadUrls, myId }) {
   const [localPosts, setLocalPosts] = useState([]);
-  const [lastEvaluatedKey, setLastEvaluatedKey] = useState(null);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [paginationState, setPaginationState] = useState({
+    lastEvaluatedKey: null,
+    hasMorePosts: true,
+    isLoading: false,
+    isRefreshing: false,
+  });
 
-  const fetchPosts = useCallback(async (lastKey = null) => {
-    if (!isConnected || loading || loadingMore) return;
+  const fetchPosts = useCallback(async (lastKey = null, isRefreshing = false) => {
+    if (!isConnected || paginationState.isLoading) return;
 
-    lastKey ? setLoadingMore(true) : setLoading(true);
+    setPaginationState(prev => ({
+      ...prev,
+      isLoading: true,
+      isRefreshing: isRefreshing || false,
+    }));
 
     try {
       const requestData = {
         command,
         type,
         limit: fetchLimit,
-        ...(lastKey && { lastEvaluatedKey: lastKey }),
+        ...(lastKey && !isRefreshing && { lastEvaluatedKey: lastKey }),
       };
 
       const response = await withTimeout(apiClient.post(`/${command}`, requestData), 10000);
       const newPosts = response?.data?.response || [];
 
       if (!newPosts.length) {
-        setHasMorePosts(false);
+        setPaginationState(prev => ({
+          ...prev,
+          hasMorePosts: false,
+          isLoading: false,
+          isRefreshing: false,
+        }));
         return;
       }
 
       const enrichedPosts = await Promise.all(
         newPosts.map(async post => {
           const forumId = post.forum_id;
-
-          const [reactionData, commentCount] = await Promise.all([
+          const fileKey = post?.fileKey;
+          const authorFileKey = post?.author_fileKey;
+          const thumbnailFileKey = post?.thumbnail_fileKey;
+      
+          const [reactionData, commentCount, fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
             fetchForumReactionsRaw(forumId, myId),
             fetchCommentCount(forumId),
+            fileKey ? getSignedUrl(forumId, fileKey) : Promise.resolve({}),
+            authorFileKey ? getSignedUrl(forumId, authorFileKey) : Promise.resolve({}),
+            thumbnailFileKey ? getSignedUrl(forumId, thumbnailFileKey) : Promise.resolve({}),
           ]);
-
+      
+          const authorImageUri = authorFileKey
+            ? authorSignedUrl[forumId] || ''
+            : generateAvatarFromName(post.author || 'U');
+      
           return {
             ...post,
-            aspectRatio: post.extraData?.aspectRatio || 1,
-            originalAspectRatio: post.extraData?.originalAspectRatio || 1,
-
             commentCount: commentCount || 0,
             reactionsCount: reactionData.reactionsCount || {},
             totalReactions: reactionData.totalReactions || 0,
             userReaction: reactionData.userReaction || null,
+            fileKeySignedUrl: fileKeySignedUrl[forumId] || '',
+            thumbnailSignedUrl: thumbnailSignedUrl[forumId] || '',
+            authorSignedUrl: authorSignedUrl[forumId] || '',
+            authorImageUri,
           };
         })
       );
 
       setLocalPosts(prev => {
+        // When refreshing, replace all posts
+        if (isRefreshing) {
+          return enrichedPosts;
+        }
+        
+        // Otherwise merge new posts, removing duplicates
         const combined = [...prev, ...enrichedPosts];
         return combined.filter(
           (post, index, self) => index === self.findIndex(p => p.forum_id === post.forum_id)
         );
       });
 
-      // Preload media only for the first page
-      if (!lastKey && typeof preloadUrls === 'function') {
-        preloadUrls(0, enrichedPosts.length - 1);
-      }
+      setPaginationState(prev => ({
+        ...prev,
+        lastEvaluatedKey: response.data.lastEvaluatedKey || null,
+        hasMorePosts: !!response.data.lastEvaluatedKey,
+        isLoading: false,
+        isRefreshing: false,
+      }));
 
-      setHasMorePosts(!!response.data.lastEvaluatedKey);
-      setLastEvaluatedKey(response.data.lastEvaluatedKey || null);
 
     } catch (error) {
       console.error('[useForumFetcher] Failed to fetch posts:', error);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      setPaginationState(prev => ({
+        ...prev,
+        isLoading: false,
+        isRefreshing: false,
+      }));
     }
-  }, [command, type, fetchLimit, isConnected, loading, loadingMore, preloadUrls, myId]);
+  }, [command, type, fetchLimit, isConnected, paginationState.isLoading, preloadUrls, myId]);
 
   return {
     localPosts,
     setLocalPosts,
     fetchPosts,
-    hasMorePosts,
-    loading,
-    loadingMore,
-    lastEvaluatedKey,
-    setLastEvaluatedKey,
+    hasMorePosts: paginationState.hasMorePosts,
+    loading: paginationState.isLoading,
+    loadingMore: paginationState.isLoading && !paginationState.isRefreshing,
+    lastEvaluatedKey: paginationState.lastEvaluatedKey,
   };
 }

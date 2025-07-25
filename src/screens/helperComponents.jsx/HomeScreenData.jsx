@@ -64,7 +64,7 @@ const useFetchData = ({ shouldFetch = false }) => {
       console.log('Product deleted:', data);
       if (data?.deletedProductId) {
         setProducts(prev => prev.filter(product => product.product_id !== data.deletedProductId));
-      }      
+      }
     });
 
     // Cleanup on unmount
@@ -137,7 +137,7 @@ const useFetchData = ({ shouldFetch = false }) => {
     } finally {
       setIsFetchingJobs(false);
     }
-};
+  };
 
   const fetchTrendingPosts = async () => {
     if (!isConnected) return;
@@ -155,7 +155,7 @@ const useFetchData = ({ shouldFetch = false }) => {
         const fileKeyUrlPromises = trendingData.map(post =>
           getSignedUrl(post.forum_id, post.fileKey)
         );
-  
+
         // Author image signed URLs (skip if key is missing)
         const authorKeyUrlPromises = trendingData.map(post =>
           getSignedUrl(post.forum_id, post.author_fileKey)
@@ -166,12 +166,12 @@ const useFetchData = ({ shouldFetch = false }) => {
         ]);
         const fileKeyUrlMap = Object.assign({}, ...fileKeyUrlsArray);
         const authorKeyUrlMap = Object.assign({}, ...authorKeyUrlsArray);
-  
+
         const signedUrlMap = Object.entries(fileKeyUrlMap).reduce((acc, [id, url]) => {
           acc[id] = url || defaultLogo;
           return acc;
         }, {});
-  
+
         // ✅ Gender-based fallback logic for author images
         const authorImageUrlMap = trendingData.reduce((acc, post) => {
           const signedUrl = authorKeyUrlMap[post.forum_id];
@@ -186,7 +186,7 @@ const useFetchData = ({ shouldFetch = false }) => {
         }, {});
         setTrendingPosts(trendingData);
         setTrendingImageUrls(signedUrlMap);
-        setAuthorImageUrls(authorImageUrlMap); 
+        setAuthorImageUrls(authorImageUrlMap);
 
       } else {
 
@@ -202,23 +202,23 @@ const useFetchData = ({ shouldFetch = false }) => {
   const fetchLatestPosts = async () => {
     if (!isConnected) return;
     setIsFetchingLatestPosts(true);
-  
+
     try {
       const response = await apiClient.post('/getLatestPosts', {
         command: "getLatestPosts",
-        Type:'Latest',
+        Type: 'Latest',
         limit: 10,
       });
       // getAllAdminForumPosts
       // getLatestPosts
       if (response.data.status === "success") {
         const latestData = response.data.response || [];
-  
+
         // Media image signed URLs
         const fileKeyUrlPromises = latestData.map(post =>
           getSignedUrl(post.forum_id, post.fileKey)
         );
-  
+
         // Author image signed URLs (skip if key is missing)
         const authorKeyUrlPromises = latestData.map(post =>
           getSignedUrl(post.forum_id, post.author_fileKey)
@@ -227,15 +227,15 @@ const useFetchData = ({ shouldFetch = false }) => {
           Promise.all(fileKeyUrlPromises),
           Promise.all(authorKeyUrlPromises),
         ]);
-  
+
         const fileKeyUrlMap = Object.assign({}, ...fileKeyUrlsArray);
         const authorKeyUrlMap = Object.assign({}, ...authorKeyUrlsArray);
-  
+
         const signedUrlMap = Object.entries(fileKeyUrlMap).reduce((acc, [id, url]) => {
           acc[id] = url || defaultLogo;
           return acc;
         }, {});
-  
+
         // ✅ Gender-based fallback logic for author images
         const authorImageUrlMap = latestData.reduce((acc, post) => {
           const signedUrl = authorKeyUrlMap[post.forum_id];
@@ -248,11 +248,11 @@ const useFetchData = ({ shouldFetch = false }) => {
           }
           return acc;
         }, {});
-  
+
         setLatestPosts(latestData);
         setLatestImageUrls(signedUrlMap);
-        setAuthorImageUrls(authorImageUrlMap); 
-  
+        setAuthorImageUrls(authorImageUrlMap);
+
       }
     } catch (error) {
       // handle error if needed
@@ -260,7 +260,7 @@ const useFetchData = ({ shouldFetch = false }) => {
       setIsFetchingLatestPosts(false);
     }
   };
-  
+
 
   const fetchProducts = async () => {
     if (!isConnected) return;

@@ -398,8 +398,8 @@ const styles = StyleSheet.create({
   },
   shareText: {
     color: '#075cab',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     marginLeft: 4,
 
   },
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
     // marginTop: 8,
     color: '#075cab',
     fontWeight: '500',
-    fontSize: 16,
+    fontSize: 15,
     paddingVertical: 10
     // textDecorationLine: 'underline',
   },

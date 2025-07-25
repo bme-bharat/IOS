@@ -16,6 +16,7 @@ import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 
 const CompanyDetailsScreen = ({ route }) => {
@@ -29,7 +30,6 @@ const CompanyDetailsScreen = ({ route }) => {
   const [isModalVisibleImage, setModalVisibleImage] = useState(false);
   const [isProductDropdownVisible, setProductDropdownVisible] = useState(false);
   const [isServiceDropdownVisible, setServiceDropdownVisible] = useState(false);
-
   const [products, setProducts] = useState([]);
   const [services, setServices] = useState([]);
   const [modalVisible1, setModalVisible1] = useState(false);
@@ -66,7 +66,7 @@ const CompanyDetailsScreen = ({ route }) => {
       const companyUrl = `${baseUrl}${company.company_id}`;
 
       const result = await Share.share({
-        message: companyUrl,
+        message: `Checkout this company: ${companyUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -175,55 +175,69 @@ const CompanyDetailsScreen = ({ route }) => {
 
   const fetchProfile = async () => {
     setLoading(true);
-
+  
     try {
       const response = await apiClient.post('/getCompanyDetails', {
         command: 'getCompanyDetails',
         company_id: userId,
       });
-
+  
       if (
         response.data.status === 'success' &&
         response.data.status_message &&
         typeof response.data.status_message === 'object'
       ) {
         const profileData = response.data.status_message;
-
-        setProfile(profileData);
-
+  
+        let companyAvatar = null;
+        let finalImageUrl = null;
+  
         if (profileData.fileKey?.trim()) {
           try {
             const res = await apiClient.post('/getObjectSignedUrl', {
               command: 'getObjectSignedUrl',
               key: profileData.fileKey,
             });
-            setImageUrl(res.data);
-          } catch (error) {
-            setImageUrl(defaultImage);
+  
+            if (res?.data && typeof res.data === 'string' && res.data.trim() !== '') {
+              finalImageUrl = res.data;
+            } else {
+              companyAvatar = generateAvatarFromName(profileData.company_name);
+            }
+          } catch (err) {
+            companyAvatar = generateAvatarFromName(profileData.company_name);
           }
         } else {
-          setImageUrl(defaultImage);
+          companyAvatar = generateAvatarFromName(profileData.company_name);
         }
-
+  
+        // Attach avatar to profileData
+        profileData.companyAvatar = companyAvatar;
+        setProfile(profileData);
+        setImageUrl(finalImageUrl); // null if avatar should be used
+  
         await fetchCompanypdf(profileData.brochureKey);
       } else {
         setProfile({ removed_by_author: true });
-        setImageUrl(defaultImage);
+        setImageUrl(null);
       }
     } catch (error) {
       setProfile({ removed_by_author: true });
-      setImageUrl(defaultImage);
+      setImageUrl(null);
     }
-
+  
     setLoading(false);
   };
+  
+  
+  
 
 
   useEffect(() => {
     if (routeProfile) {
       console.log('Setting profile from route.params:', routeProfile);
       setProfile(routeProfile);
-  
+
       if (routeProfile.fileKey?.trim()) {
         (async () => {
           try {
@@ -239,14 +253,14 @@ const CompanyDetailsScreen = ({ route }) => {
       } else {
         setImageUrl(defaultImage);
       }
-  
+
       fetchCompanypdf(routeProfile.brochureKey);
     } else {
       console.log('No profile from route, fetching from API');
       fetchProfile();
     }
   }, []);
-  
+
 
 
 
@@ -291,7 +305,7 @@ const CompanyDetailsScreen = ({ route }) => {
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-         <ActivityIndicator size='large' color='#075cab' />
+          <ActivityIndicator size='large' color='#075cab' />
         </View>
       </SafeAreaView>
     );
@@ -333,22 +347,49 @@ const CompanyDetailsScreen = ({ route }) => {
 
 
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-        <TouchableOpacity activeOpacity={1} style={{paddingHorizontal: 15, }}>
-          <View style={styles.imageContainer}>
+        <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 15, }}>
 
-            <TouchableOpacity
-               onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}
-              activeOpacity={1}
-            >
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.detailImage}
-                resizeMode={imageUrl?.includes('buliding.jpg') ? 'cover' : 'contain'}
-                onError={() => setImageUrl(null)}
-              />
-            </TouchableOpacity>
+        <TouchableOpacity
+    onPress={() => {
+      if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+        openMediaViewer([{ type: 'image', url: imageUrl }]);
+      }
+    }}
+    activeOpacity={1}
+    style={styles.imageContainer}
+  >
+    {profile.fileKey && typeof imageUrl === 'string' && imageUrl.trim() !== '' ? (
+      <Image
+        source={{ uri: imageUrl }}
+        style={styles.detailImage}
+        resizeMode={imageUrl.includes('buliding.jpg') ? 'cover' : 'contain'}
+        onError={() => setImageUrl(null)}
+      />
+    ) : (
+      <View
+        style={[
+          styles.detailImage,
+          {
+            backgroundColor:
+              profile?.companyAvatar?.backgroundColor || '#ccc',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.avatarText,
+            { color: profile?.companyAvatar?.textColor || '#000' },
+          ]}
+        >
+          {profile?.companyAvatar?.initials || 'Bme'}
+        </Text>
+      </View>
+    )}
+  </TouchableOpacity>
 
-          </View>
+
 
           <View style={[styles.detailsContainer]}>
 
@@ -584,7 +625,8 @@ const styles = StyleSheet.create({
   dropdownText: {
     fontSize: 15,
     color: '#075cab',
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
+    fontWeight: '500'
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -783,10 +825,11 @@ const styles = StyleSheet.create({
 
   },
   contact: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#075cab',
     textDecorationLine: 'underline',
     padding: 10,
+    fontWeight: '500',
     textAlign: 'center',
 
   },
@@ -794,10 +837,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 80,
-    overflow: 'hidden',
+    alignItems:'center',
+    justifyContent:'center'
 
   },
-
+  avatarText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',

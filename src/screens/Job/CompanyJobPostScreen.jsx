@@ -343,10 +343,8 @@ const CompanyJobPostScreen = () => {
                 <Text style={styles.instructionText}>You can select up to 3 skills</Text>
               )}
               {renderSelectedItems(selectedSkills, removeSkill)}
-              {renderSelectedItems(selectedSkills, removeSkill)}
+           
             </View>
-
-
 
 
             <View style={styles.inputContainer}>
@@ -492,12 +490,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 25,
-    textAlign: 'center',
-    color: '#222',
-    top: 10,
+    fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 25,
+        textAlign: 'center',
+        color: '#075cab',
+        top: 10,
   },
 
   backButton: {
@@ -559,7 +557,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: 10, // Moves text down
     borderRadius: 8,
-    fontSize: 16,
+    fontSize: 15,
     color: '#222',
     textAlignVertical: 'top', // Ensures text starts from the top
     shadowColor: '#000',

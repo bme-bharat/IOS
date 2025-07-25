@@ -55,8 +55,8 @@ export default AppStyle = StyleSheet.create({
   },
   PostbtnText: {
     color: '#075cab',
-    fontWeight: '600',
-    fontSize: 16,
+    fontWeight: '500',
+    fontSize: 15,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -221,8 +221,15 @@ export default AppStyle = StyleSheet.create({
     borderBottomLeftRadius: 16,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 50,
     fontWeight: 'bold',
+  },
+  avatarContainerDetails: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+
   },
 
 });
@@ -296,20 +303,21 @@ export const styles = StyleSheet.create({
   eduTitle: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#222',
+    color: '#000',
     marginBottom: 6,
   },
 
   eduSubText: {
     fontSize: 15,
-    color: '#555',
+    fontWeight:'400',
+    color: '#000',
     marginTop: 4,
   },
 
   label: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
   },
 
   jobMetaRow: {
@@ -334,11 +342,13 @@ export const styles = StyleSheet.create({
 
   modelText: {
     fontSize: 15,
+    color:'#777'
+
   },
 
   descriptionText: {
     fontSize: 15,
-    lineHeight: 18,
+       color:'#777'
   },
 
   companyNameText: {
@@ -347,8 +357,8 @@ export const styles = StyleSheet.create({
   },
 
   price: {
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '500',
     color: 'black',
   },
 
@@ -550,7 +560,7 @@ export const styles = StyleSheet.create({
 
   heading: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: "#075cab",
     padding: 10,
   },
@@ -651,9 +661,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   badgeText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#666',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#000',
 
   },
   authorImage: {
@@ -677,15 +687,18 @@ export const styles = StyleSheet.create({
     marginLeft: 12,
   },
   articleTime: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight:"300",
     color: '#666',
   },
   articleExcerpt: {
     marginTop: 6,
-    fontSize: 14,
-    color: '#333',
+    fontSize: 15,
+    color: '#000',
   },
   PostedLabel: {
+    fontSize: 15,
+    fontWeight:'500',
     paddingHorizontal: 10
 
   },

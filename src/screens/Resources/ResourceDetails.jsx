@@ -167,9 +167,8 @@ const ResourcesDetails = () => {
             const baseUrl = 'https://bmebharat.com/Resource/'; // Replace with your actual base URL
             const jobUrl = `${baseUrl}${forum_id}`; // Assuming company.company_id is the unique identifier for the job
 
-
             const result = await Share.share({
-                message: `Check out this article!\n${jobUrl}`, // Add job link
+                message: `Checkout this resource: ${jobUrl}`, // Add job link
             });
 
 

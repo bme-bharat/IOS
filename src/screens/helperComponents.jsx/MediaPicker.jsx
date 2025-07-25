@@ -3,7 +3,7 @@ import { Alert, Platform, ActionSheetIOS } from 'react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import RNFS from 'react-native-fs';
 import ImageResizer from 'react-native-image-resizer';
-
+import DocumentPicker from 'react-native-document-picker';
 import { compressVideo, generateVideoThumbnail } from '../Forum/VideoParams';
 import { showToast } from '../AppUtils/CustomToast';
 
@@ -28,6 +28,13 @@ export const useMediaPicker = ({
 
   const handleMediaSelection = async (type, fromCamera = false) => {
     try {
+
+      if (type === 'document' || (type === 'mixed' && includeDocuments)) {
+        await handleDocumentSelection();
+        return;
+      }
+
+
       const options = {
         mediaType: type,
         quality: 1,
@@ -98,14 +105,14 @@ export const useMediaPicker = ({
       };
 
       const meta = {
-        originalSize: originalFileSize,
-        compressedSize: compressedFileSize,
+
         width: asset.width,
         height: asset.height,
         fileName: asset.fileName,
-        type: fileType,
-        mimeType: fileType,
+        type: asset.type,
+        mimeType: asset.type,
         aspectRatio,
+
       };
 
       onMediaSelected(processedFile, meta);
@@ -118,19 +125,16 @@ export const useMediaPicker = ({
     try {
       const totalSeconds = Math.floor(asset.duration || 0);
       if (totalSeconds > maxVideoDuration) {
-        showToast(`Please select a video of ${Math.floor(maxVideoDuration/60)} minutes or shorter`, "error");
+        showToast(`Please select a video of ${Math.floor(maxVideoDuration / 60)} minutes or shorter`, "error");
         return;
       }
 
-      // Calculate aspect ratio
       const aspectRatio = calculateAspectRatio(asset.width, asset.height);
-
       setIsCompressing(true);
       showToast("Processing video...", "info");
 
       const compressedUri = await compressVideo(asset.uri);
       setIsCompressing(false);
-
       if (!compressedUri) return;
 
       const compressedStats = await RNFS.stat(compressedUri.replace('file://', ''));
@@ -143,6 +147,20 @@ export const useMediaPicker = ({
 
       const previewThumbnail = await generateVideoThumbnail(compressedUri);
 
+      let finalThumbnailUri = previewThumbnail;
+      // if (overlayRef?.current?.capture) {
+      //   try {
+      //     const overlayThumbnailUri = await overlayRef.current.capture();
+      //     if (overlayThumbnailUri) {
+      //       finalThumbnailUri = overlayThumbnailUri;
+      //     } else {
+      //       console.warn("⚠️ Overlay capture returned null, using default thumbnail");
+      //     }
+      //   } catch (err) {
+      //     console.warn("⚠️ Failed to generate overlay thumbnail:", err.message);
+      //   }
+      // }
+
       const processedFile = {
         uri: compressedUri,
         type: asset.type,
@@ -150,84 +168,101 @@ export const useMediaPicker = ({
       };
 
       const meta = {
-        originalSize: asset.fileSize,
-        compressedSize: compressedSize,
+
         width: asset.width,
         height: asset.height,
         fileName: asset.fileName,
         type: asset.type,
-        duration: asset.duration,
         mimeType: asset.type,
         aspectRatio,
       };
 
-      onMediaSelected(processedFile, meta);
+      onMediaSelected(processedFile, meta, finalThumbnailUri);
     } catch (error) {
       setIsCompressing(false);
       handleError(error.message);
     }
   };
 
-  const handleDocumentSelection = async (asset) => {
+
+  const handleDocumentSelection = async () => {
     try {
-      const filePath = asset.uri.replace('file://', '');
-      const stats = await RNFS.stat(filePath);
+      const res = await DocumentPicker.pickSingle({
+        type: DocumentPicker.types.allFiles,
+        copyTo: 'cachesDirectory',
+      });
+  
+      if (!res || !res.uri) return;
+  
+      const mimeType = res.type || '';
       
+      // ❌ Reject images and videos
+      if (mimeType.startsWith('image/') || mimeType.startsWith('video/')) {
+        showToast('Please select only document files (no images/videos)', 'error');
+        return;
+      }
+  
+      const filePath = res.fileCopyUri?.replace('file://', '') || res.uri.replace('file://', '');
+      const stats = await RNFS.stat(filePath);
+  
       const processedFile = {
-        uri: asset.uri,
-        type: asset.type,
-        name: asset.fileName,
+        uri: res.fileCopyUri || res.uri,
+        type: mimeType,
+        name: res.name,
       };
-
+  
       const meta = {
-        originalSize: stats.size,
-        fileName: asset.fileName,
-        type: asset.type,
-        mimeType: asset.type,
+        fileName: res.name,
+        type: mimeType,
+        mimeType: mimeType,
       };
-
+  
       onMediaSelected(processedFile, meta);
-    } catch (error) {
-      handleError(error.message);
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) {
+        handleError(err.message);
+      }
     }
   };
+  
+
 
   const showMediaOptions = (includeRemove = false, onRemove = null) => {
     const options = [];
-    
+
     if (includeCamera && (mediaType === 'photo' || mediaType === 'mixed')) {
-      options.push({ 
-        text: "Take Photo", 
-        onPress: () => handleMediaSelection('photo', true) 
+      options.push({
+        text: "Take Photo",
+        onPress: () => handleMediaSelection('photo', true)
       });
     }
 
     if (mediaType === 'photo' || mediaType === 'mixed') {
-      options.push({ 
-        text: "Choose Photo", 
-        onPress: () => handleMediaSelection('photo') 
+      options.push({
+        text: "Choose Photo",
+        onPress: () => handleMediaSelection('photo')
       });
     }
 
     if (mediaType === 'video' || mediaType === 'mixed') {
-      options.push({ 
-        text: "Choose Video", 
-        onPress: () => handleMediaSelection('video') 
+      options.push({
+        text: "Choose Video",
+        onPress: () => handleMediaSelection('video')
       });
     }
 
-    if (includeDocuments && mediaType === 'mixed') {
-      options.push({ 
-        text: "Choose File", 
-        onPress: () => handleMediaSelection('mixed') 
+    if (includeDocuments) {
+      options.push({
+        text: "Choose File",
+        onPress: () => handleMediaSelection('document')
       });
     }
 
     if (includeRemove && onRemove) {
-      options.push({ 
-        text: "Remove", 
+      options.push({
+        text: "Remove",
         onPress: onRemove,
-        style: "destructive" 
+        style: "destructive"
       });
     }
 

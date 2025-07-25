@@ -261,14 +261,11 @@ const ServicesList = () => {
 
                         {/* <Text numberOfLines={1} style={styles.description}>{item.description || ' '}</Text>
                         <Text numberOfLines={1} style={styles.company}>{item.company_name || ' '}</Text> */}
-
-                        {(item.price ?? '').toString().trim() !== '' ? (
-                            <View style={styles.priceRow}>
-                                <Text numberOfLines={1} style={styles.price}>₹ {item.price}</Text>
-                            </View>
-                        ) : (
-                            <Text style={styles.category}>₹ Undefined</Text>
-                        )}
+<View style={styles.priceRow}>
+  <Text numberOfLines={1} style={styles.price}>
+    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
+  </Text>
+</View>
 
                     </View>
 
@@ -418,10 +415,10 @@ const styles = StyleSheet.create({
         paddingBottom: '20%',
 
     },
-    company: {
-        fontSize: 12,
-        fontWeight: '400',
-        color: '#555',
+company: {
+        fontSize: 15,
+        fontWeight: '500',
+        color: '#000',
         textAlign: 'center',
         marginTop: 2,
         alignSelf: 'flex-start',
@@ -434,8 +431,9 @@ const styles = StyleSheet.create({
     },
 
     category: {
-        fontSize: 13,
-        color: '#777',
+        fontSize: 15,
+        fontWeight:'500',
+        color: '#000',
         marginTop: 2,
     },
 
@@ -524,14 +522,14 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#222',
+        color: '#000',
 
     },
 
     description: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: '#666',
+        fontSize: 15,
+       
+        color: '#777',
         marginTop: 4,
     },
 
@@ -541,8 +539,8 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     price: {
-        fontSize: 14,
-        fontWeight: '400',
+        fontSize: 15,
+        fontWeight: '500',
         color: 'black'
     },
     separator: {
@@ -554,14 +552,14 @@ const styles = StyleSheet.create({
     },
 
     productDetailsContainer: {
-        marginTop: 10,
+        marginTop: 0,
 
     },
 
     productDetailsText: {
-        fontSize: 14,
+        fontSize: 15,
         color: '#075cab',
-        fontWeight: '600',
+        fontWeight: '500',
     },
     filterContainer: {
         position: 'absolute',

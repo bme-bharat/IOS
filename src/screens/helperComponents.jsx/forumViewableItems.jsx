@@ -249,8 +249,7 @@ export const useForumMedia = (posts, isFocused,isTabActive, setActiveVideo) => {
       const url = getUrlFor(item.author_fileKey);
       if (url) return { uri: url };
     }
-  
-    // Fallback to generated avatar
+
     return generateAvatarFromName(item.author || '');
   }, [getUrlFor]);
   

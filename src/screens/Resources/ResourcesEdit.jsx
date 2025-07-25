@@ -27,6 +27,10 @@ import { EventRegister } from 'react-native-event-listeners';
 import apiClient from '../ApiClient';
 import AppStyles from '../../assets/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
+import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
+import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
+import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
 
 const videoExtensions = [
   '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
@@ -36,53 +40,46 @@ const ResourcesEditScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { post, imageUrl } = route.params;
+  console.log('post',post)
+  const [signedUrl, setSignedUrl] = useState(
+    post?.signedUrl?.includes('image.jpg') ? '' : imageUrl
+  );
   const profile = useSelector(state => state.CompanyProfile.profile);
   const { myId, myData } = useNetwork();
 
-  const [imageUri, setImageUri] = useState(null);
-  const [videoUri, setVideoUri] = useState(null);
 
   const scrollViewRef = useRef(null)
-  const [file, setFile] = useState(null);
-  const [fileType, setFileType] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState(null);
+  const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState('');
+  const [mediaMeta, setMediaMeta] = useState(null);
+  const handleRemoveMedia = () => {
+    setFile(null);
+    setFileType('');
+    setMediaMeta(null);
+    setSignedUrl('');
 
-
-  const handleRemoveMedia = async () => {
-    if (postData.fileKey) {
-      try {
-        const response = await apiClient.post('/deleteFileFromS3', {
-          command: 'deleteFileFromS3',
-          key: postData.fileKey,
-        });
-
-        if (response.data.statusCode === 200) {
-          setPostData(prev => ({
-            ...prev,
-            fileKey: '',
-          }));
-          setImageUri(null);
-          setVideoUri(null);
-          setFile(null);
-          setFileType(null);
-        } else {
-          throw new Error('Failed to delete file from backend');
-        }
-      } catch (error) {
-
-      }
-    } else if (file) {
-      setFile(null);
-      setFileType(null);
-      setImageUri(null);
-      setVideoUri(null);
-    } else {
-
-    }
   };
 
+  const {
+    showMediaOptions,
+    isCompressing,
+    overlayRef,
+  } = useMediaPicker({
+    onMediaSelected: (file, meta, previewThumbnail) => {
+      setFile(file);
+      setFileType(file.type);
+      setMediaMeta(meta);
+      setThumbnailUri(previewThumbnail);
+    },
+    includeDocuments: true,
+    includeCamera: false,
+    mediaType: 'mixed',
+    maxImageSizeMB: 5,
+    maxVideoSizeMB: 10,
+  });
 
 
 
@@ -196,266 +193,17 @@ const ResourcesEditScreen = () => {
 
 
 
-  const handleFileChange = () => {
-    const mediaOptions = [
-      { text: "Image", onPress: openGallery },
-      { text: "Video", onPress: selectVideo },
-      { text: "Document (PDF, DOCX, etc.)", onPress: selectDocument },
-      { text: "Cancel", style: "cancel" },
-    ];
-
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: mediaOptions.map((option) => option.text),
-          cancelButtonIndex: mediaOptions.length - 1,
-        },
-        (index) => {
-          if (index !== mediaOptions.length - 1) {
-            mediaOptions[index].onPress();
-          }
-        }
-      );
-    } else {
-      Alert.alert("Select Media", "Choose an option", mediaOptions);
-    }
-  };
 
 
 
-  const openGallery = async () => {
-    try {
-      const options = {
-        mediaType: 'photo',
-        quality: 1,
-        selectionLimit: 1,
-      };
-
-      launchImageLibrary(options, async (response) => {
-        if (response.didCancel) return;
-
-        if (response.errorCode) {
-
-          return;
-        }
-
-        const asset = response.assets?.[0];
-        if (!asset) return;
-
-        let mimeType = asset.type || '';
-        const supportedFormats = ['image/jpeg', 'image/png', 'image/jpg', 'image/heic', 'image/heif'];
-
-        if (!supportedFormats.includes(mimeType)) {
-
-          showToast("Only JPEG and PNG formats are supported", 'info');
-
-          return;
-        }
-
-        // Normalize HEIC/HEIF to JPEG
-        if (mimeType === 'image/heic' || mimeType === 'image/heif') {
-          mimeType = 'image/jpeg';
-        }
-
-        const originalPath = asset.uri.replace('file://', '');
-        const fileStats = await RNFS.stat(originalPath);
-        const originalSize = fileStats.size;
-
-        const maxSize = 5 * 1024 * 1024;
-        const originalWidth = asset.width || 1080;
-        const originalHeight = asset.height || 1080;
-
-        const maxWidth = 1080, maxHeight = 1080;
-        let width = originalWidth, height = originalHeight;
-
-        if (width > maxWidth || height > maxHeight) {
-          const aspectRatio = width / height;
-          if (aspectRatio > 1) {
-            width = maxWidth;
-            height = Math.round(maxWidth / aspectRatio);
-          } else {
-            height = maxHeight;
-            width = Math.round(maxHeight * aspectRatio);
-          }
-        }
-
-        const compressed = await ImageResizer.createResizedImage(
-          asset.uri,
-          width,
-          height,
-          'JPEG',
-          70
-        );
-
-        const compressedPath = compressed.uri.replace('file://', '');
-        const compressedStats = await RNFS.stat(compressedPath);
-        const compressedSize = compressedStats.size;
-
-        if (compressedSize > maxSize) {
-
-          showToast("Image size shouldn't exceed 5MB", 'error');
-
-          return;
-        }
-
-        await uploadNewFile(compressed.uri, 'image/jpeg');
-        setImageUri(compressed.uri);
-      });
-    } catch (error) {
-      showToast("Error selecting image", 'error');
-
-    }
-  };
 
 
-  const [isCompressing, setIsCompressing] = useState(false);
+
+
   const [capturedThumbnailUri, setCapturedThumbnailUri] = useState(null);
-  const overlayRef = useRef();
+
   const playIcon = require('../../images/homepage/PlayIcon.png');
 
-  const selectVideo = async () => {
-    if (isCompressing) {
-      Alert.alert('Info', 'Uploading is already in progress. Please wait.');
-      return;
-    }
-
-    try {
-      const options = {
-        mediaType: 'video',
-        quality: 1,
-        videoQuality: 'high',
-      };
-
-      launchImageLibrary(options, async (response) => {
-        if (response.didCancel) {
-
-          return;
-        }
-
-        if (response.errorCode) {
-
-          return;
-        }
-
-        const asset = response.assets?.[0];
-        if (!asset?.uri) {
-
-          return;
-        }
-
-        const rawDuration = asset.duration || 0;
-        const totalSeconds = Math.floor(rawDuration);
-
-        if (totalSeconds > 1800) {
-          const hours = Math.floor(totalSeconds / 3600);
-          const minutes = Math.floor((totalSeconds % 3600) / 60);
-          const seconds = totalSeconds % 60;
-          const formatted = [
-            hours > 0 ? hours.toString().padStart(2, '0') : null,
-            minutes.toString().padStart(2, '0'),
-            seconds.toString().padStart(2, '0'),
-          ]
-            .filter(Boolean)
-            .join(':');
-          showToast("Please select a video of 30 minutes or shorter", 'error');
-
-          return;
-        }
-
-        const persistentUri = await moveToPersistentStorage(asset.uri);
-        const previewThumbnail = await generateVideoThumbnail(persistentUri);
-
-        if (previewThumbnail) {
-          setThumbnailUri(previewThumbnail);
-
-          setTimeout(async () => {
-            const finalThumb = await captureFinalThumbnail(overlayRef);
-
-            if (finalThumb) {
-              const resizedThumbUri = await resizeImage(finalThumb);
-              setCapturedThumbnailUri(resizedThumbUri);
-            }
-          }, 300);
-        }
-
-        const fileStat = await RNFS.stat(persistentUri.replace('file://', ''));
-        const originalSizeMB = (fileStat.size / (1024 * 1024)).toFixed(2);
-
-        try {
-          const thumbnail = await generateVideoThumbnail(persistentUri);
-          if (thumbnail) {
-
-            setThumbnailUri(thumbnail);
-          }
-        } catch (err) {
-
-        }
-
-        const maxFileSize = 10 * 1024 * 1024;
-        let finalUri = persistentUri;
-        let finalSize = fileStat.size;
-
-        showToast("Uploading Video\nThis may take a moment...", 'info');
-
-        setIsCompressing(true);
-
-        try {
-          const compressedUri = await Compressor.Video.compress(persistentUri, {
-            compressionMethod: 'auto',
-            progressDivider: 5,
-          }, (progress) => {
-
-          });
-
-          const compressedFileStat = await RNFS.stat(compressedUri.replace('file://', ''));
-          const compressedSizeMB = (compressedFileStat.size / (1024 * 1024)).toFixed(2);
-
-          if (compressedFileStat.size < fileStat.size) {
-            finalUri = compressedUri;
-            finalSize = compressedFileStat.size;
-          } else {
-
-          }
-
-        } catch (err) {
-
-          showToast("An error occurred while uploading the video", 'error');
-
-          setIsCompressing(false);
-          return;
-        }
-
-        setIsCompressing(false);
-
-        if (finalSize > maxFileSize) {
-
-          showToast("Video size shouldn't exceed 10MB\nTry uploading a smaller video", 'error');
-
-          return;
-        }
-
-        setFile({
-          uri: finalUri,
-          type: asset.type,
-          name: asset.fileName || 'video.mp4',
-        });
-        setFileType(asset.type);
-
-
-        try {
-          await uploadNewFile(finalUri, asset.type || 'video/mp4');
-
-        } catch (uploadError) {
-          showToast("Something went wrong during upload", 'error');
-        }
-
-      });
-    } catch (error) {
-
-      showToast("Error Selecting Video", 'error');
-
-    }
-  };
 
 
   const handleThumbnailUpload = async (thumbnailUri, fileKey) => {
@@ -522,7 +270,7 @@ const ResourcesEditScreen = () => {
           thumbnail_fileKey: thumbnailFileKey || '',
         }));
 
-        setVideoUri(fileUrl || fileUri);
+
       }
 
     } catch (error) {
@@ -575,23 +323,21 @@ const ResourcesEditScreen = () => {
   const handleUploadFile = async (fileUri, fileType) => {
     try {
       setIsLoading(true);
-
-
+  
       const fileStat = await RNFS.stat(fileUri);
       const fileSize = fileStat.size;
-
-
+  
       if (fileType.startsWith('image/') && fileSize > 5 * 1024 * 1024) {
         showToast("Image size shouldn't exceed 5MB", 'error');
-
         return { fileKey: null, thumbnailFileKey: null };
       }
+  
       if (fileType.startsWith('video/') && fileSize > 10 * 1024 * 1024) {
         showToast("Video size shouldn't exceed 10MB", 'error');
         return { fileKey: null, thumbnailFileKey: null };
       }
-
-
+  
+      // 1. Get upload URL and fileKey from backend
       const res = await apiClient.post('/uploadFileToS3', {
         command: 'uploadFileToS3',
         headers: {
@@ -599,48 +345,41 @@ const ResourcesEditScreen = () => {
           'Content-Length': fileSize,
         },
       });
-
+  
       if (res.data.status !== 'success') {
         throw new Error(res.data.errorMessage || 'Failed to get upload URL');
       }
-
+  
       const uploadUrl = res.data.url;
       const fileKey = res.data.fileKey || '';
-
+  
+      // 2. Upload the file to S3
       const fileBlob = await uriToBlob(fileUri);
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': fileType },
         body: fileBlob,
       });
-
+  
       if (uploadRes.status !== 200) {
         throw new Error('Failed to upload file to S3');
       }
-
+  
+      // 3. Upload thumbnail only if it's a video and thumbnailUri exists
       let thumbnailFileKey = null;
-      if (fileType.startsWith("video/")) {
-        let finalThumbnailToUpload = capturedThumbnailUri;
-
-        if (!finalThumbnailToUpload) {
-
-          finalThumbnailToUpload = await generateVideoThumbnail(fileUri);
-        }
-        if (finalThumbnailToUpload) {
-
-          thumbnailFileKey = await handleThumbnailUpload(finalThumbnailToUpload, fileKey);
-        }
+      if (fileType.startsWith("video/") && thumbnailUri) {
+        thumbnailFileKey = await handleThumbnailUpload(thumbnailUri, fileKey);
       }
-
+  
       return { fileKey, thumbnailFileKey };
     } catch (error) {
       showToast("Something went wrong during file upload", 'error');
-
       return { fileKey: null, thumbnailFileKey: null };
     } finally {
       setIsLoading(false);
     }
   };
+  
 
 
 
@@ -653,7 +392,7 @@ const ResourcesEditScreen = () => {
 
   const sanitizeHtmlBody = (html) => {
     const cleaned = cleanForumHtml(html); // your existing cleaner
-  
+
     return cleaned
       .replace(/<div><br><\/div>/gi, '') // remove empty div lines
       .replace(/<p>(&nbsp;|\s)*<\/p>/gi, '') // remove empty <p>
@@ -663,44 +402,142 @@ const ResourcesEditScreen = () => {
       .replace(/(<br\s*\/?>)+$/gi, '') // remove trailing <br>
       .trim();
   };
-  
+
 
   const dispatch = useDispatch();
+  
+  const uploadSelectedMedia = async (media, thumbnailUri) => {
+    console.log('📥 Starting uploadSelectedMedia');
+
+    try {
+      if (!media?.uri || !media?.type) {
+        console.warn('⚠️ Invalid media object:', media);
+        return null;
+      }
+
+      const cleanedUri = media.uri.replace('file://', '');
+      const fileStat = await RNFS.stat(cleanedUri);
+      const fileSize = fileStat.size;
+
+      console.log(`📁 Media: ${media.type}, Size: ${fileSize} bytes`);
+
+      const isImage = media.type.startsWith('image/');
+      const isVideo = media.type.startsWith('video/');
+
+      if (isImage && fileSize > 5 * 1024 * 1024) {
+        showToast("Image size shouldn't exceed 5MB", 'error');
+        return null;
+      }
+
+      if (isVideo && fileSize > 10 * 1024 * 1024) {
+        showToast("Video size shouldn't exceed 10MB", 'error');
+        return null;
+      }
+
+      const { data } = await apiClient.post('/uploadFileToS3', {
+        command: 'uploadFileToS3',
+        headers: {
+          'Content-Type': media.type,
+          'Content-Length': fileSize,
+        },
+      });
+
+      if (data.status !== 'success') throw new Error('Failed to get upload URL');
+
+
+      await fetch(data.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': media.type },
+        body: await uriToBlob(media.uri),
+      });
+
+      let thumbnailFileKey = null;
+
+      if (isVideo && thumbnailUri) {
+        const thumbStat = await RNFS.stat(thumbnailUri);
+        const thumbBlob = await uriToBlob(thumbnailUri);
+        const thumbKey = `thumbnail-${data.fileKey}`;
+
+        const thumbRes = await apiClient.post('/uploadFileToS3', {
+          command: 'uploadFileToS3',
+          fileKey: thumbKey,
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': thumbStat.size,
+          },
+        });
+
+
+        await fetch(thumbRes.data.url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: thumbBlob,
+        });
+
+        thumbnailFileKey = thumbKey;
+        console.log('🖼️ Thumbnail uploaded as:', thumbnailFileKey);
+      }
+
+      return {
+        fileKey: data.fileKey,
+        thumbnailFileKey,
+      };
+    } catch (err) {
+      console.error('❌ Media upload failed', err);
+      showToast("Media upload failed", 'error');
+      return null;
+    }
+  };
 
   const handlePostSubmission = async () => {
     setHasChanges(true);
     setIsLoading(true);
-
+  
     try {
       const trimmedTitle = stripHtmlTags(postData.title)?.trim();
       const cleanedBody = sanitizeHtmlBody(postData.resource_body?.trim() || '');
-console.log('cleanedBody',cleanedBody)
+  
       if (!trimmedTitle) {
         showToast("Title field cannot be empty", 'info');
         setIsLoading(false);
         return;
       }
-
+  
       if (!cleanedBody) {
-        showToast("Forum description field cannot be empty", 'info');
+        showToast("Resource description field cannot be empty", 'info');
         setIsLoading(false);
         return;
       }
-
-      let fileKey = postData.fileKey || '';
-      let thumbnailFileKey = postData.thumbnail_fileKey || '';
-
-      if (postData.fileUri && postData.fileType) {
-
-        const uploadResult = await handleUploadFile(postData.fileUri, postData.fileType);
-
-        if (uploadResult) {
-          fileKey = uploadResult.fileKey || '';
-          thumbnailFileKey = uploadResult.thumbnailFileKey || '';
-        }
-
+  
+      let fileKey = '';
+      let thumbnailFileKey = '';
+  
+      const mediaWasRemoved = !postData.signedUrl && !file;
+      const mediaWasReplaced = !!file;
+  
+      if (mediaWasReplaced) {
+        // ✅ Media was changed: delete old & upload new
+        if (post.fileKey) await deleteS3KeyIfExists(post.fileKey);
+        if (post.thumbnail_fileKey) await deleteS3KeyIfExists(post.thumbnail_fileKey);
+  
+        const uploaded = await uploadSelectedMedia(file, thumbnailUri);
+        if (!uploaded) throw new Error('Upload failed');
+  
+        fileKey = uploaded.fileKey;
+        thumbnailFileKey = uploaded.thumbnailFileKey || '';
+      } else if (mediaWasRemoved) {
+        // ✅ Media was removed
+        if (post.fileKey) await deleteS3KeyIfExists(post.fileKey);
+        if (post.thumbnail_fileKey) await deleteS3KeyIfExists(post.thumbnail_fileKey);
+  
+        fileKey = '';
+        thumbnailFileKey = '';
+      } else {
+        // ✅ Media unchanged
+        fileKey = post.fileKey || '';
+        thumbnailFileKey = post.thumbnail_fileKey || '';
       }
-
+  
       const payload = {
         command: "updateResourcePost",
         user_id: myId,
@@ -708,49 +545,53 @@ console.log('cleanedBody',cleanedBody)
         title: trimmedTitle,
         resource_body: cleanedBody,
         fileKey,
-        mediaType: postData.mediaType || '',
+        mediaType: fileType || postData.mediaType || '',
         thumbnail_fileKey: thumbnailFileKey,
-
+        extraData: mediaMeta || {},
       };
-
+  
       const response = await apiClient.post('/updateResourcePost', payload);
-
-      const existingPost = post;
-      const updatedFields = {
-        user_id: myId,
-        resource_id: post.resource_id,
+  
+      const updatedPostData = {
+        ...post,
         title: trimmedTitle,
         resource_body: cleanedBody,
         fileKey,
-        mediaType: postData.mediaType || '',
+        mediaType: fileType || postData.mediaType || '',
         thumbnail_fileKey: thumbnailFileKey,
+        extraData: mediaMeta || {},
       };
-
-      const updatedPostData = { ...existingPost, ...updatedFields };
-
+  
       if (response.data.status === 'success') {
         EventRegister.emit('onResourcePostUpdated', {
           updatedPost: updatedPostData,
         });
-        const postWithMedia = await fetchMediaForPost(updatedPostData)
-
-        setHasChanges(false);
-
+  
+        const postWithMedia = await fetchMediaForPost(updatedPostData);
         dispatch(updateResourcePost(postWithMedia));
-        showToast("Resource post updated succesfully", 'success');
-
+  
+        setFile(null);
+        setFileType('');
+        setThumbnailUri(null);
+        setMediaMeta(null);
+        setSignedUrl('');
+        setHasChanges(false);
+  
+        showToast("Resource post updated successfully", 'success');
         navigation.goBack();
       } else {
-        throw new Error(response.data.errorMessage || 'Failed to update forum post');
+        throw new Error(response.data.errorMessage || 'Failed to update resource post');
       }
     } catch (error) {
       showToast(error.message, 'error');
-
     } finally {
       setIsLoading(false);
       setHasChanges(false);
     }
   };
+  
+  
+  
 
   const fetchMediaForPost = async (post) => {
     const mediaData = { resource_id: post.resource_id };
@@ -966,35 +807,35 @@ console.log('cleanedBody',cleanedBody)
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.profileContainer}>
-     <View style={styles.imageContainer}>
-                      {profile?.fileKey ? (
-                        <Image
-                          source={{ uri: profile?.imageUrl }}
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            marginRight: 10,
-                          }}
-                        />
-                      ) : (
-                        <View
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            marginRight: 10,
-                            backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Text style={{ color: profile?.companyAvatar?.textColor || '#000', fontWeight: 'bold' }}>
-                            {profile?.companyAvatar?.initials || '?'}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+          <View style={styles.imageContainer}>
+            {profile?.fileKey ? (
+              <Image
+                source={{ uri: profile?.imageUrl }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  marginRight: 10,
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  marginRight: 10,
+                  backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: profile?.companyAvatar?.textColor || '#000', fontWeight: 'bold' }}>
+                  {profile?.companyAvatar?.initials || '?'}
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={styles.profileTextContainer}>
             <Text style={styles.profileName}>
               {profile?.company_name
@@ -1004,67 +845,6 @@ console.log('cleanedBody',cleanedBody)
             <Text style={styles.profileCategory}>{profile?.category}</Text>
           </View>
         </View>
-
-        {/* <TextInput
-          style={[styles.input, { height: 50, marginBottom: 10, }]}
-          multiline
-          placeholder="Enter title ..."
-          value={postData.title}
-          placeholderTextColor="gray"
-          onChangeText={(text) => {
-            if (text === "") {
-              setPostData(prev => ({ ...prev, title: "" }));
-              return;
-            }
-
-            if (text.startsWith(" ")) {
-              showToast("Leading spaces are not allowed", 'error');
-
-              return;
-            }
-
-            let trimmedText = text.replace(/^\s+/, "");
-            if (text.length > 0 && trimmedText === "") {
-
-              showToast("Leading spaces are not allowed", 'error');
-
-              return;
-            }
-
-            setPostData(prev => ({ ...prev, title: trimmedText }));
-          }}
-        /> */}
-
-
-        {/* <TextInput
-          style={[styles.input, { minHeight: 250, maxHeight: 400 }]}
-          multiline
-          placeholder="Describe your resource in detail ..."
-          value={postData.resource_body}
-          placeholderTextColor="gray"
-          onChangeText={(text) => {
-            if (text === "") {
-              setPostData(prev => ({ ...prev, resource_body: "" }));
-              return;
-            }
-
-            if (text.startsWith(" ")) {
-              showToast("Leading spaces are not allowed", 'error');
-
-              return;
-            }
-
-            let trimmedText = text.replace(/^\s+/, "");
-            if (text.length > 0 && trimmedText === "") {
-
-              showToast("Leading spaces are not allowed", 'error');
-
-              return;
-            }
-
-            setPostData(prev => ({ ...prev, resource_body: trimmedText }));
-          }}
-        /> */}
 
         <TextInput
           style={[styles.input, {
@@ -1126,71 +906,6 @@ console.log('cleanedBody',cleanedBody)
         />
 
 
-        {file?.uri || postData.fileKey ? (
-          <View key={file?.uri || postData.fileKey}>
-
-            <TouchableOpacity onPress={handleRemoveMedia} style={styles.closeIcon}>
-              <Ionicons name="close" size={24} color="black" />
-            </TouchableOpacity>
-
-            {(() => {
-              const uri = file?.uri || videoUri || imageUrl; // Use selected file first
-              const fileName = file?.name || postData.fileKey?.split('/').pop() || '';
-              const ext = fileName.split('.').pop()?.toLowerCase();
-              const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext || '');
-
-              if (isVideo) {
-                return (
-                  <View style={styles.mediaContainer}>
-
-                    <Video
-                      source={{ uri }}
-                      style={{ width: '100%', height: '100%' }}
-                      resizeMode="contain"
-                      muted
-                      controls
-                    />
-
-
-                  </View>
-                );
-              } else if (['jpg', 'jpeg', 'png'].includes(ext || '')) {
-                return (
-                  <View style={styles.mediaContainer}>
-                    <FastImage
-                      source={{ uri }}
-                      style={styles.mediaPreview}
-                      resizeMode={FastImage.resizeMode.contain}
-                      onError={(error) => console.log('Image Load Error:', error.nativeEvent)}
-                    />
-                  </View>
-                );
-              } else {
-                return (
-                  <View style={{ alignItems: 'center', justifyContent: 'center', padding: 10 }}>
-                    <Text style={styles.fileName}>{fileName || 'Unknown File'}</Text>
-                    {uri ? (
-                      <TouchableOpacity onPress={() => Linking.openURL(uri)}>
-                        <Text style={styles.viewFileText}>View Document</Text>
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
-                );
-              }
-            })()}
-          </View>
-        ) : (
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.uploadButton}
-            onPress={handleFileChange}
-          >
-            <Icon name="cloud-upload-outline" size={30} color="#000" />
-            <Text style={{ color: 'black', }}>Click to upload a file</Text>
-
-          </TouchableOpacity>
-        )}
-
 
         <PlayOverlayThumbnail
           ref={overlayRef}
@@ -1198,30 +913,20 @@ console.log('cleanedBody',cleanedBody)
           playIcon={playIcon}
 
         />
-        <View style={AppStyles.UpdateContainer}>
-          <TouchableOpacity
-            onPress={handlePostSubmission}
-            style={[
-              AppStyles.buttonContainer1,
-              (!postData.resource_body.trim() || isLoading || isCompressing) && styles.disabledButton1,
-            ]}
-            disabled={isCompressing}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#ccc" />
-            ) : (
-              <Text
-                style={[
-                  styles.buttonTextdown,
-                  (!postData.resource_body.trim() || isLoading || isCompressing) && styles.disabledButtonText,
-                ]}
-              >Update</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[AppStyles.cancelBtn]}>
-            <Text style={[styles.buttonTextdown, { color: '#FF0000' }]}  >Cancel</Text>
-          </TouchableOpacity>
-        </View>
+        <MediaPreview
+          uri={file?.uri || signedUrl}
+          type={fileType || post?.extraData?.type}
+          name={file?.name || post?.extraData?.fileName}
+          onRemove={handleRemoveMedia}
+        />
+
+        {!(file || signedUrl) && (
+          <MediaPickerButton
+            onPress={() => showMediaOptions()}
+            isLoading={isCompressing}
+          />
+        )}
+
 
       </KeyboardAwareScrollView>
 
@@ -1248,21 +953,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'whitesmoke',
   },
-  buttonContainer1: {
-    width: 80,
-    paddingVertical: 4,
-    paddingHorizontal: 5,
-    borderRadius: 20,
-    alignItems: 'center',
-    alignSelf: 'center',
-    borderColor: '#075cab',
-    borderWidth: 0.5,
-    backgroundColor: '#ffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
+
   container2: {
     padding: 10,
     backgroundColor: 'whitesmoke',
@@ -1290,47 +981,12 @@ const styles = StyleSheet.create({
   disabledButtonText1: {
     color: '#fff',
   },
-  closeIcon: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    width: 26,
-    height: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 3,
-    zIndex: 4
-  },
-  uploadButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderStyle: 'dotted',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    marginHorizontal:10
-
-  },
 
   container1: {
     flex: 1,
     backgroundColor: 'whitesmoke',
   },
-  title: {
-    marginBottom: 5,
-    color: 'black',
-    fontSize: 15,
-    fontWeight: '500',
-  },
+
 
   input: {
     borderWidth: 1,
@@ -1346,53 +1002,7 @@ const styles = StyleSheet.create({
     minHeight: 300,
     maxHeight: 400,
   },
-  inputTitle: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 16,
-    textAlignVertical: 'top',
-    color: 'black',
-    textAlign: 'justify',
-    backgroundColor: 'white',
-    marginHorizontal: 10,
-    minHeight: 50,
-    maxHeight: 250,
-    marginBottom: 10
-  },
 
-  cancel: {
-    color: "black"
-  },
-
-  heading: {
-    fontSize: 20,
-    fontWeight: '500',
-    marginBottom: 20,
-    color: "#075cab",
-  },
-  mediaPreview: {
-    width: '100%',
-    height: '100%',
-resizeMode:'contain'
-  },
-  fileName: {
-    fontSize: 15,
-    fontWeight: '600',
-
-  },
-
-
-  mediaContainer: {
-
-    width: '100%',
-    height: 250,
-    borderRadius: 10,
-    overflow: 'hidden',
-    paddingHorizontal: 10,
-
-  },
   buttonContainer: {
     width: 80,
     padding: 10,
@@ -1453,25 +1063,9 @@ resizeMode:'contain'
     fontWeight: '500',
     marginVertical: 10,
   },
-  button: {
-    fontSize: 16,
-    color: '#075cab',
-    fontWeight: '600',
-  },
 
-  butttonDelte: {
-    alignSelf: 'center', // Centers the button
-    width: 90, // Adjusts the button width to be smaller
-    paddingVertical: 5,
 
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: '#FF0000',
-    borderWidth: 1,
-    marginVertical: 10,
 
-  },
   backButton: {
     alignSelf: 'flex-start',
     padding: 10

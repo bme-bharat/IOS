@@ -1086,38 +1086,23 @@ const UserProfileUpdateScreen = () => {
   
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
-        const fileKey = profileData.fileKey?.trim() || '';
+        const fileKey = profileData?.fileKey;
         profileData.fileKey = fileKey;
         let imageUrl = null;
   
         if (fileKey) {
-          try {
-            const res = await apiClient.post('/getObjectSignedUrl', {
-              command: 'getObjectSignedUrl',
-              key: fileKey,
-            });
-            imageUrl = res.data;
-            profileData.imageUrl = imageUrl;
-          } catch {
-            profileData.imageUrl = null;
-          }
-        } else {
-          profileData.imageUrl = null;
+          const res = await apiClient.post('/getObjectSignedUrl', {
+            command: 'getObjectSignedUrl',
+            key: fileKey,
+          });
+          imageUrl = res.data;
+          profileData.imageUrl = imageUrl;
         }
   
-        // ✅ Fallback to generated avatar if imageUrl is not available
-        if (!profileData.imageUrl) {
-          const fullName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
-          if (fullName) {
-            profileData.companyAvatar = generateAvatarFromName(fullName);
-          }
-        }
-  
-        // Dispatch image update for posts
         const authorImagePayload = {
           authorId: profile.user_id,
           newFileKey: fileKey,
-          ...(fileKey && imageUrl && { newImageUrl: imageUrl }),
+          newImageUrl: imageUrl,
         };
   
         dispatch({
@@ -1125,16 +1110,17 @@ const UserProfileUpdateScreen = () => {
           payload: authorImagePayload,
         });
   
-        // Dispatch full profile data (with imageUrl and fallback avatar if needed)
+        console.log('Dispatching UPDATE_COMPANY_PROFILE with payload:', profileData);
         dispatch(updateCompanyProfile(profileData));
-  
         return profileData;
       }
     } catch (error) {
+      console.log('Dispatching null profile due to error:', error);
       dispatch(updateCompanyProfile(null));
       return null;
     }
   };
+
   
 
 
@@ -1433,7 +1419,7 @@ const UserProfileUpdateScreen = () => {
           <Text style={styles.title}>Profile Type</Text>
 
           <CustomDropdown
-            items={Object.keys({ ...ProfileSelect.normalProfiles, ...ProfileSelect.companyProfiles }).map(p => ({
+            items={Object.keys({ ...ProfileSelect.normalProfiles }).map(p => ({
               label: p,
               key: p,
             }))}

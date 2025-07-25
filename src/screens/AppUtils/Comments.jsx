@@ -566,15 +566,16 @@ const styles = StyleSheet.create({
     },
 
     authorText: {
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontWeight: '500',
+        fontSize: 15,
         maxWidth: '70%',
         paddingHorizontal: 2
     },
 
     timestampText: {
         color: '#666',
-        fontSize: 12,
+        fontSize: 13,
+        fontWeight:"300",
         maxWidth: '30%',
         textAlign: 'right',
         marginLeft: 20,
@@ -591,9 +592,10 @@ const styles = StyleSheet.create({
 
     commentText: {
         marginTop: 2,
-        fontSize: 14,
-        paddingHorizontal: 2
-
+        fontSize: 15,
+        lineHeight:'20',
+        paddingHorizontal: 2,
+color:"#333"
     },
 
     buttonContainer: {

@@ -59,7 +59,7 @@ const App = () => {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [fcmToken, setFcmToken] = useState('');
   const userCheckIntervalRef = useRef(null);
-  // useLastActivityTracker();
+  useLastActivityTracker();
   // useReviewPrompt();
 
 
@@ -77,6 +77,7 @@ const App = () => {
         if (forumPostUser && (forumPostUser.user_id || forumPostUser.company_id)) {
           setUserId(forumPostUser.user_id || forumPostUser.company_id);
           setSubscriptionExpiresOn(forumPostUser.subscription_expires_on)
+          console.log('forumPostUser.subscription_expires_on',forumPostUser.subscription_expires_on)
         } else {
 
         }
@@ -559,7 +560,7 @@ const App = () => {
   useEffect(() => {
     const initializeApp = async () => {
       await checkAuthStatus();
-      setSplashVisible(false); 
+      setSplashVisible(false);
     };
 
     initializeApp();

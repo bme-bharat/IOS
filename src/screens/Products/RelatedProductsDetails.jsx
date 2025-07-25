@@ -132,7 +132,7 @@ const RelatedProductDetails = () => {
       const productUrl = `https://bmebharat.com/product/${product.company_id}/${product.product_id}`;
 
       const result = await Share.share({
-        message: productUrl,
+        message: `Checkout this product: ${productUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -690,31 +690,14 @@ const RelatedProductDetails = () => {
 };
 
 
-
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
-    backgroundColor: 'whitesmoke',
+    backgroundColor: 'white',
 
   },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 8,
-  },
 
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 4,
-    backgroundColor: '#888',
-  },
-
-  activeDot: {
-    backgroundColor: '#000',
-  },
   divider: {
     width: '100%',
     borderWidth: 0.3,
@@ -745,9 +728,9 @@ const styles = StyleSheet.create({
   },
   shareText: {
     color: '#075cab',
-    fontSize: 16,
-    fontWeight: '600',
-    paddingHorizontal: 10
+    fontSize: 15,
+    fontWeight: '500',
+    paddingHorizontal: 10,
 
   },
   imageContainer: {
@@ -764,10 +747,10 @@ const styles = StyleSheet.create({
   mainProductImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain', // Ensures the image fills the container nicely
-    alignSelf: 'center'
-
+    resizeMode: 'contain',
+    alignSelf: 'center',
   },
+
   productVideo: {
     width: width - 10,
     height: '100%',
@@ -796,18 +779,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-
   playButton: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -25 }, { translateY: -25 }],
+    transform: [{ translateX: -25 }, { translateY: -25 }], // center the 40px icon
     zIndex: 2,
-    // backgroundColor: 'white', 
     borderRadius: 50,
-    // padding: 1,
-    alignSelf: 'center'
+    alignSelf: 'center',
+    padding: 8, // optional: adds breathing space around icon
   },
+
 
   headerRow: {
     flexDirection: 'row',
@@ -843,41 +825,48 @@ const styles = StyleSheet.create({
   },
 
   company: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     // letterSpacing: 1.2,
     // textTransform: 'uppercase',
     // marginBottom: 3,
   },
 
   category: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '300',
     color: '#777',
     paddingHorizontal: 10
 
   },
 
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
     marginTop: 10,
-    letterSpacing: 0.8,
+  
     paddingHorizontal: 10
   },
 
   description: {
-    color: '#555',
-    fontSize: 14,
+    color: 'black',
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: 'justify',
+    paddingHorizontal: 10
+  },
+  productDescription: {
+    color: '#000',
+    fontSize: 15,
     // lineHeight: 24,
     // marginTop: 5,
     textAlign: 'justify',
-    // paddingHorizontal: 10
 
   },
   description1: {
-    color: 'black',
+    color: '#555',
     fontSize: 14,
     lineHeight: 24,
     marginTop: 5,
@@ -885,7 +874,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10
 
   },
-
   readMore: {
     color: '#075cab', // Blue color for "Read More"
     fontWeight: '300', // Make it bold if needed
@@ -901,14 +889,15 @@ const styles = StyleSheet.create({
   },
 
   price: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#075cab',
     marginRight: 14,
 
   },
+
   price1: {
-    fontSize: 14,
+    fontSize: 15,
     // fontWeight: 'bold',
     color: '#075cab',
     marginRight: 14,
@@ -944,7 +933,7 @@ const styles = StyleSheet.create({
   },
 
   specTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
     marginBottom: 14,
@@ -1097,7 +1086,7 @@ const styles = StyleSheet.create({
   relatedTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     marginBottom: 14,
     // textTransform: 'uppercase',
     // paddingHorizontal: 10
@@ -1106,8 +1095,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   contact: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#075cab',
+    fontWeight:'500',
     textDecorationLine: 'underline',
     marginTop: 10,
     textAlign: 'center'
@@ -1125,21 +1115,21 @@ const styles = StyleSheet.create({
     // shadowRadius: 4,
     elevation: 3,
     gap: 5,
+
   },
   productImage: {
     width: 150,
     height: 150,
-    // borderRadius: 8,
+    borderRadius: 8,
     resizeMode: 'contain',
     marginBottom: 20,
     alignSelf: 'center'
-
   },
   productName: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     marginTop: 5,
-    color: '#333',
+    color: '#000',
   },
   productPrice: {
     fontSize: 14,

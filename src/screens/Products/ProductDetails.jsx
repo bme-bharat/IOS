@@ -135,7 +135,7 @@ const ProductDetails = () => {
       const productUrl = `https://bmebharat.com/product/${product.company_id}/${product.product_id}`;
 
       const result = await Share.share({
-        message: productUrl,
+        message: `Checkout this product: ${productUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -755,8 +755,8 @@ const styles = StyleSheet.create({
   },
   shareText: {
     color: '#075cab',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     paddingHorizontal: 10,
 
   },
@@ -852,40 +852,41 @@ const styles = StyleSheet.create({
   },
 
   company: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     // letterSpacing: 1.2,
     // textTransform: 'uppercase',
     // marginBottom: 3,
   },
 
   category: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '300',
     color: '#777',
     paddingHorizontal: 10
 
   },
 
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
     marginTop: 10,
-    letterSpacing: 0.8,
+  
     paddingHorizontal: 10
   },
 
   description: {
     color: 'black',
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 20,
     textAlign: 'justify',
     paddingHorizontal: 10
   },
   productDescription: {
-    color: '#555',
-    fontSize: 14,
+    color: '#000',
+    fontSize: 15,
     // lineHeight: 24,
     // marginTop: 5,
     textAlign: 'justify',
@@ -915,15 +916,15 @@ const styles = StyleSheet.create({
   },
 
   price: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#075cab',
     marginRight: 14,
 
   },
 
   price1: {
-    fontSize: 14,
+    fontSize: 15,
     // fontWeight: 'bold',
     color: '#075cab',
     marginRight: 14,
@@ -959,7 +960,7 @@ const styles = StyleSheet.create({
   },
 
   specTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
     marginBottom: 14,
@@ -1112,7 +1113,7 @@ const styles = StyleSheet.create({
   relatedTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     marginBottom: 14,
     // textTransform: 'uppercase',
     // paddingHorizontal: 10
@@ -1121,8 +1122,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   contact: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#075cab',
+    fontWeight:'500',
     textDecorationLine: 'underline',
     marginTop: 10,
     textAlign: 'center'
@@ -1151,10 +1153,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center'
   },
   productName: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     marginTop: 5,
-    color: '#333',
+    color: '#000',
   },
   productPrice: {
     fontSize: 14,

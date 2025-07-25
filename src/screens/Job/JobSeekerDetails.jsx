@@ -14,6 +14,7 @@ import ResumeModal from '../helperComponents.jsx/resumeModal';
 const CompanyGetJobCandidatesScreen = () => {
   const route = useRoute();
   const { posts, imageUrl } = route.params;
+
   const navigation = useNavigation()
   const scrollViewRef = useRef(null)
   const [modalVisible1, setModalVisible1] = useState(false);
@@ -44,25 +45,44 @@ const CompanyGetJobCandidatesScreen = () => {
       <ScrollView showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}
         showsVerticalScrollIndicator={false} ref={scrollViewRef} >
 
-        <View style={styles.imageContainer}>
-          {imageUrl ? (
-            <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])} activeOpacity={0.8}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.image}
-                resizeMode="cover"
-                onError={(e) => console.error("Image load error:", e.nativeEvent.error)}
-              />
-            </TouchableOpacity>
-          ) : (
+
+        <TouchableOpacity
+          onPress={() => {
+            if (typeof imageUrl === 'string') {
+              openMediaViewer([{ type: 'image', url: imageUrl }]);
+            }
+          }}
+          activeOpacity={0.8}
+          style={styles.imageContainer}
+        >
+          {typeof imageUrl === 'string' ? (
             <Image
-              source={posts.gender === "Male" ? maleImage : femaleImage}
+              source={{ uri: imageUrl }}
               style={styles.image}
               resizeMode="cover"
-              onError={(e) => console.error("Image load error:", e.nativeEvent.error)}
+              onError={(e) =>
+                console.error('Image load error:', e.nativeEvent.error)
+              }
             />
+          ) : (
+            <View
+              style={[
+                styles.image,
+                { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.avatarText,
+                  { color: imageUrl?.textColor || '#000' },
+                ]}
+              >
+                {imageUrl?.initials || 'U'}
+              </Text>
+            </View>
           )}
-        </View>
+        </TouchableOpacity>
+
 
 
         <View style={styles.textContainer}>
@@ -207,13 +227,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 80,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  image1: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
+  avatarText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
 
-  },
   textContainer: {
     // borderWidth: 1,
     // borderColor: '#ccc',

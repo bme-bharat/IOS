@@ -807,6 +807,10 @@ const EditProduct = () => {
                 extraScrollHeight={20}
                 onScrollBeginDrag={() => Keyboard.dismiss()}
                 showsVerticalScrollIndicator={false}>
+
+
+
+                        <Text style={styles.title}>Edit a product</Text>
                 <TouchableOpacity activeOpacity={1}>
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Product name <Text style={{ color: 'red' }}>*</Text></Text>
@@ -1212,8 +1216,8 @@ const styles = StyleSheet.create({
 
     },
     addMediaText: {
-        fontSize: 16,
-        color: "#333",
+        fontSize: 15,
+        color: "#000",
         fontWeight: "500",
         alignSelf: 'flex-start'
     },
@@ -1235,11 +1239,20 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '500',
         marginBottom: 5,
-        color: '#444',
+        color: '#000',
     },
+
+    title: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 25,
+        textAlign: 'center',
+        color: '#075cab',
+        top: 10,
+      },
     input: {
         minHeight: 50,
         maxHeight: 150,

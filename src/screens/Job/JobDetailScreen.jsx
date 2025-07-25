@@ -13,13 +13,13 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
 import AppStyles from '../../assets/AppStyles';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 const JobDetailScreen = ({ route }) => {
   const { myId, myData } = useNetwork();
-    const { post_id } = route.params || {};
-    const routePost = route.params?.post;
-
+  const { post_id } = route.params || {};
+  const routePost = route.params?.post;
   const [profileCreated, setProfileCreated] = useState(false)
   const navigation = useNavigation();
   const [post, setPost] = useState([])
@@ -38,13 +38,13 @@ const JobDetailScreen = ({ route }) => {
 
   const fetchProfile1 = async () => {
     if (!myId) return;
-  
+
     try {
       const response = await apiClient.post('/getUserDetails', {
         command: 'getUserDetails',
         user_id: myId,
       });
-  
+
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
         setProfile(profileData);
@@ -53,7 +53,7 @@ const JobDetailScreen = ({ route }) => {
       console.error('❌ Error in fetchProfile1:', error);
     }
   };
-  
+
 
 
 
@@ -63,7 +63,7 @@ const JobDetailScreen = ({ route }) => {
         command: 'getJobProfiles',
         user_id: myId,
       });
-  
+
       if (response.data.status === 'error') {
         setProfileCreated(false);
       } else if (response.data.status === 'success') {
@@ -75,7 +75,7 @@ const JobDetailScreen = ({ route }) => {
       setProfileCreated(false); // Optional fallback
     }
   };
-  
+
 
 
   useEffect(() => {
@@ -95,51 +95,56 @@ const JobDetailScreen = ({ route }) => {
         command: 'getJobPost',
         post_id: post_id,
       };
-
+  
       const res = await withTimeout(apiClient.post('/getJobPost', requestData), 5000);
-
+  
       const hasValidResponse = res.data.response?.length > 0;
-
+  
       if (hasValidResponse) {
         const jobData = res.data.response[0];
-        setPost(jobData);
-
-        let imageUrl = defaultImage;
-
-        if (jobData.fileKey) {
-          try {
-            const imgRes = await apiClient.post('/getObjectSignedUrl', {
-              command: 'getObjectSignedUrl',
-              key: jobData.fileKey,
-            });
-            if (imgRes.data) {
-              imageUrl = imgRes.data;
-            }
-          } catch (error) {
-            console.warn('Error fetching image URL, using default:', error);
-          }
+  
+        // Case: No fileKey → generate avatar first
+        if (!jobData.fileKey) {
+          jobData.companyAvatar = generateAvatarFromName(jobData.company_name);
+          setPost(jobData);
+          return;
         }
-
-        setJobImageUrls(prevUrls => ({
-          ...prevUrls,
-          [jobData.post_id]: imageUrl,
-        }));
+  
+        // fileKey exists → try fetching image URL
+        try {
+          const imgRes = await apiClient.post('/getObjectSignedUrl', {
+            command: 'getObjectSignedUrl',
+            key: jobData.fileKey,
+          });
+  
+          if (imgRes.data) {
+            setJobImageUrls(prevUrls => ({
+              ...prevUrls,
+              [jobData.post_id]: imgRes.data,
+            }));
+          }
+        } catch (error) {
+          console.warn('Error fetching image URL, falling back to avatar:', error);
+          jobData.companyAvatar = generateAvatarFromName(jobData.company_name);
+        }
+  
+        setPost(jobData);
       } else {
         setPost({ removed_by_author: true });
       }
-
+  
     } catch (error) {
-
-      showToast('Network error', 'error')
+      showToast('Network error', 'error');
     }
   };
+  
+
 
   useEffect(() => {
     if (routePost) {
       console.log('Setting post from route.params:', routePost); // 🟢 LOG: from route
-  
       setPost(routePost);
-  
+
       if (routePost?.fileKey) {
         (async () => {
           try {
@@ -159,20 +164,17 @@ const JobDetailScreen = ({ route }) => {
           }
         })();
       } else {
-        console.log('No fileKey in routePost, using default image');
-        setJobImageUrls(prev => ({
-          ...prev,
-          [routePost.post_id]: defaultImage,
-        }));
+        console.log('No fileKey in routePost, skipping image URL set');
       }
     } else {
       console.log('No routePost found, fetching from API'); // 🟡 LOG: from API
       fetchJobs();
     }
   }, []);
-  
-  
-  
+
+
+
+
 
   useEffect(() => {
     fetchAppliedJobs();
@@ -185,7 +187,7 @@ const JobDetailScreen = ({ route }) => {
       const jobUrl = `${baseUrl}${post.post_id}`;
 
       const result = await Share.share({
-        message: `Check out this job opportunity!\n${jobUrl}`,
+        message: `Checkout this job: ${jobUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -300,7 +302,7 @@ const JobDetailScreen = ({ route }) => {
 
     }
   };
-  
+
   const handleNavigate = (company_id) => {
     navigation.navigate('CompanyDetailsPage', { userId: company_id });
   };
@@ -392,186 +394,189 @@ const JobDetailScreen = ({ route }) => {
       <>
         {post ? (
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '20%' }}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={styles.imageContainer}>
 
+            <TouchableOpacity
+              onPress={() => openMediaViewer([{ type: 'image', url: jobImageUrls[post?.post_id] }])}
+              activeOpacity={1}
+              style={styles.imageContainer}
+            >
+              {post.fileKey ? (
+                <FastImage
+                  source={{ uri: jobImageUrls[post?.post_id] }}
+                  style={styles.detailImage}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+              ) : (
+                <View style={[AppStyles.avatarContainerDetails, { backgroundColor: post?.companyAvatar?.backgroundColor }]}>
+                  <Text style={[AppStyles.avatarText, { color: post?.companyAvatar?.textColor }]}>
+                    {post?.companyAvatar?.initials}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+
+            <View style={styles.textContainer1}>
+              <Text style={styles.title}>{post?.job_title || 'No Title'}</Text>
+            </View>
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={styles.label}>Company</Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+              <Text style={styles.value} onPress={() => handleNavigate(post?.company_id)} >{post?.company_name || ''}</Text>
+            </View>
+
+
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={styles.label}>Category</Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+              <Text style={styles.value}>{post?.category || ''}</Text>
+            </View>
+
+            {post?.Website?.trimStart().trimEnd() ? (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Website</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.Website.trim()}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={styles.label}>Industry type</Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+              <Text style={styles.value}>{post?.industry_type || ''}</Text>
+            </View>
+
+            {post?.required_qualifications?.trim() && (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Required qualification</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.required_qualifications.trim()}</Text>
+              </View>
+            )}
+
+            {post?.required_expertise?.trim() && (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Required expertise</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.required_expertise.trim()}</Text>
+              </View>
+            )}
+
+            {post?.experience_required?.trim() && (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Required experience</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.experience_required.trim()}</Text>
+              </View>
+            )}
+
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={[styles.label]}>Required speicializations </Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+
+              <Text style={[styles.value]}>{post?.speicializations_required || ''}</Text>
+            </View>
+
+            {post?.working_location?.trim() && (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Work location</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.working_location.trim()}</Text>
+              </View>
+            )}
+
+
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={styles.label}>Salary package</Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+              <Text style={styles.value}>{post?.Package || ''}</Text>
+            </View>
+
+            {post?.job_description?.trimStart().trimEnd() ? (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={styles.label}>Job description</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={styles.value}>{post?.job_description.trim()}</Text>
+              </View>
+            ) : null}
+
+
+
+            {post?.preferred_languages?.trimStart().trimEnd() ? (
+              <View style={styles.detailContainer}>
+                <View style={styles.lableIconContainer}>
+                  <Text style={[styles.label]}>Required languages</Text>
+                </View>
+                <Text style={styles.colon}>:</Text>
+                <Text style={[styles.value]}>{post?.preferred_languages || ''}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.detailContainer}>
+              <View style={styles.lableIconContainer}>
+                <Text style={styles.label}>Posted on</Text>
+              </View>
+              <Text style={styles.colon}>:</Text>
+              <Text style={styles.value}>
+                {
+                  post?.job_post_created_on
+                    ? (() => {
+                      const date = new Date(post?.job_post_created_on * 1000);
+                      const day = String(date.getDate()).padStart(2, '0');
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const year = String(date.getFullYear());
+
+                      return `${day}/${month}/${year}`;
+                    })()
+                    : ''
+                }
+              </Text>
+
+            </View>
+
+            {myId !== post?.company_id && (
+              <>
                 <TouchableOpacity
-                 onPress={() => openMediaViewer([{ type: 'image', url: jobImageUrls[post?.post_id] }])}
-                  activeOpacity={1}
+                  onPress={() => {
+                    setModalVisible1(true);
+                  }}
+                  style={{ padding: 10 }}
                 >
-                  <FastImage
-                    source={{ uri: jobImageUrls[post?.post_id] }}
-                    style={styles.detailImage}
-                    resizeMode={jobImageUrls[post?.post_id]?.includes('buliding.jpg') ? 'cover' : 'contain'}
-                  />
+                  <Text style={styles.contact}>Contact details</Text>
                 </TouchableOpacity>
 
+                <ContactSupplierModal
+                  visible={modalVisible1}
+                  onClose={() => {
+                    setModalVisible1(false);
+                  }}
+                  company_id={post?.company_id}
+                />
+              </>
+            )}
 
-              </View>
-
-
-              <View style={styles.textContainer1}>
-                <Text style={styles.title}>{post?.job_title || 'No Title'}</Text>
-              </View>
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={styles.label}>Company</Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value} onPress={() => handleNavigate(post?.company_id)} >{post?.company_name || ''}</Text>
-              </View>
-
-
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={styles.label}>Category</Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.category || ''}</Text>
-              </View>
-
-              {post?.Website?.trimStart().trimEnd() ? (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Website</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.Website.trim()}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={styles.label}>Industry type</Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.industry_type || ''}</Text>
-              </View>
-
-              {post?.required_qualifications?.trim() && (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Required qualification</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.required_qualifications.trim()}</Text>
-                </View>
-              )}
-
-              {post?.required_expertise?.trim() && (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Required expertise</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.required_expertise.trim()}</Text>
-                </View>
-              )}
-
-              {post?.experience_required?.trim() && (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Required experience</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.experience_required.trim()}</Text>
-                </View>
-              )}
-
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={[styles.label]}>Required speicializations </Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-
-                <Text style={[styles.value]}>{post?.speicializations_required || ''}</Text>
-              </View>
-
-              {post?.working_location?.trim() && (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Work location</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.working_location.trim()}</Text>
-                </View>
-              )}
-
-
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={styles.label}>Salary package</Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.Package || ''}</Text>
-              </View>
-
-              {post?.job_description?.trimStart().trimEnd() ? (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={styles.label}>Job description</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={styles.value}>{post?.job_description.trim()}</Text>
-                </View>
-              ) : null}
-
-
-
-              {post?.preferred_languages?.trimStart().trimEnd() ? (
-                <View style={styles.detailContainer}>
-                  <View style={styles.lableIconContainer}>
-                    <Text style={[styles.label]}>Required languages</Text>
-                  </View>
-                  <Text style={styles.colon}>:</Text>
-                  <Text style={[styles.value]}>{post?.preferred_languages || ''}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.detailContainer}>
-                <View style={styles.lableIconContainer}>
-                  <Text style={styles.label}>Posted on</Text>
-                </View>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>
-                  {
-                    post?.job_post_created_on
-                      ? (() => {
-                        const date = new Date(post?.job_post_created_on * 1000);
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const year = String(date.getFullYear());
-
-                        return `${day}/${month}/${year}`;
-                      })()
-                      : ''
-                  }
-                </Text>
-
-              </View>
-
-              {myId !== post?.company_id && (
-                <>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setModalVisible1(true);
-                    }}
-                    style={{ padding: 10 }}
-                  >
-                    <Text style={styles.contact}>Contact details</Text>
-                  </TouchableOpacity>
-
-                  <ContactSupplierModal
-                    visible={modalVisible1}
-                    onClose={() => {
-                      setModalVisible1(false);
-                    }}
-                    company_id={post?.company_id}
-                  />
-                </>
-              )}
-
-            </TouchableOpacity>
           </ScrollView>
         ) : null}
 
@@ -703,7 +708,7 @@ const styles = StyleSheet.create({
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
   },
-  
+
   textContainer1: {
     textAlign: 'center',
     padding: 10,
@@ -711,7 +716,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'black',
-    fontWeight: '700',
+    fontWeight: '500',
     fontSize: 15,
     paddingHorizontal: 12,
   },
@@ -777,7 +782,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 250,
-    padding: 15,
+    alignSelf: 'center',
+    paddingHorizontal:10
 
   },
 
@@ -817,7 +823,8 @@ const styles = StyleSheet.create({
 
   },
   contact: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
     color: '#075cab',
     textDecorationLine: 'underline',
     marginTop: 10,
@@ -838,7 +845,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    
+
   },
 
 

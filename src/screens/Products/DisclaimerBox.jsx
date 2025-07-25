@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     
   },
   heading: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     marginBottom: 16,
     color: '#333',
   },
@@ -55,7 +55,8 @@ const styles = StyleSheet.create({
   },
   text: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight:"300",
     lineHeight: 16,
     color: '#555',
   },

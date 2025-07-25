@@ -1379,6 +1379,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-image-marker (1.2.6):
+    - React-Core
   - react-native-image-picker (7.2.3):
     - DoubleConversion
     - glog
@@ -1427,6 +1429,15 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-photo-editor (1.1.6):
+    - React-Core
+    - react-native-photo-editor/ZLImageEditor (= 1.1.6)
+    - SDWebImage (~> 5.11.1)
+    - SDWebImageWebPCoder (~> 0.8.4)
+  - react-native-photo-editor/ZLImageEditor (1.1.6):
+    - React-Core
+    - SDWebImage (~> 5.11.1)
+    - SDWebImageWebPCoder (~> 0.8.4)
   - react-native-razorpay (2.3.0):
     - razorpay-pod
     - React
@@ -1457,7 +1468,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video (6.13.0):
+  - react-native-video (6.16.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1470,7 +1481,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.13.0)
+    - react-native-video/Video (= 6.16.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1479,7 +1490,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.13.0):
+  - react-native-video/Video (6.16.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2059,11 +2070,13 @@ DEPENDENCIES:
   - react-native-compressor (from `../node_modules/react-native-compressor`)
   - react-native-create-thumbnail (from `../node_modules/react-native-create-thumbnail`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
+  - react-native-image-marker (from `../node_modules/react-native-image-marker`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-image-resizer (from `../node_modules/react-native-image-resizer`)
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
+  - "react-native-photo-editor (from `../node_modules/@baronha/react-native-photo-editor`)"
   - react-native-razorpay (from `../node_modules/react-native-razorpay`)
   - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-restart (from `../node_modules/react-native-restart`)
@@ -2218,6 +2231,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-create-thumbnail"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
+  react-native-image-marker:
+    :path: "../node_modules/react-native-image-marker"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
   react-native-image-resizer:
@@ -2228,6 +2243,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
+  react-native-photo-editor:
+    :path: "../node_modules/@baronha/react-native-photo-editor"
   react-native-razorpay:
     :path: "../node_modules/react-native-razorpay"
   react-native-render-html:
@@ -2385,17 +2402,19 @@ SPEC CHECKSUMS:
   react-native-compressor: d934fd161f6be5dc2ddf1249e6319ef80682c137
   react-native-create-thumbnail: daaa5d465360c5015b02026bd0978abf16b36ea9
   react-native-document-picker: 1928548d8b19bbc9f2219b01f1d350aa8ff76508
+  react-native-image-marker: 01caff7bfa50f44277922cf84e7c29a732994ea8
   react-native-image-picker: c766cde7cefdd68d417fb92dbf7ef1386a037ffe
   react-native-image-resizer: d9fb629a867335bdc13230ac2a58702bb8c8828f
   react-native-in-app-review: cf4a29c5a1d6bb28dd0d15f1fb1faa25e265bfb5
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: 87334b0013bb6ba27a491ddc499e2c1cb9058e3f
+  react-native-photo-editor: df7a23b0f31379ca5f64671f7d9fc42dbdd68722
   react-native-razorpay: 0272dd684bc9148828c54a72e05059e3e2e8b813
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: 141eca0fd4e4191288dfc8b96a7c7e1c2983447a
   react-native-shortcuts: 25b5f3ced54b0e5692eb43c5a6d699c4ae671be0
-  react-native-video: dd180f8bf4017848fb89596c2020a94e9fb6d6eb
+  react-native-video: 127bf7f365c0c2137971097c3fb8a3e2fa14bdfb
   react-native-view-shot: 4fc2e9c2ef1a316ca05e0c5ad2c58251298e5085
   react-native-webview: 22d53b4e956c9190e5b9beb853a0117249bad388
   React-nativeconfig: cd572c97f64676dcc2a1c88fc644b693b98408bf

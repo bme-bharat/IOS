@@ -323,7 +323,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#ddd'
+    borderColor: '#ddd',
+    marginBottom:10
   },
   dropdownButtonText: {
     fontSize: 16,

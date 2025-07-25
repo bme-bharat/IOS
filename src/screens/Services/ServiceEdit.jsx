@@ -733,6 +733,10 @@ const EditService = () => {
                 extraScrollHeight={20}
                 onScrollBeginDrag={() => Keyboard.dismiss()}
                 showsVerticalScrollIndicator={false}>
+
+
+
+                    <Text style={styles.title}>Edit a service</Text>
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Service name <Text style={{ color: 'red' }}>*</Text></Text>
                     <TextInput
@@ -996,8 +1000,8 @@ const styles = StyleSheet.create({
 
     },
     addMediaText: {
-        fontSize: 16,
-        color: "#333",
+        fontSize: 15,
+        color: "#000",
         fontWeight: "500",
         alignSelf: 'flex-start'
     },
@@ -1023,10 +1027,10 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '500',
         marginBottom: 5,
-        color: '#444',
+        color: '#000',
     },
     input: {
         minHeight: 50,
@@ -1148,7 +1152,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         paddingHorizontal: 15,
         borderRadius: 8,
-        fontSize: 16,
+        fontSize: 15,
         color: '#222',
         shadowColor: '#000',
         shadowOpacity: 0.05,
@@ -1156,6 +1160,14 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
         marginTop: 10,
+    },
+    title:{
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 25,
+        textAlign: 'center',
+        color: '#075cab',
+        top: 10,
     },
 
     dropdownButtonText: {

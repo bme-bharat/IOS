@@ -17,6 +17,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { MyPostBody } from './forumBody';
+import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
 
 const videoExtensions = [
   '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
@@ -30,9 +31,7 @@ const YourForumListScreen = ({ navigation, route }) => {
 
   const [allForumPost, setAllForumPost] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
-  useEffect(() => {
-    console.log('allForumPost', allForumPost)
-  }, [allForumPost])
+
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
   const scrollViewRef = useRef(null)
@@ -209,38 +208,28 @@ const YourForumListScreen = ({ navigation, route }) => {
 
   const confirmDelete = async () => {
     setShowDeleteConfirmation(false);
-
+  
+    // ✅ Use utility function for S3 deletions
     if (fileKeyToDelete && fileKeyToDelete.length > 0) {
       try {
         for (const key of fileKeyToDelete) {
-          if (key) {
-            const fileDeleteResponse = await apiClient.post('/deleteFileFromS3', {
-              command: 'deleteFileFromS3',
-              key: key,
-            });
-
-            if (fileDeleteResponse.data.statusCode !== 200) {
-              throw new Error(`Failed to delete file: ${key}`);
-            }
-          }
+          await deleteS3KeyIfExists(key); 
         }
       } catch (error) {
-        showToast("Something went wrong", 'error');
+ 
         return;
       }
     }
-
+  
     try {
       const response = await apiClient.post('/deleteForumPost', {
         command: "deleteForumPost",
         user_id: myId,
         forum_id: postToDelete,
       });
-
+  
       if (response.data.status === 'success') {
-
         EventRegister.emit('onForumPostDeleted', { forum_id: postToDelete });
-
         showToast("Forum post deleted", 'success');
       } else {
         throw new Error(response.data.status_message || "Failed to delete post.");
@@ -249,8 +238,7 @@ const YourForumListScreen = ({ navigation, route }) => {
       showToast("Something went wrong", 'error');
     }
   };
-
-
+  
 
 
   const cancelDelete = () => {

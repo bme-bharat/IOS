@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   details1: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: 'black',
     marginLeft: 10,

@@ -142,7 +142,7 @@ const RelatedServicesDetails = () => {
       console.log('message', productUrl)
 
       const result = await Share.share({
-        message: productUrl,
+        message: `Checkout this service: ${productUrl}`,
       });
 
       // Handle share actions

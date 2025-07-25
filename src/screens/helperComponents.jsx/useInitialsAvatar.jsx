@@ -28,18 +28,13 @@ const alphabetColors = {
 };
 
 export const generateAvatarFromName = (name) => {
-  const getInitials = (name) => {
-    if (!name) return '';
-    const parts = name.trim().split(/\s+/);
-    const first = parts[0]?.[0]?.toUpperCase() || '';
-    const last = parts[1]?.[0]?.toUpperCase() || '';
-    return `${first}${last}` || '?';
+  const getInitial = (name) => {
+    if (!name) return '?';
+    return name.trim().charAt(0).toUpperCase();
   };
 
-  const getBackgroundColorFromInitial = (name) => {
-    if (!name) return '#888888'; // fallback color
-    const firstChar = name.trim().charAt(0).toUpperCase();
-    return alphabetColors[firstChar] || '#888888';
+  const getBackgroundColorFromInitial = (char) => {
+    return alphabetColors[char] || '#888888'; // fallback color
   };
 
   const getContrastColor = (hexColor) => {
@@ -47,17 +42,16 @@ export const generateAvatarFromName = (name) => {
     const r = parseInt(hexColor.substr(1, 2), 16);
     const g = parseInt(hexColor.substr(3, 2), 16);
     const b = parseInt(hexColor.substr(5, 2), 16);
-    // luminance formula
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
     return luminance > 186 ? '#000000' : '#FFFFFF';
   };
 
-  const initials = getInitials(name);
-  const backgroundColor = getBackgroundColorFromInitial(name);
+  const initial = getInitial(name);
+  const backgroundColor = getBackgroundColorFromInitial(initial);
   const textColor = getContrastColor(backgroundColor);
 
   return {
-    initials,
+    initials: initial,
     backgroundColor,
     textColor
   };

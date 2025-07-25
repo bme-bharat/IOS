@@ -268,7 +268,7 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
           )}
 
           <View>
-            <Text style={{ fontWeight: 'bold' }}>{item.author}</Text>
+            <Text style={{ fontWeight: '500',fontSize:15,color:'black' }}>{item.author}</Text>
             <Text style={{ fontSize: 12, color: '#555' }}>
               {(reactionType === 'All' || item.reaction_type !== reactionType)
                 ? `${getEmojiForReaction(item.reaction_type).label}  ${getEmojiForReaction(item.reaction_type).emoji}`
@@ -428,8 +428,8 @@ const styles = StyleSheet.create({
   },
 
   reactionTabText: {
-    fontSize: 12,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '500',
   },
 
   backdrop: {
@@ -477,9 +477,9 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
   },
 });
 

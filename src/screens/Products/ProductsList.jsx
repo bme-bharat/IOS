@@ -486,13 +486,12 @@ const ProductsList = () => {
                             <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(item.company_name || '', searchQuery)}</Text>
                             {/* <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(job.company_name || '', searchQuery)}</Text> */}
 
-                            {item.price && item.price.trim() !== '' ? (
-                                <View style={styles.priceRow}>
-                                    <Text numberOfLines={1} style={styles.price}>₹ {item.price}</Text>
-                                </View>
-                            ) : (
-                                <Text style={styles.category}>₹ Contact Supplier</Text> // Show "Contact Supplier" instead of empty space
-                            )}
+                            <View style={styles.priceRow}>
+  <Text numberOfLines={1} style={styles.price}>
+    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
+  </Text>
+</View>
+
 
                         </View>
 
@@ -795,9 +794,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
     },
 
+    categorycontact: {
+    
+
+        fontSize: 15,
+     
+        color: '#000',
+        fontWeight:'500',
+      
+    },
+
     category: {
-        fontSize: 13,
+        fontSize: 15,
+     
         color: '#777',
+        
         marginTop: 2,
     },
 
@@ -886,26 +897,33 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#222',
+        color: '#000',
 
     },
 
     description: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: '#666',
+        fontSize: 15,
+     
+        color: '#777',
         marginTop: 4,
     },
 
+    companyName:{
+        fontSize: 15,
+     
+        color: '#000',
+        fontWeight:'500'
+    },
     priceRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 2,
     },
     price: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: 'black'
+        fontSize: 15,
+     
+        color: '#000',
+        fontWeight:'500'
     },
     separator: {
 
@@ -916,7 +934,7 @@ const styles = StyleSheet.create({
     },
 
     productDetailsContainer: {
-        marginTop: 10,
+        marginTop: 5,
 
     },
 

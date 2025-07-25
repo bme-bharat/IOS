@@ -46,6 +46,7 @@ const extensionMap = {
     'ms-powerpoint': 'ppt',
     'plain': 'txt',
 };
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // or more if needed
 
 const fileIcons = {
     pdf: 'file-pdf-box',
@@ -61,6 +62,8 @@ const fileIcons = {
     png: 'file-image',
     webp: 'file-image',
 };
+const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
+const maxAllowedHeight = Math.round(deviceHeight * 0.6);
 
 const ResourcesList = ({ navigation, route }) => {
 
@@ -72,7 +75,7 @@ const ResourcesList = ({ navigation, route }) => {
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const listRef = useRef(null);
-
+console.log('localPosts',localPosts[0])
     const [activeVideo, setActiveVideo] = useState(null);
     const isFocused = useIsFocused();
     const [lastEvaluatedKey, setLastEvaluatedKey] = useState(null);
@@ -199,7 +202,11 @@ const ResourcesList = ({ navigation, route }) => {
     ];
 
 
-
+    const getMappedExtension = (fileKey = '') => {
+        const rawExt = fileKey?.split('.').pop()?.toLowerCase();
+        return extensionMap[rawExt] || rawExt;
+      };
+      
     const fetchMediaForPost = async (post) => {
         const mediaData = { resource_id: post.resource_id };
 
@@ -350,7 +357,7 @@ const ResourcesList = ({ navigation, route }) => {
             const jobUrl = `${baseUrl}${resource_id}`;
 
             const result = await Share.share({
-                message: `Check out this article!\n${jobUrl}`,
+                message: `Checkout this resource: ${jobUrl}`,
             });
 
 
@@ -370,15 +377,26 @@ const ResourcesList = ({ navigation, route }) => {
 
 
     const renderItem = useCallback(({ item }) => {
-
+        let height;
+        if (item.extraData?.aspectRatio) {
+          const aspectRatioHeight = Math.round(deviceWidth / item.extraData?.aspectRatio);
+    
+          height = aspectRatioHeight > maxAllowedHeight ? maxAllowedHeight : aspectRatioHeight;
+        } else {
+    
+          height = deviceWidth;
+        }
         const urlWithoutQuery = item.fileKey?.split('?')[0];
         let fileExtension = urlWithoutQuery?.split('.').pop()?.toLowerCase();
 
         const validExtensions = new Set(Object.values(extensionMap));
 
         const isValidFileKey = (fileKey = '') => {
-            return [...validExtensions].some(ext => fileKey.toLowerCase().endsWith(`.${ext}`));
-        };
+            const extension = fileKey?.split('.').pop()?.toLowerCase();
+            const mappedExtension = extensionMap[extension] || extension;
+            return validExtensions.has(mappedExtension);
+          };
+          
 
         const getFileIcon = (fileKey) => {
             if (!fileKey) return 'file-document';
@@ -419,7 +437,7 @@ const ResourcesList = ({ navigation, route }) => {
                         <View style={styles.textContainer}>
                             <View style={styles.title3}>
                                 <TouchableOpacity onPress={() => handleNavigate(item)}>
-                                    <Text style={{ flex: 1, alignSelf: 'flex-start', color: 'black', fontSize: 15, fontWeight: '600' }}>
+                                    <Text style={{ flex: 1, alignSelf: 'flex-start', color: 'black', fontSize: 15, fontWeight: '500' }}>
                                         {(item.author || '').trimStart().trimEnd()}
                                     </Text>
                                 </TouchableOpacity>
@@ -477,12 +495,12 @@ const ResourcesList = ({ navigation, route }) => {
                                 source={{ uri: item.videoUrl }}
                                 style={{
                                     width: '100%',
-                                    aspectRatio: item.aspectRatio || 16 / 9,
+                                    height:height,
 
                                 }}
                                 controls
                                 paused={activeVideo !== item.resource_id}
-                                resizeMode="contain"
+                                resizeMode="cover"
                                 poster={item.thumbnailUrl}
                                 repeat
                                 posterResizeMode="cover"
@@ -744,6 +762,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 20,
+        backgroundColor:'red'
     },
     actionText: {
         marginTop: 5,
@@ -796,7 +815,7 @@ const styles = StyleSheet.create({
 
     },
     date1: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#666',
         // marginBottom: 5,
         fontWeight: '300',

@@ -243,7 +243,6 @@ export const normalizeHtml = (input = '', query = '') => {
   // Highlighting logic
   const highlightQuery = (text, q) => {
     if (!q) return text;
-    console.log('highlightQuery', q)
     const regex = new RegExp(escapeRegExp(q), 'gi');
     return text.replace(regex, match => `<mark style="background-color: yellow">${match}</mark>`);
   };

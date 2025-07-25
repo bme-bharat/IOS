@@ -24,6 +24,8 @@ import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../../assets/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from '../Forum/forumBody';
+import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
 
 
 async function uriToBlob(uri) {
@@ -40,7 +42,7 @@ const videoExtensions = [
 const ResourcesPost = () => {
   const navigation = useNavigation();
   const profile = useSelector(state => state.CompanyProfile.profile);
-  const overlayRef = useRef();
+
   const { myId, myData } = useNetwork();
 
   const [postData, setPostData] = useState({
@@ -167,132 +169,36 @@ const ResourcesPost = () => {
   };
 
 
-
-
-  const handleMediaSelection = () => {
-    const options = ["Image", "Video", "Document (PDF, DOCX, etc.)"];
-    const actions = [openGallery, handleVideoPick, selectDocument];
-
-    // If a file exists, add "Remove" option
-    if (postData.fileKey) {
-      options.push("Remove");
-      actions.push(handleRemoveMedia);
-    }
-
-    options.push("Cancel");
-
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex: options.length - 1,
-          destructiveButtonIndex: postData.fileKey ? options.length - 2 : undefined,
-        },
-        (index) => {
-          if (index !== -1 && index < actions.length) {
-            actions[index]();
-          }
-        }
-      );
-    } else {
-
-      Alert.alert("Select Media", "Choose an option", [
-        ...options.slice(0, -1).map((text, idx) => ({
-          text,
-          onPress: actions[idx],
-        })),
-        { text: "Cancel", style: "cancel" },
-      ]);
-    }
-  };
+  const {
+    showMediaOptions,
+    isCompressing,
+    overlayRef,
+  } = useMediaPicker({
+    onMediaSelected: (file, meta, previewThumbnail) => {
+      setFile(file);
+      setFileType(file.type);
+      setMediaMeta(meta);
+      setThumbnailUri(previewThumbnail);
+    },
+    includeDocuments: true, // No document option for forum posts
+    includeCamera: false,     // Include camera option
+    mediaType: 'mixed',      // Allow both photos and videos
+    maxImageSizeMB: 5,
+    maxVideoSizeMB: 10,
+  });
 
 
 
-  const openGallery = async () => {
-    try {
-      const options = {
-        mediaType: 'photo',
-        quality: 1,
-        selectionLimit: 1,
-      };
 
-      launchImageLibrary(options, async (response) => {
-        if (response.didCancel) {
 
-          return;
-        }
 
-        if (response.errorCode) {
 
-          return;
-        }
 
-        const asset = response.assets?.[0];
-        if (!asset) return;
-
-        let fileType = asset.type || '';
-        if (!fileType.startsWith('image/')) {
-
-          showToast("Please select a valid image file", 'error');
-          return;
-        }
-
-        if (fileType === 'image/heic' || fileType === 'image/heif') {
-          fileType = 'image/jpeg';
-        }
-
-        const compressedImage = await ImageResizer.createResizedImage(
-          asset.uri,
-          1080,
-          1080,
-          'JPEG',
-          70
-        );
-
-        const compressedFilePath = compressedImage.uri.replace('file://', '');
-        const compressedStats = await RNFS.stat(compressedFilePath);
-        const compressedFileSize = compressedStats.size;
-
-        const maxFileSize = 5 * 1024 * 1024;
-        if (compressedFileSize > maxFileSize) {
-
-          showToast("Image size shouldn't exceed 5MB", 'error');
-
-          return;
-        }
-
-        setFile({
-          uri: compressedImage.uri,
-          type: 'image/jpeg',
-          name: asset.fileName ? asset.fileName.replace(/\.[^/.]+$/, '.jpeg') : 'image.jpeg',
-        });
-        setFileType('image/jpeg');
-
-      });
-    } catch (error) {
-      showToast("Something went wrong", 'error');
-
-    }
-  };
-
-  const [isCompressing, setIsCompressing] = useState(false);
   const [capturedThumbnailUri, setCapturedThumbnailUri] = useState(null);
 
   const playIcon = require('../../images/homepage/PlayIcon.png');
 
 
-  const handleVideoPick = async () => {
-    const videoMeta = await selectVideo({
-      isCompressing,
-      setIsCompressing,
-      setThumbnailUri,
-      setCapturedThumbnailUri,
-      setFile,
-      setFileType,
-      overlayRef,
-      setMediaMeta, // Add this
-    });
-  };
 
   const handleThumbnailUpload = async (thumbnailUri, fileKey) => {
     try {
@@ -334,63 +240,22 @@ const ResourcesPost = () => {
   };
 
 
-  const documentExtensions = [
-    DocumentPicker.types.pdf,
-    DocumentPicker.types.doc,
-    DocumentPicker.types.docx,
-    DocumentPicker.types.plainText,
-    DocumentPicker.types.csv,
-    DocumentPicker.types.ppt,
-    DocumentPicker.types.pptx,
-    DocumentPicker.types.xls,
-    DocumentPicker.types.xlsx
-  ];
-
-
-  const selectDocument = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({
-        type: documentExtensions,
-      });
-
-      if (!res || !res.uri) {
-
-        return;
-      }
-      if (!res.type) {
-
-        res.type = 'application/pdf';
-      }
-
-      setFile(res);
-      setFileType(res.type);
-
-    } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
-
-      } else {
-
-      }
-    }
-  };
-
 
 
   const handleUploadFile = async () => {
     if (!file) {
-      console.log('[handleUploadFile] No file selected');
+      console.log('📂 No file selected for upload');
       return { fileKey: null, thumbnailFileKey: null };
     }
-
+  
     setLoading(true);
-
+    console.log('⏫ Upload starting for file:', file);
+  
     try {
-      console.log('[handleUploadFile] Starting file upload');
-
       const fileStat = await RNFS.stat(file.uri);
       const fileSize = fileStat.size;
-      console.log(`[handleUploadFile] File size: ${fileSize} bytes`);
-
+      console.log('📏 File size:', fileSize);
+  
       const res = await apiClient.post('/uploadFileToS3', {
         command: 'uploadFileToS3',
         headers: {
@@ -398,62 +263,48 @@ const ResourcesPost = () => {
           'Content-Length': fileSize,
         },
       });
-
+  
       if (res.data.status !== 'success') {
-        console.log('[handleUploadFile] Failed to get upload URL', res.data);
+        console.error('❌ Failed to get S3 URL:', res.data);
         throw new Error(res.data.errorMessage || 'Failed to get upload URL');
       }
-
-      const uploadUrl = res.data.url;
-      const fileKey = res.data.fileKey;
-      console.log('[handleUploadFile] Received upload URL and fileKey:', fileKey);
-
+  
+      const { url: uploadUrl, fileKey } = res.data;
+      console.log('✅ Got S3 Upload URL and fileKey:', { uploadUrl, fileKey });
+  
       const fileBlob = await uriToBlob(file.uri);
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': fileType },
         body: fileBlob,
       });
-
+  
+      console.log('📤 Upload to S3 response status:', uploadRes.status);
+  
       if (uploadRes.status !== 200) {
-        console.log('[handleUploadFile] Upload failed with status:', uploadRes.status);
         throw new Error('Failed to upload file to S3');
       }
-
-      console.log('[handleUploadFile] File uploaded successfully');
-
-      // ✅ Step 4: Generate Thumbnail for Videos
+  
       let thumbnailFileKey = null;
-      if (file.type.startsWith("video/")) {
-        console.log('[handleUploadFile] File is a video. Generating thumbnail...');
-        let finalThumbnailToUpload = capturedThumbnailUri;
-
-        if (!finalThumbnailToUpload) {
-          finalThumbnailToUpload = await generateVideoThumbnail(file.uri);
-          console.log('[handleUploadFile] Generated thumbnail from video URI');
-        } else {
-          console.log('[handleUploadFile] Using captured thumbnail URI');
-        }
-
-        if (finalThumbnailToUpload) {
-          thumbnailFileKey = await handleThumbnailUpload(finalThumbnailToUpload, fileKey);
-          console.log('[handleUploadFile] Thumbnail uploaded. Key:', thumbnailFileKey);
-        }
+  
+      if (file.type.startsWith("video/") && thumbnailUri) {
+        console.log('🖼 Uploading thumbnail:', thumbnailUri);
+        thumbnailFileKey = await handleThumbnailUpload(thumbnailUri, fileKey);
+        console.log('🖼 Uploaded thumbnailFileKey:', thumbnailFileKey);
       }
-
-      console.log('[handleUploadFile] Upload complete. Returning keys:', { fileKey, thumbnailFileKey });
-
+  
       return { fileKey, thumbnailFileKey };
-
+  
     } catch (error) {
-      console.error('[handleUploadFile] Error:', error.message || error);
+      console.error('🚨 Error in handleUploadFile:', error);
       showToast("Something went wrong", 'error');
       return { fileKey: null, thumbnailFileKey: null };
-
+  
     } finally {
       setLoading(false);
     }
   };
+  
 
 
   const dispatch = useDispatch();
@@ -466,36 +317,41 @@ const ResourcesPost = () => {
     "msword", 'webp'
   ];
 
-    const sanitizeHtmlBody = (html) => {
-      const cleaned = cleanForumHtml(html); // your existing cleaner
-  
-      return cleaned
-        .replace(/<div><br><\/div>/gi, '') // remove empty line divs
-        .replace(/<p>(&nbsp;|\s)*<\/p>/gi, '') // remove empty p tags
-        .replace(/<div>(&nbsp;|\s)*<\/div>/gi, '') // remove empty divs
-        .trim(); // trim outer whitespace
-    };
-    
+  const sanitizeHtmlBody = (html) => {
+    const cleaned = cleanForumHtml(html); // your existing cleaner
+
+    return cleaned
+      .replace(/<div><br><\/div>/gi, '') // remove empty line divs
+      .replace(/<p>(&nbsp;|\s)*<\/p>/gi, '') // remove empty p tags
+      .replace(/<div>(&nbsp;|\s)*<\/div>/gi, '') // remove empty divs
+      .trim(); // trim outer whitespace
+  };
+
   const handlePostSubmission = async () => {
     setHasChanges(true);
     setLoading(true);
-
+  
     try {
       const trimmedTitle = postData.title?.trim();
       const rawBodyHtml = postData.body?.trim();
-
+      console.log('📝 Title:', trimmedTitle);
+      console.log('📝 Raw body:', rawBodyHtml);
+  
       if (!trimmedTitle || !rawBodyHtml) {
         showToast("Title and body are required", 'info');
         return;
       }
-
+  
       const cleanedBody = sanitizeHtmlBody(rawBodyHtml);
-
-      const uploadedFiles = await handleUploadFile();
-      if (!uploadedFiles) throw new Error("File upload failed.");
-
-      const { fileKey, thumbnailFileKey } = uploadedFiles;
-
+      console.log('🧼 Cleaned body:', cleanedBody);
+  
+      console.log('🎬 File selected:', file);
+      console.log('🧾 Media meta:', mediaMeta);
+      console.log('🖼 Thumbnail URI:', thumbnailUri);
+  
+      const { fileKey, thumbnailFileKey } = await handleUploadFile();
+      console.log('📎 Uploaded keys:', { fileKey, thumbnailFileKey });
+  
       const postPayload = {
         command: "postInResources",
         user_id: myId,
@@ -503,26 +359,28 @@ const ResourcesPost = () => {
         resource_body: cleanedBody,
         ...(fileKey && { fileKey }),
         ...(thumbnailFileKey && { thumbnail_fileKey: thumbnailFileKey }),
+        extraData: mediaMeta || {}
       };
-
-      console.log('postPayload', postPayload);
-
+  
+      console.log('📦 Final postPayload:', postPayload);
+  
       const res = await apiClient.post('/postInResources', postPayload);
-
+  
       if (res.data.status === 'success') {
         const newPost = res.data.resource_details;
-        EventRegister.emit('onResourcePostCreated', { newPost: newPost });
-
+        console.log('✅ Post created:', newPost);
+        EventRegister.emit('onResourcePostCreated', { newPost });
+  
         const postWithMedia = await fetchMediaForPost(newPost);
-
-        if (newPost && newPost.resource_id) {
+        console.log('🔄 Fetched media details:', postWithMedia);
+  
+        if (newPost?.resource_id) {
           dispatch(updateOrAddResourcePosts([postWithMedia]));
-          // EventRegister.emit('onResourcePostCreated', { newPost: postWithMedia });
         } else {
           showToast("Post submission failed", 'error');
           return;
         }
-
+  
         await clearCacheDirectory();
         setPostData({ title: '', body: '', fileKey: '' });
         setFile(null);
@@ -530,23 +388,25 @@ const ResourcesPost = () => {
         showToast("Resource post submitted successfully", 'success');
         navigation.goBack();
       } else {
+        console.error('❌ Submission failed:', res.data);
         showToast("Failed to submit post", 'error');
       }
-
+  
     } catch (error) {
+      console.error('🚨 Error in handlePostSubmission:', error);
       const message =
         error?.response?.data?.status_message ||
         error?.message ||
         'Something went wrong';
-
+  
       showToast(message, 'error');
-      return { fileKey: null, thumbnailFileKey: null };
-
+  
     } finally {
       setLoading(false);
       setHasChanges(false);
     }
   };
+  
 
 
   const fetchMediaForPost = async (post) => {
@@ -713,83 +573,83 @@ const ResourcesPost = () => {
       </View>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10,paddingBottom:'20%' }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10, paddingBottom: '20%' }}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => Keyboard.dismiss}
       >
-        <TouchableOpacity activeOpacity={1}>
-          <View style={styles.profileContainer}>
-           <View style={styles.imageContainer}>
-                            {profile?.fileKey ? (
-                              <Image
-                                source={{ uri: profile?.imageUrl }}
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 20,
-                                  marginRight: 10,
-                                }}
-                              />
-                            ) : (
-                              <View
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 20,
-                                  marginRight: 10,
-                                  backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
-                                  justifyContent: 'center',
-                                  alignItems: 'center',
-                                }}
-                              >
-                                <Text style={{ color: profile?.companyAvatar?.textColor || '#000', fontWeight: 'bold' }}>
-                                  {profile?.companyAvatar?.initials || '?'}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
 
-            <View style={styles.profileTextContainer}>
-              <Text style={styles.profileName}>
-                {profile?.company_name
-                  ? profile.company_name
-                  : `${profile?.first_name || ''} ${profile?.last_name || ''}`}
-              </Text>
-              <Text style={styles.profileCategory}>{profile?.category}</Text>
-            </View>
+        <View style={styles.profileContainer}>
+          <View style={styles.imageContainer}>
+            {profile?.fileKey ? (
+              <Image
+                source={{ uri: profile?.imageUrl }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  marginRight: 10,
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  marginRight: 10,
+                  backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: profile?.companyAvatar?.textColor || '#000', fontWeight: 'bold' }}>
+                  {profile?.companyAvatar?.initials || '?'}
+                </Text>
+              </View>
+            )}
           </View>
 
-          <TextInput
-            style={[styles.input, { height: 50 }]}
-            value={postData.title}
-            multiline
-            placeholder="Enter title ..."
-            placeholderTextColor="gray"
-            onChangeText={handleTitleChange}
-          />
+          <View style={styles.profileTextContainer}>
+            <Text style={styles.profileName}>
+              {profile?.company_name
+                ? profile.company_name
+                : `${profile?.first_name || ''} ${profile?.last_name || ''}`}
+            </Text>
+            <Text style={styles.profileCategory}>{profile?.category}</Text>
+          </View>
+        </View>
+
+        <TextInput
+          style={[styles.input, { height: 50 }]}
+          value={postData.title}
+          multiline
+          placeholder="Enter title ..."
+          placeholderTextColor="gray"
+          onChangeText={handleTitleChange}
+        />
 
 
-          <RichEditor
-            ref={bodyEditorRef}
-            useContainer={false}
-            style={{
-              minHeight: 250,
-              maxHeight: 400,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: '#ccc',
-              overflow: 'hidden',
-            }}
-            onTouchStart={() => setActiveEditor('body')}
-            onFocus={() => handleBodyFocus('body')}
-            initialContentHTML={postData.body}
-            placeholder="Describe your resource in detail ..."
-            editorInitializedCallback={() => { }}
-            onChange={handleBodyChange}
-            editorStyle={{
-              cssText: `
+        <RichEditor
+          ref={bodyEditorRef}
+          useContainer={false}
+          style={{
+            minHeight: 250,
+            maxHeight: 400,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: '#ccc',
+            overflow: 'hidden',
+          }}
+          onTouchStart={() => setActiveEditor('body')}
+          onFocus={() => handleBodyFocus('body')}
+          initialContentHTML={postData.body}
+          placeholder="Describe your resource in detail ..."
+          editorInitializedCallback={() => { }}
+          onChange={handleBodyChange}
+          editorStyle={{
+            cssText: `
       * {
         font-size: 15px !important;
         line-height: 20px !important;
@@ -803,122 +663,93 @@ const ResourcesPost = () => {
         margin: 0 !important;
       }
     `
-            }}
-          />
+          }}
+        />
 
-          <RichToolbar
-            key={`toolbar-${activeEditor}`}
-            editor={bodyEditorRef}
-            actions={[
-              actions.setBold,
-              actions.setItalic,
-              actions.insertBulletsList,
-              actions.insertOrderedList,
-              actions.insertLink,
-            ]}
-            iconTint="#000"
-            selectedIconTint="#075cab"
-            selectedButtonStyle={{ backgroundColor: "#eee" }}
-          />
-
-
-          {!file && (
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.uploadButton}
-              onPress={handleMediaSelection}
-            >
-              <Icon name="cloud-upload-outline" size={30} color="#000" />
-              <Text style={{ color: 'black' }}>Click to upload a file </Text>
+        <RichToolbar
+          key={`toolbar-${activeEditor}`}
+          editor={bodyEditorRef}
+          actions={[
+            actions.setBold,
+            actions.setItalic,
+            actions.insertBulletsList,
+            actions.insertOrderedList,
+            actions.insertLink,
+          ]}
+          iconTint="#000"
+          selectedIconTint="#075cab"
+          selectedButtonStyle={{ backgroundColor: "#eee" }}
+        />
 
 
+      
+
+
+        {file && (
+          <View style={{ width: '100%', alignItems: 'center', position: 'relative' }}>
+            {/* Clear File Button */}
+            <TouchableOpacity onPress={clearFile} style={styles.closeIcon}>
+              <Ionicons name="close" size={24} color="black" />
             </TouchableOpacity>
-          )}
-
-  
-            {file && (
-              <View style={{ width: '100%', alignItems: 'center', position: 'relative' }}>
-                {/* Clear File Button */}
-                <TouchableOpacity onPress={clearFile} style={styles.closeIcon}>
-                  <Ionicons name="close" size={24} color="black" />
-                </TouchableOpacity>
 
 
-                {fileType.startsWith('image') && (
-                  <View style={{ width: '100%', height: 250, borderRadius: 10, overflow: 'hidden', }}>
-                    <FastImage
-                      source={{ uri: file.uri }}
-                      style={{ width: '100%', height: '100%' }}
-                      resizeMode="contain"
-                    />
-                  </View>
-                )}
-
-
-                {fileType.startsWith('video') && (
-                  <View style={{ width: '100%', height: 250, borderRadius: 10, overflow: 'hidden', }}>
-                    <Video
-                      source={{ uri: file.uri }}
-                      style={{ width: '100%', height: '100%' }}
-                      resizeMode="contain"
-                      muted
-                      controls
-                    />
-                  </View>
-                )}
-
-
-                {(fileType === 'application/pdf' ||
-                  fileType.includes('msword') ||
-                  fileType.includes('text') ||
-                  fileType.includes('officedocument')) && (
-                    <View style={{ width: '100%', alignItems: 'center', padding: 20, borderRadius: 10, backgroundColor: '#f5f5f5' }}>
-                      <Ionicons name="document-text-outline" size={40} color="black" />
-                      <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 10 }}>Document Uploaded</Text>
-                      <Text style={{ fontSize: 14, color: 'gray', marginTop: 5 }} numberOfLines={1} ellipsizeMode="middle">
-                        {file.name}
-                      </Text>
-                    </View>
-                  )}
+            {fileType.startsWith('image') && (
+              <View style={{ width: '100%', height: 250, borderRadius: 10, overflow: 'hidden', }}>
+                <FastImage
+                  source={{ uri: file.uri }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
+                />
               </View>
             )}
 
 
-          <View style={AppStyles.UpdateContainer}>
-            <TouchableOpacity
-              onPress={handlePostSubmission}
-              style={[
-                AppStyles.buttonContainer1,
-                !isFormValid || loading || isCompressing ? styles.disabledButton1 : null,
-              ]}
-              disabled={!isFormValid || loading || isCompressing}
-            >
-              {loading || isCompressing ? (
-                <ActivityIndicator size="small" />
-              ) : (
-                <Text
-                  style={[
-                    styles.buttonTextdown,
-                    (!isFormValid || loading || isCompressing) && styles.disabledButtonText,
-                  ]}
-                >Post</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={[AppStyles.cancelBtn]}>
-              <Text style={[styles.buttonTextdown, { color: '#FF0000' }]}  >Cancel</Text>
-            </TouchableOpacity>
-          </View>
+            {fileType.startsWith('video') && (
+              <View style={{ width: '100%', height: 250, borderRadius: 10, overflow: 'hidden', }}>
+                <Video
+                  source={{ uri: file.uri }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
+                  muted
+                  controls
+                />
+              </View>
+            )}
 
-          <Message3
-            visible={showModal}
-            onClose={() => setShowModal(false)}
-            onCancel={handleStay}
-            onOk={handleLeave}
-            title="Are you sure ?"
-            message="Your updates will be lost if you leave this page. This action cannot be undone."
-            iconType="warning"
-          />
-        </TouchableOpacity>
+
+            {(fileType === 'application/pdf' ||
+              fileType.includes('msword') ||
+              fileType.includes('text') ||
+              fileType.includes('officedocument')) && (
+                <View style={{ width: '100%', alignItems: 'center', padding: 20, borderRadius: 10, backgroundColor: '#f5f5f5' }}>
+                  <Ionicons name="document-text-outline" size={40} color="black" />
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 10 }}>Document Uploaded</Text>
+                  <Text style={{ fontSize: 14, color: 'gray', marginTop: 5 }} numberOfLines={1} ellipsizeMode="middle">
+                    {file.name}
+                  </Text>
+                </View>
+              )}
+          </View>
+        )}
+
+
+        {!file && (
+                <MediaPickerButton
+                  onPress={() => showMediaOptions()}
+                  isLoading={isCompressing}
+                />
+              )}
+
+        <Message3
+          visible={showModal}
+          onClose={() => setShowModal(false)}
+          onCancel={handleStay}
+          onOk={handleLeave}
+          title="Are you sure ?"
+          message="Your updates will be lost if you leave this page. This action cannot be undone."
+          iconType="warning"
+        />
+
       </KeyboardAwareScrollView>
       <PlayOverlayThumbnail
         ref={overlayRef}

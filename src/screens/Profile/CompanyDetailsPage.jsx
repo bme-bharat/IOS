@@ -11,6 +11,7 @@ import apiClient from '../ApiClient';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
 import { MyPostBody } from '../Forum/forumBody';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 
 const defaultImageCompany = Image.resolveAssetSource(defaultImage).uri;
@@ -464,12 +465,13 @@ const CompanyDetailsPage = () => {
         command: 'getCompanyDetails',
         company_id: userId,
       });
-
+  
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
         setProfile(profileData);
-
-        // Only proceed to check fileKey and set image if user_type is "company"
+  
+        const displayName = profileData.company_name?.trim() || 'Bme';
+  
         if (profileData.user_type === 'company') {
           if (profileData.fileKey && profileData.fileKey !== 'null') {
             try {
@@ -477,29 +479,35 @@ const CompanyDetailsPage = () => {
                 command: 'getObjectSignedUrl',
                 key: profileData.fileKey,
               });
-
+  
               const imgUrlData = res.data;
               if (imgUrlData && typeof imgUrlData === 'string') {
                 setImageUrl(imgUrlData);
               } else {
-                setImageUrl(defaultImageCompany);
+                // fallback to generated avatar
+                setImageUrl(generateAvatarFromName(displayName));
               }
             } catch (err) {
-              setImageUrl(defaultImageCompany);
+              // fallback to generated avatar
+              setImageUrl(generateAvatarFromName(displayName));
             }
           } else {
-            setImageUrl(defaultImageCompany);
+            // fallback to generated avatar
+            setImageUrl(generateAvatarFromName(displayName));
           }
         } else {
-          setImageUrl(null); // or handle differently if not company
+          // not a company, fallback to user avatar
+          setImageUrl(generateAvatarFromName(displayName));
         }
       }
     } catch (error) {
-      setImageUrl(defaultImageCompany); // fallback only for companies
+      const fallbackName = profile?.company_name?.trim() || 'Unknown';
+      setImageUrl(generateAvatarFromName(fallbackName));
     } finally {
       setLoading(false);
     }
   };
+  
 
 
 
@@ -514,19 +522,30 @@ const CompanyDetailsPage = () => {
     <View style={styles.profileBox}>
 
 
-      <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])} style={styles.imageContainerprofile}>
-        <FastImage
-          source={{ uri: imageUrl }}
-          style={styles.imagerprofile}
-          resizeMode={
-            imageUrl && imageUrl.includes('buliding.jpg')
-              ? FastImage.resizeMode.cover
-              : FastImage.resizeMode.contain
-          }
-          onError={() => setImageUrl(null)}
-        />
-      </TouchableOpacity>
-
+ 
+      <View style={styles.imageContainerprofile}>
+  {typeof imageUrl === 'string' ? (
+    <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
+      <FastImage
+        source={{ uri: imageUrl }}
+        style={styles.imagerprofile}
+        resizeMode="contain"
+        onError={() => setImageUrl(null)}
+      />
+    </TouchableOpacity>
+  ) : (
+    <View
+      style={[
+        styles.imagerprofile,
+        { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+      ]}
+    >
+      <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
+        {imageUrl?.initials || '?'}
+      </Text>
+    </View>
+  )}
+</View>
 
       <View style={styles.textContainer}>
 
@@ -1102,7 +1121,9 @@ const styles = StyleSheet.create({
   imagerprofile: {
     width: '100%',
     height: '100%',
-    borderRadius: 100
+    borderRadius: 100,
+    alignItems:'center',
+    justifyContent:'center'
   },
 
   image: {

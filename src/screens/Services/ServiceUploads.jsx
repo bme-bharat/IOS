@@ -19,7 +19,7 @@ import apiClient from '../ApiClient';
 import { showToast } from '../AppUtils/CustomToast';
 import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../../assets/AppStyles';
-
+import {products} from '../../assets/Constants';
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 10;
 
@@ -464,7 +464,7 @@ const CreateService = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.searchContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon1 name="arrow-left" size={24} color="#075cab" />
+          <Icon name="arrow-left" size={24} color="#075cab" />
         </TouchableOpacity>
       </View>
       <KeyboardAwareScrollView
@@ -472,7 +472,7 @@ const CreateService = () => {
         extraScrollHeight={20}
         onScrollBeginDrag={() => Keyboard.dismiss()}
         contentContainerStyle={{ paddingBottom: '20%', top: 15, paddingHorizontal: 10, }} showsVerticalScrollIndicator={false}>
-        {/* <Text style={styles.header}>Create Product</Text> */}
+        <Text style={styles.header}>Add a service</Text>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Service name <Text style={{ color: 'red' }}>*</Text></Text>
@@ -701,25 +701,26 @@ const styles = StyleSheet.create({
     padding: 10
   },
   header: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 25,
     textAlign: 'center',
-    color: '#222',
+    color: '#075cab',
+    top: 10,
   },
   inputContainer: {
     marginBottom: 15,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     marginBottom: 10,
-    color: '#444',
+    color: '#000',
   },
   label1: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#444',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
   },
 
   input: {
@@ -791,8 +792,8 @@ const styles = StyleSheet.create({
   },
 
   addMediaText: {
-    fontSize: 16,
-    color: "#333",
+    fontSize: 15,
+    color: "#000",
     fontWeight: "500",
     alignSelf: 'flex-start'
   },

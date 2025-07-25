@@ -12,6 +12,7 @@ import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../../assets/AppStyles';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 
 const resolvedMaleImage = Image.resolveAssetSource(maleImage).uri;
@@ -23,6 +24,7 @@ const CompanyListJobCandidates = () => {
 
   const [posts, setPosts] = useState([]);
   const [imageUrls, setImageUrls] = useState({});
+
   const scrollViewRef = useRef(null)
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,35 +45,35 @@ const CompanyListJobCandidates = () => {
     ]);
   };
 
-   const debounceTimeout = useRef(null);
-  
-    const handleDebouncedTextChange = useCallback((text) => {
-      setSearchQuery(text);
-    
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-    
-      const trimmedText = text.trim();
-    
-      if (trimmedText === '') {
-        setSearchTriggered(false);
-        setSearchResults([]);
-        return;
-      }
-    
-      if (trimmedText.length < 3) {
-        setSearchTriggered(false);
-        setSearchResults([]);
-        return;
-      }
-    
-      debounceTimeout.current = setTimeout(() => {
-        handleSearch(trimmedText);  // Call actual search function
-      }, 300);
-    }, [handleSearch]);
-    
-  
+  const debounceTimeout = useRef(null);
+
+  const handleDebouncedTextChange = useCallback((text) => {
+    setSearchQuery(text);
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    const trimmedText = text.trim();
+
+    if (trimmedText === '') {
+      setSearchTriggered(false);
+      setSearchResults([]);
+      return;
+    }
+
+    if (trimmedText.length < 3) {
+      setSearchTriggered(false);
+      setSearchResults([]);
+      return;
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      handleSearch(trimmedText);  // Call actual search function
+    }, 300);
+  }, [handleSearch]);
+
+
   const handleSearch = async (text) => {
     if (!isConnected) {
       showToast('No internet connection', 'error')
@@ -139,12 +141,10 @@ const CompanyListJobCandidates = () => {
           return;
         }
 
-        // Select default image based on gender
-        const defaultImage =
-          job.gender && job.gender.toLowerCase() === 'female'
-            ? resolvedFemaleImage
-            : resolvedMaleImage;
+        const displayName =
+          `${job.first_name || ''} ${job.last_name || ''}`.trim() || 'User';
 
+        // If fileKey exists, try to fetch signed URL
         if (job.fileKey) {
           try {
             const res = await apiClient.post('/getObjectSignedUrl', {
@@ -152,22 +152,26 @@ const CompanyListJobCandidates = () => {
               key: job.fileKey,
             });
 
-            urlsObject[userId] = res.data || defaultImage;
+            if (res.data && typeof res.data === 'string') {
+              urlsObject[userId] = res.data;
+              return;
+            }
           } catch (error) {
-            urlsObject[userId] = defaultImage;
+            console.warn(`Error fetching image for user ${userId}:`, error);
           }
-        } else {
-          urlsObject[userId] = defaultImage;
         }
+
+        // Fallback: use generated avatar from name
+        urlsObject[userId] = generateAvatarFromName(displayName);
       })
     );
-
 
     setImageUrls((prev) => ({
       ...prev,
       ...urlsObject,
     }));
   };
+
 
 
 
@@ -230,41 +234,60 @@ const CompanyListJobCandidates = () => {
     const imageUrl = imageUrls[item.user_id];
 
     return (
-      <TouchableOpacity activeOpacity={1}>
-        <TouchableOpacity
-          key={item.user_id}
-          style={styles.postContainer}
-          activeOpacity={1}
-          onPress={() => navigation.navigate('CompanyGetJobCandidates', { posts: item, imageUrl })}
-        >
-          <View style={styles.imageContainer}>
+
+      <TouchableOpacity
+        key={item.user_id}
+        style={styles.postContainer}
+        activeOpacity={1}
+        onPress={() => navigation.navigate('CompanyGetJobCandidates', { posts: item, imageUrl })}
+      >
+        <View style={styles.imageContainer}>
+          {typeof imageUrls[item.user_id] === 'string' ? (
             <Image
               source={{ uri: imageUrls[item.user_id] }}
               style={styles.image}
               resizeMode="cover"
             />
-          </View>
+          ) : (
+            <View
+              style={[
+                styles.image,
+                { backgroundColor: imageUrls[item.user_id]?.backgroundColor || '#ccc' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.avatarText,
+                  { color: imageUrls[item.user_id]?.textColor || '#000' },
+                ]}
+              >
+                {imageUrls[item.user_id]?.initials || 'U'}
+              </Text>
+            </View>
+          )}
+        </View>
 
 
-          <View style={styles.labelValueContainer}>
-            <Text numberOfLines={1} style={styles.name}>
-              {(`${item.first_name || ""} ${item.last_name || ""}`)}
-            </Text>
-            <View style={styles.detailContainer}>
-              <Text numberOfLines={1} style={styles.label}>Expert In</Text>
-              <Text numberOfLines={1} style={styles.value}>: {(item.expert_in || "")}</Text>
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={styles.label}>Experience</Text>
-              <Text style={styles.value}>: {item.work_experience || ""}</Text>
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={styles.label}>Preferred cities</Text>
-              <Text numberOfLines={1} style={styles.value}>: {(item.city || "")}</Text>
-            </View>
+
+        <View style={styles.labelValueContainer}>
+          <Text numberOfLines={1} style={styles.name}>
+            {(`${item.first_name || ""} ${item.last_name || ""}`)}
+          </Text>
+          <View style={styles.detailContainer}>
+            <Text numberOfLines={1} style={styles.label}>Expert In</Text>
+            <Text numberOfLines={1} style={styles.value}>: {(item.expert_in || "")}</Text>
           </View>
-        </TouchableOpacity>
+          <View style={styles.detailContainer}>
+            <Text style={styles.label}>Experience</Text>
+            <Text style={styles.value}>: {item.work_experience || ""}</Text>
+          </View>
+          <View style={styles.detailContainer}>
+            <Text style={styles.label}>Preferred cities</Text>
+            <Text numberOfLines={1} style={styles.value}>: {(item.city || "")}</Text>
+          </View>
+        </View>
       </TouchableOpacity>
+
     );
   };
 
@@ -293,7 +316,7 @@ const CompanyListJobCandidates = () => {
                   setSearchQuery('');
                   setSearchTriggered(false);
                   setSearchResults([]);
-            
+
 
                 }}
                 style={AppStyles.iconButton}
@@ -302,7 +325,7 @@ const CompanyListJobCandidates = () => {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-        
+
                 style={AppStyles.searchIconButton}
               >
                 <Icon name="magnify" size={20} color="#075cab" />
@@ -314,49 +337,49 @@ const CompanyListJobCandidates = () => {
       </View>
 
 
-        {!loading ? (
-          <FlatList
-            data={!searchTriggered || searchQuery.trim() === '' ? posts : searchResults}
-            onScrollBeginDrag={() => Keyboard.dismiss()}
-            style={styles.scrollView}
-            refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={handlerefresh} />
-            }
-            showsVerticalScrollIndicator={false}
-            renderItem={renderJob} // Use renderJob here
-            keyExtractor={(item, index) => `${item.user_id}-${index}`} // Ensure unique keys by combining user_id and index
-            onEndReached={() => hasMoreJobs && fetchJobs(lastEvaluatedKey)}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={() =>
-              loadingMore && (
-                <View style={styles.loaderContainer}>
-                  <ActivityIndicator size="small" color="#075cab" />
-                </View>
-              )
-            }
-            ListHeaderComponent={
-              <View>
-                {searchTriggered && searchResults.length > 0 && (
-                  <Text style={styles.companyCount}>
-                    {searchResults.length} results found
-                  </Text>
-                )}
+      {!loading ? (
+        <FlatList
+          data={!searchTriggered || searchQuery.trim() === '' ? posts : searchResults}
+          onScrollBeginDrag={() => Keyboard.dismiss()}
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handlerefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+          renderItem={renderJob} // Use renderJob here
+          keyExtractor={(item, index) => `${item.user_id}-${index}`} // Ensure unique keys by combining user_id and index
+          onEndReached={() => hasMoreJobs && fetchJobs(lastEvaluatedKey)}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() =>
+            loadingMore && (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="small" color="#075cab" />
               </View>
-            }
-            ListEmptyComponent={
-              (searchTriggered && searchResults.length === 0) ? (
-                <View style={{ alignItems: 'center', marginTop: 40 }}>
-                  <Text style={{ fontSize: 16, color: '#666' }}>No job seekers found</Text>
-                </View>
-              ) : null
-            }
-          />
+            )
+          }
+          ListHeaderComponent={
+            <View>
+              {searchTriggered && searchResults.length > 0 && (
+                <Text style={styles.companyCount}>
+                  {searchResults.length} results found
+                </Text>
+              )}
+            </View>
+          }
+          ListEmptyComponent={
+            (searchTriggered && searchResults.length === 0) ? (
+              <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <Text style={{ fontSize: 16, color: '#666' }}>No job seekers found</Text>
+              </View>
+            ) : null
+          }
+        />
 
-        ) : (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#075cab" />
-          </View>
-        )}
+      ) : (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#075cab" />
+        </View>
+      )}
 
     </SafeAreaView>
   );
@@ -432,8 +455,13 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
+    alignItems:'center',
+    justifyContent:'center'
   },
-
+  avatarText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
   detailContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -491,6 +519,9 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 15,
   },
+  
+
+  
 });
 
 

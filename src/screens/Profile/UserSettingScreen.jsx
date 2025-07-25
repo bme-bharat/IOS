@@ -60,7 +60,7 @@ const UserSettingScreen = () => {
   const navigation = useNavigation();
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
-
+console.log('myData',myData)
   const profile = useSelector(state => state.CompanyProfile.profile);
   const parentNavigation = navigation.getParent();
   const currentRouteName = parentNavigation?.getState()?.routes[parentNavigation.getState().index]?.name;
@@ -70,10 +70,10 @@ const UserSettingScreen = () => {
   const [deviceInfo, setDeviceInfo] = useState({
     appVersion: '',
   });
+const hasSubscription =
+  myData?.subscription_expires_on &&
+  Math.floor(Date.now() / 1000) < Number(myData.subscription_expires_on);
 
-  const hasSubscription = myData?.subscription_expires_on
-    ? Math.floor(Date.now() / 1000) < myData.subscription_expires_on
-    : false;
 
   useEffect(() => {
     // Fetch device information
@@ -105,11 +105,13 @@ const UserSettingScreen = () => {
               user_id: myId,
             }
           );
+          console.log('response',response.data)
 
           // Filter only completed transactions
           const completedTransactions = response.data.response.filter(
             transaction => transaction.transaction_status === "captured"
           );
+
           setTransactions(completedTransactions);
         } catch (err) {
 

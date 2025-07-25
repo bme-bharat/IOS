@@ -311,9 +311,9 @@ const MyServices = () => {
                     </View>
 
                     <View style={styles.textContainer}>
-                        <Text numberOfLines={1} style={[styles.value, { fontWeight: 'bold' }]}>{item.title || "N/A"}</Text>
-                        <Text numberOfLines={1} style={styles.value}>{item.category || "N/A"}</Text>
-                        <Text numberOfLines={1} style={styles.value}>{item.description || "N/A"}</Text>
+                        <Text numberOfLines={1} style={[styles.value,]}>{item.title || "N/A"}</Text>
+                        <Text numberOfLines={1} style={styles.value1}>{item.category || "N/A"}</Text>
+                        <Text numberOfLines={1} style={styles.value1}>{item.description || "N/A"}</Text>
                         {(item.price ?? '').toString().trim() !== '' ? (
                             <View style={styles.priceRow}>
                                 <Text numberOfLines={1} style={styles.value}>₹ {item.price}</Text>
@@ -470,8 +470,8 @@ const styles = StyleSheet.create({
     },
     addProductText: {
         color: '#075cab',
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '500',
         marginLeft: 4,
 
     },
@@ -500,7 +500,8 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         marginLeft: 5,
-        fontSize: 12,
+        fontSize: 15,
+        fontWeight:'500',
         color: "#075cab",
     },
     deleteButtonText: {
@@ -652,8 +653,18 @@ const styles = StyleSheet.create({
         flex: 2, // Take the remaining space
         flexShrink: 1,
         color: 'black',
-        fontWeight: '400',
-        fontSize: 14,
+        fontWeight: '500',
+        fontSize: 15,
+        textAlign: 'left', // Align text to the left
+        alignSelf: 'flex-start',
+        padding: 5,
+    },
+    value1: {
+        flex: 2, // Take the remaining space
+        flexShrink: 1,
+        color: '#777',
+      
+        fontSize: 15,
         textAlign: 'left', // Align text to the left
         alignSelf: 'flex-start',
         padding: 5,

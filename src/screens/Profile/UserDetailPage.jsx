@@ -238,7 +238,7 @@ const UserDetailsPage = () => {
             const displayName =
               profileData.company_name?.trim() ||
               `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() ||
-              'Unknown';
+              'Bme';
             setImageUrl(generateAvatarFromName(displayName));
           }
         } else {
@@ -246,7 +246,7 @@ const UserDetailsPage = () => {
           const displayName =
             profileData.company_name?.trim() ||
             `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() ||
-            'Unknown';
+            'Bme';
           setImageUrl(generateAvatarFromName(displayName));
         }
       }

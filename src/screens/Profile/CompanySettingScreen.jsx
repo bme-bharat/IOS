@@ -268,6 +268,7 @@ const CompanySettingScreen = () => {
 
 
               <TouchableOpacity style={styles.editProfileButton} onPress={handleUpdate}>
+                          <Icon name="account-edit" size={20} color="#075cab" />
                 <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     color: '#075cab',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     paddingHorizontal: 4,
   },

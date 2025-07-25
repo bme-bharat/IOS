@@ -490,7 +490,7 @@ const JobListScreen = () => {
 
 
       const result = await Share.share({
-        message: `${jobUrl}`,
+        message: `Checkout this job: ${jobUrl}`,
       });
       if (result.action === Share.sharedAction) {
         if (result.activityType) {

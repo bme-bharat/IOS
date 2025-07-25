@@ -67,8 +67,6 @@ const CustomDropdown = ({
 
 const styles = StyleSheet.create({
     dropdownContainer: {
-        marginBottom: 16,
-        marginTop: 10,
         borderRadius: 20
     },
     dropdown: {

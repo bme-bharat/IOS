@@ -397,7 +397,7 @@ const CompanyProfileScreen = ({ route }) => {
         <TouchableOpacity style={styles.circle}
           onPress={handleUpdate} activeOpacity={0.8}>
           <MaterialCommunityIcons name="account-edit" size={20} color="#075cab" />
-          <Text style={styles.shareText}>Update</Text>
+          <Text style={styles.shareText}>Edit profile</Text>
         </TouchableOpacity>
       </View>
 
@@ -833,8 +833,8 @@ const CompanyProfileScreen = ({ route }) => {
 
   shareText: {
     color: '#075cab',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     marginLeft: 4,
 
   },
@@ -964,8 +964,8 @@ const CompanyProfileScreen = ({ route }) => {
 
   signOutButtonText: {
     color: "#075cab",
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     marginLeft: 5,
     alignSelf: 'center'
   },
@@ -982,8 +982,8 @@ const CompanyProfileScreen = ({ route }) => {
   },
   deleteAccountButtonText: {
     color: "red",
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     marginLeft: 5,
   },
 
@@ -1038,7 +1038,7 @@ const CompanyProfileScreen = ({ route }) => {
 
   tabButtonText: {
     color: '#075cab',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '500',
   },
 

@@ -20,7 +20,7 @@ import { useConnection } from "../AppUtils/ConnectionProvider";
 import AppStyles from "../../assets/AppStyles";
 import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from "../helperComponents.jsx/signedUrls";
 import { openMediaViewer } from "../helperComponents.jsx/mediaViewer";
-import {  fetchForumReactionsRaw } from "../helperComponents.jsx/ForumReactions";
+import { fetchForumReactionsRaw } from "../helperComponents.jsx/ForumReactions";
 
 import ReactionSheet from "../helperComponents.jsx/ReactionUserSheet";
 import { ForumBody, generateHighlightedHTML, normalizeHtml } from "./forumBody";
@@ -28,17 +28,13 @@ import { fetchMediaForPost, useForumMedia } from "../helperComponents.jsx/forumV
 import { fetchCommentCount, fetchCommentCounts } from "../AppUtils/CommentCount";
 import useRenderForumItem from './useRenderForumItem';
 import { reactionConfig } from './useForumReactions';
-import useForumFetcher from './useForumFetcher';
+import useForumFetcher, { enrichForumPost } from './useForumFetcher';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
 const CompanySettingScreen = React.lazy(() => import('../Profile/CompanySettingScreen'));
 const CompanyHomeScreen = React.lazy(() => import('../CompanyHomeScreen'));
-
-const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
-const MAX_HEIGHT = Math.floor(deviceHeight * 0.7);
-const MAX_WIDTH = deviceWidth;
-const MIN_ASPECT_RATIO = 0.8; 
 
 const initialLayout = { width: Dimensions.get('window').width };
 const { height: screenHeight } = Dimensions.get('window');
@@ -72,7 +68,7 @@ const PageView = () => {
     trending: useRef({}),
     post: useRef({})
   });
-  
+
 
   useEffect(() => {
     const listener = EventRegister.addEventListener('onForumPostCreated', ({ newPost, profile }) => {
@@ -105,7 +101,7 @@ const PageView = () => {
   const handleTabChange = (newIndex) => {
     // Pause current tab videos
     pauseVideosInTab(routes[index].key);
-    
+
     InteractionManager.runAfterInteractions(() => {
       setIndex(newIndex);
       // Videos in new tab will auto-play based on visibility
@@ -165,7 +161,7 @@ const PageView = () => {
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={handleTabChange}
-        initialLayout={initialLayout}
+        // initialLayout={initialLayout}
         renderTabBar={props => (
           <View style={styles.tabBarContainer}>
             <View style={styles.swipeableTabs}>
@@ -230,23 +226,18 @@ const PageView = () => {
 // All Posts Component
 const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
-  const posts = useSelector((state) => state.forum.posts);
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
   const [scrollY, setScrollY] = useState(0);
   const [hasFetchedPosts, setHasFetchedPosts] = useState(false);
   const { openSheet, closeSheet } = useBottomSheet();
-  // const commentsCount = useSelector((state) => state.forum.commentsCount);
-
-  // const storePosts = useSelector((state) => state.forum.posts);
-
 
 
   useEffect(() => {
     const reactionListener = EventRegister.addEventListener(
       'onForumReactionUpdated',
       ({ forum_id, reaction_type }) => {
-     
+
         if (!isFocused) return;
 
         setLocalPosts(prev => {
@@ -267,7 +258,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               newTotal += 1;
             } else if (oldReaction !== reaction_type) {
               // Reaction changed (e.g., Like -> Love), count remains
-            
+
             }
 
             const updatedPost = {
@@ -276,7 +267,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               totalReactions: newTotal,
             };
 
-       
+
             return updatedPost;
           });
         });
@@ -289,17 +280,14 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     };
   }, []);
 
-  const dispatch = useDispatch();
-  const navigation = useNavigation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
   const isFocused = useIsFocused();
 
   const [searchCount, setSearchCount] = useState(false);
+  const [videoEndStates, setVideoEndStates] = useState({});
 
-  const [fetchLimit, setFetchLimit] = useState(3);
-  const [expandedTexts, setExpandedTexts] = useState({});
   const [searchResults, setSearchResults] = useState(false);
   const isRefreshingRef = useRef(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -333,10 +321,8 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     type: 'All',
     fetchLimit: 10,
     isConnected,
-    preloadUrls,
     myId
   });
-  
 
   const {
     getMediaForItem,
@@ -345,41 +331,60 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     onViewableItemsChanged,
     viewabilityConfig,
     version,
-  } = useForumMedia(localPosts, isTabActive, isFocused,setActiveVideo);
+  } = useForumMedia(localPosts, isTabActive, isFocused, setActiveVideo);
 
+  const missedEventsRef = useRef({
+    created: [],
+    deleted: [],
+    updated: [],
+    commentAdded: [],
+    commentDeleted: [],
+  });
 
   useEffect(() => {
     const listener = EventRegister.addEventListener('onForumPostCreated', async ({ newPost }) => {
-      if (!isFocused) return;
-
+      if (!isFocused) {
+        missedEventsRef.current.created.push(newPost);
+        return;
+      }
+    
       try {
-        const postWithMedia = await fetchMediaForPost(newPost);
-        setLocalPosts((prev) => [postWithMedia, ...prev]);
+        const enrichedPost = await enrichForumPost(newPost, myId);
+        setLocalPosts((prev) => [enrichedPost, ...prev]);
       } catch (error) {
         setLocalPosts((prev) => [newPost, ...prev]);
       }
+    
       setTimeout(() => {
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
       }, 1000);
     });
+    
 
     const deleteListener = EventRegister.addEventListener('onForumPostDeleted', ({ forum_id }) => {
-      if (!isFocused) return;
+      if (!isFocused) {
+        missedEventsRef.current.deleted.push(forum_id);
+        return;
+      }
+      
 
       setLocalPosts((prev) => prev.filter((post) => post.forum_id !== forum_id));
     });
 
     const updateListener = EventRegister.addEventListener('onForumPostUpdated', async ({ updatedPost }) => {
-      if (!isFocused) return;
-
+      if (!isFocused) {
+        missedEventsRef.current.updated.push(updatedPost);
+        return;
+      }
+    
       try {
-        const postWithMedia = await fetchMediaForPost(updatedPost);
+        const enrichedPost = await enrichForumPost(updatedPost, myId);
         setLocalPosts((prev) =>
           prev.map((post) =>
-            post.forum_id === postWithMedia.forum_id ? postWithMedia : post
+            post.forum_id === enrichedPost.forum_id ? enrichedPost : post
           )
         );
-      } catch (error) {
+      } catch {
         setLocalPosts((prev) =>
           prev.map((post) =>
             post.forum_id === updatedPost.forum_id ? updatedPost : post
@@ -387,6 +392,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         );
       }
     });
+    
 
     // 🔻 Listener to DECREASE comment count on deletion
     const commentDeletedListener = EventRegister.addEventListener('onCommentDeleted', ({ forum_id }) => {
@@ -431,6 +437,50 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     };
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      const processMissedEvents = async () => {
+        for (const newPost of missedEventsRef.current.created) {
+          try {
+            const enrichedPost = await enrichForumPost(newPost, myId);
+            setLocalPosts((prev) => [enrichedPost, ...prev]);
+          } catch {
+            setLocalPosts((prev) => [newPost, ...prev]);
+          }
+        }
+        
+        for (const updatedPost of missedEventsRef.current.updated) {
+          try {
+            const enrichedPost = await enrichForumPost(updatedPost, myId);
+            setLocalPosts((prev) =>
+              prev.map((post) =>
+                post.forum_id === enrichedPost.forum_id ? enrichedPost : post
+              )
+            );
+          } catch {
+            setLocalPosts((prev) =>
+              prev.map((post) =>
+                post.forum_id === updatedPost.forum_id ? updatedPost : post
+              )
+            );
+          }
+        }        
+  
+        // Clear the missed events after handling
+        missedEventsRef.current = {
+          created: [],
+          deleted: [],
+          updated: [],
+          commentAdded: [],
+          commentDeleted: [],
+        };
+      };
+  
+      processMissedEvents();
+    }, [])
+  );
+  
+  
   useEffect(() => {
     if (!hasFetchedPosts) {
       fetchPosts();
@@ -438,34 +488,20 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     }
   }, [hasFetchedPosts]);
 
+
   const handleEndReached = useCallback(() => {
     if (loading || loadingMore || !hasMorePosts) return;
     fetchPosts(lastEvaluatedKey);
-  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey]);
+  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey, fetchPosts]);
 
-  const activeVideoRef = useRef(null);
-  useEffect(() => {
-    activeVideoRef.current = activeVideo;
-  }, [activeVideo]);
-
-  useEffect(() => {
-    if (!isFocused) {
-      setActiveVideo(null);
-    }
-
-    return () => {
-      setActiveVideo(null);
-    };
-  }, [isFocused]);
 
 
   const commentSectionRef = useRef();
   const bottomSheetRef = useRef(null);
 
 
+  const openCommentSheet = (forum_id, user_id, myId, item) => {
 
-  const openCommentSheet = (forum_id, user_id, myId,item) => {
- 
     openSheet(
       <View style={{ flex: 1, backgroundColor: 'white' }}>
         <CommentsSection
@@ -501,8 +537,12 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   const renderItem = useRenderForumItem({
     localPosts,
     setLocalPosts,
+    searchResults,        // Add this
+    setSearchResults,
     isTabActive: isTabActive && isFocused,
     activeVideo,
+    videoEndStates,
+    setVideoEndStates,
     isFocused,
     videoRefs,
     activeReactionForumId,
@@ -517,7 +557,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     styles,
   });
 
-// console.log('localPosts',localPosts[0])
+
   const lastCheckedTimeRef = useRef(Math.floor(Date.now() / 1000));
   const [lastCheckedTime, setLastCheckedTime] = useState(lastCheckedTimeRef.current);
   const [newJobCount, setNewJobCount] = useState(0);
@@ -563,45 +603,58 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   };
 
 
-
-
   const handleRefresh = useCallback(async () => {
+
     if (!isConnected) {
+
+      showToast('No internet connection', 'error');
+      return;
+    }
+
+    if (isRefreshingRef.current) {
 
       return;
     }
-    if (isRefreshingRef.current) return;
 
-    isRefreshingRef.current = true;
-    setIsRefreshing(true);
+    try {
 
-    setSearchQuery('');
-    setSearchTriggered(false);
-    setSearchResults([]);
-    setSearchCount(0);
+      isRefreshingRef.current = true;
+      setIsRefreshing(true);
 
-    if (searchInputRef.current) {
-      searchInputRef.current.blur();
+      setLocalPosts([])
+
+      setSearchQuery('');
+      setSearchTriggered(false);
+      setSearchResults([]);
+      setActiveVideo(null);
+      setVideoEndStates({});
+      searchInputRef.current?.blur();
+
+      setNewJobCount(0);
+      setShowNewJobAlert(false);
+      const newCheckTime = Math.floor(Date.now() / 1000);
+      updateLastCheckedTime(newCheckTime);
+
+      await fetchPosts(null, true);
+
+    } catch (error) {
+
+    } finally {
+      setIsRefreshing(false);
+
+      setTimeout(() => {
+        isRefreshingRef.current = false;
+
+      }, 300);
     }
-
-    setExpandedTexts(false);
-
-    setLocalPosts([]);
-
-    setNewJobCount(0);
-    setShowNewJobAlert(false);
-    updateLastCheckedTime(Math.floor(Date.now() / 1000));
-
-    dispatch(clearPosts());
-    await fetchPosts(null);
-
-    setIsRefreshing(false);
-
-    setTimeout(() => {
-      isRefreshingRef.current = false;
-    }, 300);
-  }, [fetchPosts, dispatch]);
-
+  }, [
+    fetchPosts,
+    isConnected,
+    showToast,
+    searchQuery,
+    activeVideo,
+    updateLastCheckedTime,
+  ]);
 
   const debounceTimeout = useRef(null);
 
@@ -650,23 +703,51 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
       const forumPosts = res.data.response || [];
       const count = res.data.count || forumPosts.length;
 
+      // Match the same enrichment pattern as useForumFetcher
       const postsWithMedia = await Promise.all(
-        forumPosts.map(post => fetchMediaForPost(post))
+        forumPosts.map(async post => {
+          const forumId = post.forum_id;
+          const fileKey = post?.fileKey;
+          const authorFileKey = post?.author_fileKey;
+          const thumbnailFileKey = post?.thumbnail_fileKey;
+
+          const [reactionData, commentCount, fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
+            fetchForumReactionsRaw(forumId, myId),
+            fetchCommentCount(forumId),
+            fileKey ? getSignedUrl(forumId, fileKey) : Promise.resolve({}),
+            authorFileKey ? getSignedUrl(forumId, authorFileKey) : Promise.resolve({}),
+            thumbnailFileKey ? getSignedUrl(forumId, thumbnailFileKey) : Promise.resolve({}),
+          ]);
+
+          const authorImageUri = authorFileKey
+            ? authorSignedUrl[forumId] || ''
+            : generateAvatarFromName(post.author || 'U');
+
+          return {
+            ...post,
+            commentCount: commentCount || 0,
+            reactionsCount: reactionData.reactionsCount || {},
+            totalReactions: reactionData.totalReactions || 0,
+            userReaction: reactionData.userReaction || null,
+            fileKeySignedUrl: fileKeySignedUrl[forumId] || '',
+            thumbnailSignedUrl: thumbnailSignedUrl[forumId] || '',
+            authorSignedUrl: authorSignedUrl[forumId] || '',
+            authorImageUri,
+          };
+        })
       );
 
       setSearchResults(postsWithMedia);
-      setSearchCount(count);
 
       // ✅ Scroll to top of list
       listRef.current?.scrollToOffset({ offset: 0, animated: true });
 
     } catch (error) {
-      // Optional: Log or show error
+      console.error('[handleSearch] Failed to search posts:', error);
     } finally {
       setSearchTriggered(true);
     }
-  }, [isConnected]);
-
+  }, [isConnected, myId]);
 
 
 
@@ -678,18 +759,6 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
   const [showSearchBar, setShowSearchBar] = useState(false);
   const searchBarRef = useRef(null);
-
-  // const toggleSearchBar = () => {
-  //   setShowSearchBar(prev => {
-  //     if (!prev) {
-  //       setTimeout(() => {
-  //         searchBarRef.current?.focus();
-  //       }, 100);
-  //     }
-  //     return !prev;
-  //   });
-  // };
-
   const searchBarHeight = useRef(new Animated.Value(0)).current;
   const searchBarOpacity = useRef(new Animated.Value(0)).current;
   const searchButtonOpacity = useRef(new Animated.Value(1)).current;
@@ -835,7 +904,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               placeholderTextColor="gray"
               value={searchQuery}
               onChangeText={handleDebouncedTextChange}
-              autoFocus={true}
+              autoFocus={showSearchBar}
               returnKeyType="search"
             />
             {searchQuery ? (
@@ -868,74 +937,70 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
 
 
-          {!loading ? (
-            <FlatList
-              data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
-              renderItem={renderItem}
-              ref={listRef}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              onScrollBeginDrag={() => {
-                Keyboard.dismiss();
-                searchInputRef.current?.blur?.();
 
-                if (showSearchBar && !searchTriggered) {
-                  toggleSearchBar(); // This will trigger the hide animation
-                }
+          <FlatList
+            data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
+            renderItem={renderItem}
+            ref={listRef}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={() => {
+              Keyboard.dismiss();
+              searchInputRef.current?.blur?.();
 
-              }}
-              onScroll={(e) => {
-                const currentScrollY = e.nativeEvent.contentOffset.y;
-                if (Math.abs(currentScrollY - scrollY) > 5 && activeReactionForumId) {
-                  setActiveReactionForumId(null);
-                }
-                setScrollY(currentScrollY);
-              }}
-              scrollEventThrottle={16}
-
-              keyExtractor={(item, index) => `${item.forum_id}-${index}`}
-              onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={viewabilityConfig}
-            
-            
-              refreshControl={
-                <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+              if (showSearchBar && !searchTriggered) {
+                toggleSearchBar(); // This will trigger the hide animation
               }
 
-              onEndReached={handleEndReached}
-              onEndReachedThreshold={0.5}
-              contentContainerStyle={{ flexGrow: 1, paddingBottom: '10%' }}
-              ListHeaderComponent={
-                <>
-                  {searchTriggered && searchResults.length > 0 && (
-                    <Text style={styles.companyCount}>
-                      {searchResults.length} results found
-                    </Text>
-                  )}
-                </>
+            }}
+            onScroll={(e) => {
+              const currentScrollY = e.nativeEvent.contentOffset.y;
+              if (Math.abs(currentScrollY - scrollY) > 5 && activeReactionForumId) {
+                setActiveReactionForumId(null);
               }
-              ListEmptyComponent={
-                (searchTriggered && searchResults.length === 0) ? (
-                  <View style={{ alignItems: 'center', marginTop: 40 }}>
-                    <Text style={{ fontSize: 16, color: '#666' }}>No posts found</Text>
-                  </View>
-                ) : null
-              }
+              setScrollY(currentScrollY);
+            }}
+            scrollEventThrottle={16}
 
-              ListFooterComponent={
-                loadingMore ? (
-                  <View style={{ paddingVertical: 20 }}>
-                    <ActivityIndicator size="small" color="#075cab" />
-                  </View>
-                ) : null
-              }
+            keyExtractor={(item, index) => `${item.forum_id}-${index}`}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
 
-            />
-          ) : (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator color={'#075cab'} size="large" />
-            </View>
-          )}
+
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+            }
+
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: '10%' }}
+            ListHeaderComponent={
+              <>
+                {searchTriggered && searchResults.length > 0 && (
+                  <Text style={styles.companyCount}>
+                    {searchResults.length} results found
+                  </Text>
+                )}
+              </>
+            }
+            ListEmptyComponent={
+              (searchTriggered && searchResults.length === 0) ? (
+                <View style={{ alignItems: 'center', marginTop: 40 }}>
+                  <Text style={{ fontSize: 16, color: '#666' }}>No posts found</Text>
+                </View>
+              ) : null
+            }
+
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={{ paddingVertical: 20 }}>
+                  <ActivityIndicator size="small" color="#075cab" />
+                </View>
+              ) : null
+            }
+
+          />
+
 
 
         </View>
@@ -948,16 +1013,13 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
 // Latest Posts Component
 const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
-  useEffect(() => {
-    console.log(`LatestPosts isTabActive: ${isTabActive}`);
-  }, [isTabActive]);
-  const posts = useSelector((state) => state.forum.posts);
+
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
   const [scrollY, setScrollY] = useState(0);
   const [hasFetchedPosts, setHasFetchedPosts] = useState(false);
   const { openSheet, closeSheet } = useBottomSheet();
-  // const commentsCount = useSelector((state) => state.forum.commentsCount);
+
   useEffect(() => {
     const listener = EventRegister.addEventListener('onCommentAdded', ({ forum_id }) => {
       setLocalPosts(prev =>
@@ -1000,12 +1062,12 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     const reactionListener = EventRegister.addEventListener(
       'onForumReactionUpdated',
       ({ forum_id, reaction_type }) => {
-      
+
         setLocalPosts(prev => {
           return prev.map(post => {
             if (post.forum_id !== forum_id) return post;
 
-  
+
             let newTotal = Number(post.totalReactions || 0);
             let newReaction = reaction_type;
 
@@ -1018,7 +1080,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
             } else if (!hadReaction) {
               newTotal += 1;
             } else if (oldReaction !== reaction_type) {
-            
+
             }
 
             const updatedPost = {
@@ -1027,7 +1089,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               totalReactions: newTotal,
             };
 
-       
+
             return updatedPost;
           });
         });
@@ -1040,22 +1102,15 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     };
   }, []);
 
-  const dispatch = useDispatch();
-  const navigation = useNavigation();
-
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
   const isFocused = useIsFocused();
-
-  const [searchCount, setSearchCount] = useState(false);
-
-  const [fetchLimit, setFetchLimit] = useState(3);
-  const [expandedTexts, setExpandedTexts] = useState({});
   const [searchResults, setSearchResults] = useState(false);
   const isRefreshingRef = useRef(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const searchInputRef = useRef(null);
+  const [videoEndStates, setVideoEndStates] = useState({});
 
   const listRef = useRef(null);
 
@@ -1078,7 +1133,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     isConnected,
     preloadUrls
   });
-  
+
 
   const {
     getMediaForItem,
@@ -1087,7 +1142,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     onViewableItemsChanged,
     viewabilityConfig,
     version,
-  } = useForumMedia(localPosts, isTabActive,isFocused, setActiveVideo);
+  } = useForumMedia(localPosts, isTabActive, isFocused, setActiveVideo);
 
 
   useEffect(() => {
@@ -1105,45 +1160,12 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
 
 
-
-
-
-
-  const activeVideoRef = useRef(null);
-  useEffect(() => {
-    activeVideoRef.current = activeVideo;
-  }, [activeVideo]);
-
-
-  useEffect(() => {
-    if (!isFocused) {
-      setActiveVideo(null);
-    }
-
-    return () => {
-      setActiveVideo(null);
-    };
-  }, [isFocused]);
-
-// In each tab component (AllPosts, LatestPosts, TrendingPosts):
-useEffect(() => {
-  return () => {
-    // Clean up video refs when component unmounts
-    Object.keys(videoRefs).forEach(key => {
-      if (videoRefs[key] && typeof videoRefs[key].setNativeProps === 'function') {
-        videoRefs[key].setNativeProps({ paused: true });
-      }
-      delete videoRefs[key];
-    });
-  };
-}, []);
-
   const commentSectionRef = useRef();
   const bottomSheetRef = useRef(null);
 
 
 
-  const openCommentSheet = (forum_id, user_id, myId,item) => {
+  const openCommentSheet = (forum_id, user_id, myId, item) => {
 
     openSheet(
       <View style={{ flex: 1, backgroundColor: 'white' }}>
@@ -1152,7 +1174,7 @@ useEffect(() => {
           currentUserId={myId}
           ref={commentSectionRef}
           closeBottomSheet={() => {
-   
+
             bottomSheetRef.current?.scrollTo(0);
           }}
         />
@@ -1186,6 +1208,8 @@ useEffect(() => {
     setLocalPosts,
     isTabActive: isTabActive && isFocused,
     activeVideo,
+    videoEndStates,
+    setVideoEndStates,
     isFocused,
     videoRefs,
     activeReactionForumId,
@@ -1214,17 +1238,13 @@ useEffect(() => {
     setSearchQuery('');
     setSearchTriggered(false);
     setSearchResults([]);
-    setSearchCount(0);
 
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
 
-    setExpandedTexts(false);
-
     setLocalPosts([]);
 
-    dispatch(clearPosts());
     await fetchPosts(null);
 
     setIsRefreshing(false);
@@ -1232,7 +1252,7 @@ useEffect(() => {
     setTimeout(() => {
       isRefreshingRef.current = false;
     }, 300);
-  }, [fetchPosts, dispatch]);
+  }, [fetchPosts]);
 
 
   const onRender = (id, phase, actualDuration) => {
@@ -1322,16 +1342,14 @@ useEffect(() => {
 
 // Trending Posts Component
 const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
-  useEffect(() => {
-    console.log(`Trending isTabActive: ${isTabActive}`);
-  }, [isTabActive]);
-  const posts = useSelector((state) => state.forum.posts);
+
   const { myId, myData } = useNetwork();
   const [scrollY, setScrollY] = useState(0);
   const { isConnected } = useConnection();
   const [hasFetchedPosts, setHasFetchedPosts] = useState(false);
   const { openSheet, closeSheet } = useBottomSheet();
-  // const commentsCount = useSelector((state) => state.forum.commentsCount);
+  const [videoEndStates, setVideoEndStates] = useState({});
+
   useEffect(() => {
     const listener = EventRegister.addEventListener('onCommentAdded', ({ forum_id }) => {
       setLocalPosts(prev =>
@@ -1368,36 +1386,13 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
       EventRegister.removeEventListener(deleteListener);
     };
   }, []);
-  // const storePosts = useSelector((state) => state.forum.posts);
-  const handleReactionUpdate = async (forumId, reactionType, item) => {
-    try {
-
-      await apiClient.post('/addOrUpdateForumReaction', {
-        command: 'addOrUpdateForumReaction',
-        forum_id: forumId,
-        user_id: myId,
-        reaction_type: reactionType,
-      });
-
-      // Emit event after successful reaction update
-      EventRegister.emit('onForumReactionUpdated', {
-        forum_id: forumId,
-        user_id: myId,
-        reaction_type: reactionType,
-        previous_reaction: item?.userReaction, // Now item is passed as parameter
-      });
-
-    } catch (err) {
-      console.error('[Reaction Submit] Failed to update reaction:', err);
-    }
-  };
 
 
   useEffect(() => {
     const reactionListener = EventRegister.addEventListener(
       'onForumReactionUpdated',
       ({ forum_id, reaction_type }) => {
-    
+
         setLocalPosts(prev => {
           return prev.map(post => {
             if (post.forum_id !== forum_id) return post;
@@ -1440,39 +1435,15 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     };
   }, []);
 
-  const dispatch = useDispatch();
-  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
   const isFocused = useIsFocused();
 
-  const [searchCount, setSearchCount] = useState(false);
-
-
-  const [fetchLimit, setFetchLimit] = useState(3);
-  const [expandedTexts, setExpandedTexts] = useState({});
   const [searchResults, setSearchResults] = useState(false);
   const isRefreshingRef = useRef(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const searchInputRef = useRef(null);
-
-  const listRef = useRef(null);
-
-  useScrollToTop(listRef);
-
-  useEffect(() => {
-    if (scrollRef) {
-      scrollRef.current = {
-        scrollToTop: () => {
-          listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
-        },
-        handleRefresh: () => {
-          // your refresh logic here
-        },
-      };
-    }
-  }, [scrollRef]);
 
 
   const reactionSheetRef = useRef(null);
@@ -1496,7 +1467,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     isConnected,
     preloadUrls
   });
-  
+
 
   const {
     getMediaForItem,
@@ -1505,7 +1476,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     onViewableItemsChanged,
     viewabilityConfig,
     version,
-  } = useForumMedia(localPosts, isTabActive,isFocused, setActiveVideo);
+  } = useForumMedia(localPosts, isTabActive, isFocused, setActiveVideo);
 
 
   useEffect(() => {
@@ -1521,50 +1492,6 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey]);
 
 
-  const viewedForumIdsRef = useRef(new Set());
-
-  const incrementViewCount = async (forumId) => {
-    try {
-      await apiClient.post('/forumViewCounts', {
-        command: 'forumViewCounts',
-        forum_id: forumId,
-      });
-    } catch (error) {
-
-    }
-  };
-
-
-
-
-  const activeVideoRef = useRef(null);
-  useEffect(() => {
-    activeVideoRef.current = activeVideo;
-  }, [activeVideo]);
-
-  useEffect(() => {
-    if (!isFocused) {
-      setActiveVideo(null);
-    }
-
-    return () => {
-      setActiveVideo(null);
-    };
-  }, [isFocused]);
-
-
-// In each tab component (AllPosts, LatestPosts, TrendingPosts):
-useEffect(() => {
-  return () => {
-    // Clean up video refs when component unmounts
-    Object.keys(videoRefs).forEach(key => {
-      if (videoRefs[key] && typeof videoRefs[key].setNativeProps === 'function') {
-        videoRefs[key].setNativeProps({ paused: true });
-      }
-      delete videoRefs[key];
-    });
-  };
-}, []);
 
 
   const commentSectionRef = useRef();
@@ -1609,6 +1536,8 @@ useEffect(() => {
     setLocalPosts,
     isTabActive: isTabActive && isFocused,
     activeVideo,
+    videoEndStates,
+    setVideoEndStates,
     isFocused,
     videoRefs,
     activeReactionForumId,
@@ -1623,6 +1552,7 @@ useEffect(() => {
     styles,
   });
 
+
   const handleRefresh = useCallback(async () => {
     if (!isConnected) {
 
@@ -1636,17 +1566,13 @@ useEffect(() => {
     setSearchQuery('');
     setSearchTriggered(false);
     setSearchResults([]);
-    setSearchCount(0);
 
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
 
-    setExpandedTexts(false);
-
     setLocalPosts([]);
 
-    dispatch(clearPosts());
     await fetchPosts(null);
 
     setIsRefreshing(false);
@@ -1654,7 +1580,7 @@ useEffect(() => {
     setTimeout(() => {
       isRefreshingRef.current = false;
     }, 300);
-  }, [fetchPosts, dispatch]);
+  }, [fetchPosts]);
 
 
 
@@ -1674,7 +1600,6 @@ useEffect(() => {
             <FlatList
               data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
               renderItem={renderItem}
-              ref={listRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               onScrollBeginDrag={() => {
@@ -1746,165 +1671,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'whitesmoke',
   },
-  searchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    height: 40,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: 'black',
-    marginRight: 10,
-  },
-  tabBar: {
-    backgroundColor: 'white',
-  },
-  indicator: {
-    backgroundColor: '#075cab',
-    height: 2,
-    borderRadius: 10,
-    flex: 1
-  },
-  label: {
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-
-  companyCount: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: 'black',
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-  },
-
-  comments: {
-    paddingHorizontal: 5,
-    // borderTopWidth: 0.5,
-    // borderColor: '#ccc',
-    paddingVertical: 10,
-    backgroundColor: 'white',
-    minHeight: 120,
-    marginBottom: 5,
-  },
-
-  image1: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-    borderRadius: 100,
-    backgroundColor: '#eee'
-  },
-
-  title: {
-    fontSize: 13,
-    color: 'black',
-    // marginBottom: 5,
-    fontWeight: '300',
-    textAlign: 'justify',
-    alignItems: 'center',
-  },
-
-  title3: {
-    fontSize: 15,
-    color: 'black',
-    // marginBottom: 5,
-    fontWeight: '500',
-    flexDirection: 'row',  // Use row to align items horizontally
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-
-
-  },
-  date1: {
-    fontSize: 12,
-    color: '#666',
-    // marginBottom: 5,
-    fontWeight: '300',
-
-
-  },
-  title1: {
-    backgroundColor: 'red'
-
-  },
-
-  readMore: {
-    color: 'gray', // Blue color for "Read More"
-    fontWeight: '300', // Make it bold if needed
-    fontSize: 13,
-  },
-
-  dpContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10
-
-  },
-  dpContainer1: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignSelf: 'center',
-    alignItems:'center',
-    justifyContent:'center'
-
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    marginLeft: 10,
-
-  },
-  iconContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-
-  },
-  iconButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 5,
-
-  },
-  iconText: {
-    fontSize: 12,
-    color: '#075cab',
-  },
-
-  backButton: {
-    alignSelf: 'flex-start',
-    padding: 10
-
-  },
-
-  iconTextUnderlined: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#075cab',
-    marginLeft: 1,
-    marginRight: 3
-  },
-
-
   bottomNavContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -1936,18 +1702,6 @@ const styles = StyleSheet.create({
     color: 'black',
     marginTop: 2,
   },
-
-  modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  modalItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  modalText: { marginLeft: 10, fontSize: 18 },
-
-
 
   tabBarContainer: {
     flexDirection: 'row',
@@ -1991,24 +1745,6 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: '600',
     textTransform: 'capitalize',
-  },
-reactionContainer: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    borderRadius: 40,
-    flexDirection: 'row',
-  },
-  reactionButton: {
-    padding: 8,
-    margin: 4,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ccc'
-  },
-  selectedReaction: {
-    backgroundColor: '#c2d8f0',
   },
 
 

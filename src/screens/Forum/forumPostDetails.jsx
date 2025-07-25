@@ -51,6 +51,7 @@ import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvata
 
 const screenHeight = Dimensions.get('window').height;
 const { width } = Dimensions.get('window');
+const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
 const CommentScreen = ({ route }) => {
   const { highlightId, highlightReactId, forum_id } = route.params;
@@ -299,7 +300,7 @@ const CommentScreen = ({ route }) => {
       const jobUrl = `${baseUrl}${item.forum_id}`;
 
       const result = await Share.share({
-        message: ` ${jobUrl}`,
+        message: `Checkout this post: ${jobUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -459,7 +460,17 @@ const CommentScreen = ({ route }) => {
     );
   }
 
+  const maxAllowedHeight = Math.round(deviceHeight * 0.6);
 
+  let height;
+  if (post?.extraData?.aspectRatio) {
+    const aspectRatioHeight = Math.round(deviceWidth / post.extraData?.aspectRatio);
+
+    height = aspectRatioHeight > maxAllowedHeight ? maxAllowedHeight : aspectRatioHeight;
+  } else {
+
+    height = deviceWidth;
+  }
 
 
   return (
@@ -549,31 +560,23 @@ const CommentScreen = ({ route }) => {
           </View>
           {mediaUrl ? (
             <TouchableOpacity
-              style={styles.mediaContainer}
-              onPress={() => !isVideo && openMediaViewer([{ type: 'image', url: mediaUrl }])}
+              style={[styles.mediaContainer, { width: '100%', height: height }]}
               activeOpacity={1}
             >
               {isVideo ? (
                 <View style={styles.videoContainer}>
                   <Video
                     source={{ uri: mediaUrl }}
-                    style={styles.video}
+                    style={{
+                      width: '100%',
+                      height: height
+                    }}
                     controls
                     repeat={true}
                     // paused={!isVideoPlaying}
-                    resizeMode="contain"
+                    resizeMode="cover"
                   />
-                  {/* <TouchableOpacity 
-          style={styles.playButton} 
-          onPress={() => setIsVideoPlaying(!isVideoPlaying)}
-        >
-          <Icon
-            name={isVideoPlaying ? "pause-circle" : "play-circle"}
-            size={50}
-            color="white"
-            style={{ opacity: isVideoPlaying ? 0 : 1 }}
-          />
-        </TouchableOpacity> */}
+
                 </View>
               ) : (
                 <Image
@@ -887,7 +890,8 @@ const styles = StyleSheet.create({
     // borderWidth:1,
     alignSelf: 'center',
     borderColor: '#f0f0f0',
-    paddingHorizontal: 2
+    paddingHorizontal: 2,
+    backgroundColor: 'white'
   },
 
   image: {
@@ -899,7 +903,7 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     height: '100%',
-    // borderRadius: 10,
+    backgroundColor: 'white'
   },
   playButton: {
     position: 'absolute',

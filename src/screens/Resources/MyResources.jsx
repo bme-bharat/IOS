@@ -19,6 +19,7 @@ import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { MyPostBody } from '../Forum/forumBody';
+import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
 
 const defaultLogo = Image.resolveAssetSource(defaultImage).uri;
 
@@ -26,6 +27,7 @@ const YourResourcesList = ({ navigation, route }) => {
   const { myId, myData } = useNetwork();
 
   const [allForumPost, setAllForumPost] = useState([]);
+  console.log('allForumPost',allForumPost)
   const [imageUrls, setImageUrls] = useState({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
@@ -125,17 +127,6 @@ const YourResourcesList = ({ navigation, route }) => {
   };
 
 
-
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const timeout = setTimeout(() => {
-  //       fetchResources();
-  //     }, 500);
-
-  //     return () => clearTimeout(timeout);
-  //   }, [myId])
-  // );
   useEffect(() => {
     fetchResources();
   }, [])
@@ -255,60 +246,48 @@ const YourResourcesList = ({ navigation, route }) => {
 
   const confirmDelete = async () => {
     setShowDeleteConfirmation(false);
-
-    if (fileKeyToDelete && fileKeyToDelete.length > 0) {
+  
+    if (fileKeyToDelete?.length > 0) {
       try {
-
         for (const key of fileKeyToDelete) {
           if (key) {
             console.log(`🗑️ Deleting file: ${key}`);
-
-            const fileDeleteResponse = await apiClient.post('/deleteFileFromS3', {
-              command: 'deleteFileFromS3',
-              key: key,
-            });
-
-            if (fileDeleteResponse.data.statusCode !== 200) {
-              throw new Error(`Failed to delete file: ${key}`);
-            }
+            await deleteS3KeyIfExists(key); // ✅ use utility function
           }
         }
-
       } catch (error) {
-
+        console.error('❌ Error deleting files:', error);
         return;
       }
     }
-
+  
     try {
-
       const response = await apiClient.post('/deleteResourcePost', {
         command: "deleteResourcePost",
         user_id: myId,
         resource_id: postToDelete,
       });
-
+  
       if (response.data.status === 'success') {
-        console.log('response.data', response.data)
+        console.log('✅ Post deleted:', response.data);
         EventRegister.emit('onResourcePostDeleted', {
           deletedPostId: postToDelete,
         });
-
-
+  
         dispatch(deleteResourcePost(postToDelete));
-        setAllForumPost(prevPosts => prevPosts.filter(post => post.resource_id !== postToDelete));
-
+        setAllForumPost(prevPosts =>
+          prevPosts.filter(post => post.resource_id !== postToDelete)
+        );
+  
         showToast("Resource post deleted", 'success');
-
       } else {
         throw new Error("Failed to delete post.");
       }
-
     } catch (error) {
-
+      console.error("❌ Error deleting post:", error);
     }
   };
-
+  
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);

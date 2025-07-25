@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     height: 216,
     width: windowWidth,
     alignSelf: 'center',
-    borderRadius: 14,
+ 
   },
   imageRow: {
     flexDirection: 'row',
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
   bannerSlide: {
     width: windowWidth,
     height: 216,
-    borderRadius: 14,
+
     overflow: 'hidden',
   },
   media: {
     width: '100%',
     height: '100%',
-    borderRadius: 14,
+
   },
 });
 

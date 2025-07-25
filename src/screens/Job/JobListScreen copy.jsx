@@ -126,7 +126,7 @@ const JobDetailScreen = ({ route }) => {
       const jobUrl = `${baseUrl}${post.post_id}`;
 
       const result = await Share.share({
-        message: `Check out this job opportunity!\n${jobUrl}`,
+        message: `Checkout this job: ${jobUrl}`,
       });
 
       if (result.action === Share.sharedAction) {

@@ -144,14 +144,6 @@ export const compressVideo = async (videoUri, attempt = 1) => {
 
 
 
-
-
-
-
-
-
-
-
 export const resizeImage = async (uri) => {
   try {
     const resized = await ImageResizer.createResizedImage(

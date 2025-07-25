@@ -234,7 +234,7 @@ const CompanyListScreen = () => {
       const companyUrl = `${baseUrl}${company.company_id}`;
 
       const result = await Share.share({
-        message: companyUrl,
+        message: `Checkout this company: ${companyUrl}`,
       });
 
       if (result.action === Share.sharedAction) {
@@ -694,8 +694,8 @@ const styles = StyleSheet.create({
     // padding: 20,
     color: "#075cab",
     textAlign: 'left',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '500',
   },
   noCompaniesText: {
     color: 'black', margin: 'auto', textAlign: "center", marginTop: 300, fontSize: 18, fontWeight: '400'

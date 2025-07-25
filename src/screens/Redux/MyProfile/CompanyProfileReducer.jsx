@@ -5,6 +5,7 @@ const initialState = {
 };
 
 const CompanyReducer = (state = initialState, action) => {
+
   switch (action.type) {
     case 'UPDATE_COMPANY_PROFILE': {
       const incoming = action.payload || {};
@@ -19,7 +20,7 @@ const CompanyReducer = (state = initialState, action) => {
       const avatarName = incoming.company_name?.trim() || fullName || 'BME';
       const companyAvatar = generateAvatarFromName(avatarName);
 
-      return {
+      const newState = {
         ...state,
         profile: {
           ...current,
@@ -28,6 +29,8 @@ const CompanyReducer = (state = initialState, action) => {
           companyAvatar,
         },
       };
+      
+      return newState;
     }
 
     default:

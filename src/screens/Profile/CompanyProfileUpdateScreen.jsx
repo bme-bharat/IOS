@@ -1227,6 +1227,10 @@ const CompanyUserSignupScreen = () => {
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color="#075cab" />
       </TouchableOpacity>
+
+
+
+
       <FlatList
         showsVerticalScrollIndicator={false}
         onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -1246,28 +1250,30 @@ const CompanyUserSignupScreen = () => {
                 //     <Icon name="camera-enhance" size={22} color="#333" />
                 //   </TouchableOpacity>
                 // </TouchableOpacity>
+                <>
+                  <Text style={styles.header}>Edit your profile</Text>
 
-                <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer}>
-
-                  {imageUri || postData.fileKey ? (
-                    <FastImage
-                      source={{ uri: imageUri || imageUrl, priority: FastImage.priority.normal }}
-                      cache="immutable"
-                      style={styles.image}
-                      resizeMode='contain'
-                      onError={() => { }}
-                    />
-                  ) : (
-                    <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-                      <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
-                        {profile?.companyAvatar?.initials}
-                      </Text>
-                    </View>
-                  )}
-                  <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
-                    <Icon name="camera-enhance" size={22} color="#333" />
+                  <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer}>
+                    {imageUri || postData.fileKey ? (
+                      <FastImage
+                        source={{ uri: imageUri || imageUrl, priority: FastImage.priority.normal }}
+                        cache="immutable"
+                        style={styles.image}
+                        resizeMode='contain'
+                        onError={() => { }}
+                      />
+                    ) : (
+                      <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                        <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+                          {profile?.companyAvatar?.initials}
+                        </Text>
+                      </View>
+                    )}
+                    <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
+                      <Icon name="camera-enhance" size={22} color="#333" />
+                    </TouchableOpacity>
                   </TouchableOpacity>
-                </TouchableOpacity>
+                </>
               );
 
             case 'formInputs':
@@ -1350,43 +1356,47 @@ const CompanyUserSignupScreen = () => {
                     </View>
                   </View>
 
+
+
                   <Text style={styles.label}>Profile type</Text>
 
-                  <View style={styles.inputContainer}>
+                  <CustomDropdown
+                    label="Profile Type"
+                    data={Object.keys({
+                      ...ProfileSelect.companyProfiles
+                    })}
+                    onSelect={(item) => {
+                      setSelectedProfile(item);
+                      setSelectedCategory(""); // Reset category when profile changes
+                    }}
+                    selectedItem={selectedProfile}
+                    setSelectedItem={setSelectedProfile}
+                    placeholder={selectedProfile || "Select Profile Type"}
+                    buttonStyle={styles.dropdownButton}
+                    buttonTextStyle={styles.dropdownButtonText}
+                    placeholderTextColor="gray"
+                  />
 
-                    <CustomDropdown
-                      label="Profile Type"
-                      data={Object.keys({
-                        ...ProfileSelect.normalProfiles,
-                        ...ProfileSelect.companyProfiles
-                      })}
-                      onSelect={(item) => {
-                        setSelectedProfile(item);
-                        setSelectedCategory(""); // Reset category when profile changes
-                      }}
-                      selectedItem={selectedProfile}
-                      setSelectedItem={setSelectedProfile}
-                    />
-                  </View>
 
 
                   {selectedProfile && (
                     <>
-                      <Text style={styles.label}>Category <Text style={{ color: 'red' }}>*</Text></Text>
+                      <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Category <Text style={{ color: 'red' }}>*</Text></Text>
 
-                      <View style={styles.inputContainer}>
-                        <CustomDropdown
-                          label="Category"
-                          data={[
-                            ...(ProfileSelect.normalProfiles[selectedProfile] || []),
-                            ...(ProfileSelect.companyProfiles[selectedProfile] || [])
-                          ]}
-                          onSelect={setSelectedCategory}
-                          selectedItem={selectedCategory}
-                          setSelectedItem={setSelectedCategory}
-                        />
+                      <CustomDropdown
+                        label="Category"
+                        data={[
+                          ...(ProfileSelect.companyProfiles[selectedProfile] || [])
+                        ]}
+                        onSelect={setSelectedCategory}
+                        selectedItem={selectedCategory}
+                        setSelectedItem={setSelectedCategory}
+                        buttonStyle={styles.dropdownButton}
+                        buttonTextStyle={styles.dropdownButtonText}
+                        placeholderTextColor="gray"
+                        disabled={!selectedProfile}
+                      />
 
-                      </View>
                     </>
                   )}
                   <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, paddingBottom: 10 }]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
@@ -1780,7 +1790,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    height: 40,
+    height: 50,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
@@ -1802,7 +1812,8 @@ const styles = StyleSheet.create({
     color: 'black',
     minHeight: 50,
     maxHeight: 200,
-    padding: 10
+    padding: 10,
+    fontSize: 15
 
   },
   closeButton: {
@@ -1848,6 +1859,15 @@ const styles = StyleSheet.create({
     padding: 10
 
   },
+  header: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#075cab',
+    top: 10,
+  },
+
   pdfText: {
     fontSize: 15,
     fontWeight: '600',
@@ -1874,7 +1894,7 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     color: '#075cab',
     fontWeight: '500',
-    fontSize: 14,
+    fontSize: 15,
   },
   Uploadcontainer: {
     textAlign: 'center',
@@ -2015,7 +2035,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10
+    padding: 10,
+    fontSize: 15,
 
   },
   buttonemailmain: {

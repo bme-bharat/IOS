@@ -16,7 +16,6 @@
 		9718FD792DA146E100D46D8A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9718FD782DA146E100D46D8A /* GoogleService-Info.plist */; };
 		9718FD7A2DA146E100D46D8A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9718FD782DA146E100D46D8A /* GoogleService-Info.plist */; };
 		9718FD7B2DA146E100D46D8A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9718FD782DA146E100D46D8A /* GoogleService-Info.plist */; };
-		97212B8E2E2608400003CD96 /* NativeVideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97212B8D2E2608400003CD96 /* NativeVideoView.swift */; };
 		9728809D2D68964D00CA7B37 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9728809B2D68964D00CA7B37 /* UserNotifications.framework */; };
 		9728809E2D68964D00CA7B37 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9728809C2D68964D00CA7B37 /* UserNotificationsUI.framework */; };
 		972880A02D68965F00CA7B37 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9728809F2D68965E00CA7B37 /* MobileCoreServices.framework */; };
@@ -40,11 +39,6 @@
 		97A888E82C9BEF85005A3F7E /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 97A888D42C9BEF84005A3F7E /* SimpleLineIcons.ttf */; };
 		97A888E92C9BEF85005A3F7E /* Zocial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 97A888D52C9BEF84005A3F7E /* Zocial.ttf */; };
 		97BB45BC2D003A7100CDDF5E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97BB45BB2D003A7100CDDF5E /* UIKit.framework */; };
-		97D77CDC2E275C62002CC7B8 /* NativeVideoViewModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D77CDB2E275C62002CC7B8 /* NativeVideoViewModule.swift */; };
-		97D77CDE2E275C7E002CC7B8 /* NativeVideoViewModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 97D77CDD2E275C7E002CC7B8 /* NativeVideoViewModuleBridge.m */; };
-		97D77CE02E276291002CC7B8 /* VideoPlayerCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D77CDF2E276291002CC7B8 /* VideoPlayerCache.swift */; };
-		97EDA8512E268087008F3591 /* NativeVideoViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97EDA8502E268087008F3591 /* NativeVideoViewManager.swift */; };
-		97EDA8532E2680A2008F3591 /* NativeVideoViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 97EDA8522E2680A2008F3591 /* NativeVideoViewManager.m */; };
 		BA835635C779068678243A6B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0DBF70CE91DFD4CA461DA2B8 /* PrivacyInfo.xcprivacy */; };
 		F75E37DCC0D65016E6F4B4C5 /* Pods_ProjectName_ProjectNameTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79F00486E14EDAC937F619B2 /* Pods_ProjectName_ProjectNameTests.framework */; };
 /* End PBXBuildFile section */
@@ -95,7 +89,6 @@
 		79F00486E14EDAC937F619B2 /* Pods_ProjectName_ProjectNameTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ProjectName_ProjectNameTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ProjectName/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		9718FD782DA146E100D46D8A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		97212B8D2E2608400003CD96 /* NativeVideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVideoView.swift; sourceTree = "<group>"; };
 		9728809B2D68964D00CA7B37 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		9728809C2D68964D00CA7B37 /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 		9728809F2D68965E00CA7B37 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
@@ -121,14 +114,9 @@
 		97A888D52C9BEF84005A3F7E /* Zocial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Zocial.ttf; sourceTree = "<group>"; };
 		97BB45BB2D003A7100CDDF5E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		97BB45BD2D003A7D00CDDF5E /* ProjectNameDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = ProjectNameDebug.entitlements; path = ProjectName/ProjectNameDebug.entitlements; sourceTree = "<group>"; };
-		97D77CDB2E275C62002CC7B8 /* NativeVideoViewModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVideoViewModule.swift; sourceTree = "<group>"; };
-		97D77CDD2E275C7E002CC7B8 /* NativeVideoViewModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeVideoViewModuleBridge.m; sourceTree = "<group>"; };
-		97D77CDF2E276291002CC7B8 /* VideoPlayerCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerCache.swift; sourceTree = "<group>"; };
 		97D8AEE82DDD99DB002FA078 /* ProjectName.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProjectName.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97D8AEE92DDD99DB002FA078 /* ServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		97D8AEEA2DDD99DB002FA078 /* ProjectNameTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProjectNameTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		97EDA8502E268087008F3591 /* NativeVideoViewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeVideoViewManager.swift; sourceTree = "<group>"; };
-		97EDA8522E2680A2008F3591 /* NativeVideoViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeVideoViewManager.m; sourceTree = "<group>"; };
 		A34D19A515D574BD4A16997C /* Pods-ProjectName-ProjectNameTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProjectName-ProjectNameTests.release.xcconfig"; path = "Target Support Files/Pods-ProjectName-ProjectNameTests/Pods-ProjectName-ProjectNameTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F3E7C924041FC3198109794D /* Pods_ProjectName.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ProjectName.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -229,12 +217,6 @@
 				13B07FB71A68108700A75B9A /* main.m */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				0DBF70CE91DFD4CA461DA2B8 /* PrivacyInfo.xcprivacy */,
-				97212B8D2E2608400003CD96 /* NativeVideoView.swift */,
-				97EDA8502E268087008F3591 /* NativeVideoViewManager.swift */,
-				97EDA8522E2680A2008F3591 /* NativeVideoViewManager.m */,
-				97D77CDB2E275C62002CC7B8 /* NativeVideoViewModule.swift */,
-				97D77CDD2E275C7E002CC7B8 /* NativeVideoViewModuleBridge.m */,
-				97D77CDF2E276291002CC7B8 /* VideoPlayerCache.swift */,
 			);
 			name = ProjectName;
 			sourceTree = "<group>";
@@ -633,13 +615,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
-				97212B8E2E2608400003CD96 /* NativeVideoView.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
-				97D77CE02E276291002CC7B8 /* VideoPlayerCache.swift in Sources */,
-				97EDA8532E2680A2008F3591 /* NativeVideoViewManager.m in Sources */,
-				97D77CDE2E275C7E002CC7B8 /* NativeVideoViewModuleBridge.m in Sources */,
-				97D77CDC2E275C62002CC7B8 /* NativeVideoViewModule.swift in Sources */,
-				97EDA8512E268087008F3591 /* NativeVideoViewManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -729,7 +705,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = M6X6N2GDS4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = ProjectName/Info.plist;
@@ -737,7 +713,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.6;
+				MARKETING_VERSION = 4.5.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -763,14 +739,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = M6X6N2GDS4;
 				INFOPLIST_FILE = ProjectName/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.6;
+				MARKETING_VERSION = 4.5.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

@@ -823,7 +823,7 @@ const UserSignupScreen = () => {
             />
           </View>
 
-          <Text style={[styles.label, { marginBottom: 0 }]}>Gender <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={[styles.label, ]}>Gender <Text style={{ color: 'red' }}>*</Text></Text>
           <CustomDropdown
             label="Gender"
             data={['Male', 'Female', 'Other']}
@@ -831,7 +831,7 @@ const UserSignupScreen = () => {
             onSelect={handleGender}
             placeholder="Select gender"
             placeholderTextColor="gray"
-            buttonStyle={[styles.dropdownButton, { marginBottom: 0 }]}
+            buttonStyle={[styles.dropdownButton, ]}
             buttonTextStyle={styles.dropdownButtonText}
           />
 
@@ -859,7 +859,7 @@ const UserSignupScreen = () => {
             />
           )}
 
-          <Text style={[styles.label, { marginBottom: 0 }]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={[styles.label, ]}>State <Text style={{ color: 'red' }}>*</Text></Text>
           <View>
             <CustomDropdown
               label="State"
@@ -871,11 +871,11 @@ const UserSignupScreen = () => {
               }}
               placeholder="Select state"
               placeholderTextColor="gray"
-              buttonStyle={[styles.dropdownButton, { marginBottom: 0 }]}
+              buttonStyle={[styles.dropdownButton, ]}
               buttonTextStyle={styles.dropdownButtonText}
             />
 
-            <Text style={[styles.label, { marginBottom: 0 }]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+            <Text style={[styles.label, ]}>City <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropdown
               label="City"
               data={cities}
@@ -884,7 +884,7 @@ const UserSignupScreen = () => {
               disabled={!selectedState}
               placeholder="Select city"
               placeholderTextColor="gray"
-              buttonStyle={[styles.dropdownButton, { marginBottom: 0 }]}
+              buttonStyle={[styles.dropdownButton,]}
               buttonTextStyle={styles.dropdownButtonText}
             />
 
@@ -1239,6 +1239,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd',
+    marginBottom:10
 
   },
   dropdownButtonText: {

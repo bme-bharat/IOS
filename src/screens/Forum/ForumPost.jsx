@@ -1,27 +1,14 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Image, Button, StyleSheet, TouchableOpacity, Text, ScrollView, TextInput, Alert, SafeAreaView, ActivityIndicator, Modal, Keyboard, ActionSheetIOS, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import axios from 'axios';
+import { View, Image, StyleSheet, TouchableOpacity, Text, SafeAreaView, ActivityIndicator, Modal, Keyboard, } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
-import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Message3 from '../../components/Message3';
-import ImageResizer from 'react-native-image-resizer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { addPost } from '../Redux/Forum_Actions';
-import { useDispatch, useSelector } from 'react-redux';
-import VideoThumbnail, { generateVideoThumbnail } from './VideoParams';
 import PlayOverlayThumbnail from './Play';
-import { selectVideo } from './VideoParams';
-import { addMyPost } from '../Redux/MyPosts/MyForumPost_Actions';
-import defaultImage from '../../images/homepage/image.jpg'
-import FastImage from 'react-native-fast-image';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
@@ -32,27 +19,22 @@ import { cleanForumHtml } from './forumBody';
 import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
 import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
 import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
+import { useSelector } from 'react-redux';
 
 async function uriToBlob(uri) {
   const response = await fetch(uri);
   const blob = await response.blob();
   return blob;
 }
-const videoExtensions = [
-  '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
-  '.m4v', '.3gp', '.3g2', '.f4v', '.f4p', '.f4a', '.f4b', '.qt', '.quicktime'
-];
 
 
 const ForumPostScreen = () => {
-  const dispatch = useDispatch();
+
   const profile = useSelector(state => state.CompanyProfile.profile);
   const { myId, myData } = useNetwork();
-
   const [file, setFile] = useState(null);
   const [fileType, setFileType] = useState('');
   const [mediaMeta, setMediaMeta] = useState(null);
-
   const navigation = useNavigation();
   const [postData, setPostData] = useState({
     body: '',
@@ -63,9 +45,8 @@ const ForumPostScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const scrollViewRef = useRef(null);
   const [thumbnailUri, setThumbnailUri] = useState(null);
-
   const [loading, setLoading] = useState(false);
-  const defaultLogo = Image.resolveAssetSource(defaultImage).uri;
+  const richText = useRef();
 
   useEffect(() => {
 
@@ -123,25 +104,18 @@ const ForumPostScreen = () => {
     isCompressing,
     overlayRef,
   } = useMediaPicker({
-    onMediaSelected: (file, meta) => {
+    onMediaSelected: (file, meta, previewThumbnail) => {
       setFile(file);
       setFileType(file.type);
       setMediaMeta(meta);
+      setThumbnailUri(previewThumbnail);
     },
     includeDocuments: false, // No document option for forum posts
-    includeCamera: true,     // Include camera option
+    includeCamera: false,     // Include camera option
     mediaType: 'mixed',      // Allow both photos and videos
     maxImageSizeMB: 5,
     maxVideoSizeMB: 10,
   });
-
-
-
-
-  const playIcon = require('../../images/homepage/PlayIcon.png');
-
-  const [capturedThumbnailUri, setCapturedThumbnailUri] = useState(null);
-
 
 
 
@@ -231,11 +205,10 @@ const ForumPostScreen = () => {
     }
 
     try {
-      // ✅ Step 1: Get file size using RNFS
       const fileStat = await RNFS.stat(file.uri);
       const fileSize = fileStat.size;
 
-      // ✅ Step 2: Request upload URL from backend
+      // 1. Get Upload URL
       const res = await apiClient.post('/uploadFileToS3', {
         command: 'uploadFileToS3',
         headers: {
@@ -251,7 +224,7 @@ const ForumPostScreen = () => {
       const uploadUrl = res.data.url;
       const fileKey = res.data.fileKey;
 
-      // ✅ Step 3: Convert file to Blob & upload
+      // 2. Upload Main File
       const fileBlob = await uriToBlob(file.uri);
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
@@ -263,31 +236,26 @@ const ForumPostScreen = () => {
         throw new Error('Failed to upload file to S3');
       }
 
-      // ✅ Step 4: Generate Thumbnail for Videos
+      // 3. Upload Thumbnail (for video only)
       let thumbnailFileKey = null;
-      if (file.type.startsWith("video/")) {
-        let finalThumbnailToUpload = capturedThumbnailUri;
 
-        if (!finalThumbnailToUpload) {
+      if (fileType.startsWith("video/")) {
+        const thumbnailToUpload = thumbnailUri;
 
-          finalThumbnailToUpload = await generateVideoThumbnail(file.uri);
-        }
-
-        if (finalThumbnailToUpload) {
-
-          thumbnailFileKey = await handleThumbnailUpload(finalThumbnailToUpload, fileKey);
+        if (thumbnailToUpload) {
+          thumbnailFileKey = await handleThumbnailUpload(thumbnailToUpload, fileKey);
         }
       }
 
       return { fileKey, thumbnailFileKey };
     } catch (error) {
       showToast("An error occurred during file upload", 'error');
-
       return { fileKey: null, thumbnailFileKey: null };
     } finally {
       setLoading(false);
     }
   };
+
 
   const stripHtmlTags = (html) =>
     html?.replace(/<\/?[^>]+(>|$)/g, '').trim() || '';
@@ -385,22 +353,7 @@ const ForumPostScreen = () => {
   };
 
 
-  const richText = useRef();
 
-
-
-  useFocusEffect(
-    React.useCallback(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y: 0, animated: true });
-      }
-    }, [])
-  );
-
-
-  const clearFile = () => {
-    setFile(null);
-  };
 
 
   return (
@@ -534,7 +487,6 @@ const ForumPostScreen = () => {
         <PlayOverlayThumbnail
           ref={overlayRef}
           thumbnailUri={thumbnailUri}
-          playIcon={playIcon}
 
         />
 
@@ -574,22 +526,11 @@ const ForumPostScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
     marginHorizontal: 10,
   },
 
-  uploadButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderStyle: 'dotted',
-    backgroundColor: 'white',
-    borderRadius: 15,
-  },
   buttonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#fff',
   },
@@ -598,24 +539,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  removeMediaButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 13,
-    width: 25,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 3,
-    zIndex: 2,
-  },
-
 
 
   profileContainer: {
@@ -645,13 +568,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   profileName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '500',
     color: 'black'
   },
   profileCategory: {
-    fontSize: 14,
-    color: 'gray',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#666',
   },
 
 
@@ -667,32 +591,13 @@ const styles = StyleSheet.create({
 
   },
 
-
   disabledButton: {
     backgroundColor: '#ccc',
     borderColor: '#ccc',
     borderWidth: 0.5,
   },
 
-  buttonText1: {
-    fontSize: 18,
-    color: '#075cab',
-  },
-  buttonTextdown: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#075cab',
-    fontWeight: '500',
-  },
-  disabledButton1: {
-    backgroundColor: '#fff',
-    borderColor: '#ccc',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  disabledButtonText: {
-    color: '#ccc',
-  }
+  
 });
 
 export default ForumPostScreen;

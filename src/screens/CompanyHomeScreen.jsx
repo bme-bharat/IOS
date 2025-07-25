@@ -102,6 +102,10 @@ const CompanyHomeScreen = React.memo(() => {
     }
   };
 
+  const navigateToDetails = (job) => {
+    navigation.navigate("JobDetail", { post_id: job.post_id, post: job });
+  };
+  
   const renderJobCard = ({ item }) => {
     if (!item || item.isEmpty) return null;
 
@@ -110,7 +114,7 @@ const CompanyHomeScreen = React.memo(() => {
 
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate("JobDetail", { post_id, imageUrl })}
+      onPress={() => navigateToDetails(item)}
         activeOpacity={0.85}
         style={styles.eduCard}
       >
@@ -266,12 +270,12 @@ const CompanyHomeScreen = React.memo(() => {
 
           <Text numberOfLines={1} style={styles.modelText}>
             {/* <Text style={styles.label}>Model name: </Text> */}
-            <Icon name="tag-outline" size={16} color='#666' /> {item.specifications.model_name || ' '}
+            <Icon name="tag-outline" size={16} color='#777' /> {item.specifications.model_name || ' '}
           </Text>
 
           <Text style={styles.descriptionText} numberOfLines={1}>
             {/* <Text style={styles.label}>Description: </Text> */}
-            <Icon name="text-box-outline" size={16} color='#666' /> {item.description || ' '}
+            <Icon name="text-box-outline" size={16} color='#777' /> {item.description || ' '}
           </Text>
 
           <Text numberOfLines={1} style={styles.companyNameText}>

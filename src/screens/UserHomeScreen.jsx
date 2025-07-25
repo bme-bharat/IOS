@@ -107,6 +107,9 @@ const UserHomeScreen = React.memo(() => {
     }
   };
 
+  const navigateToDetails = (job) => {
+    navigation.navigate("JobDetail", { post_id: job.post_id, post: job });
+  };
 
   const renderJobCard = ({ item }) => {
     if (!item || item.isEmpty) return null;
@@ -116,7 +119,7 @@ const UserHomeScreen = React.memo(() => {
 
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate("JobDetail", { post_id, imageUrl })}
+        onPress={() => navigateToDetails(item)}
         activeOpacity={0.85}
         style={styles.eduCard}
       >
