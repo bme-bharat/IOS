@@ -17,7 +17,7 @@ import Message3 from "../../components/Message3";
 import { showToast } from "../AppUtils/CustomToast";
 import { EventRegister } from "react-native-event-listeners";
 import apiClient from "../ApiClient";
-import AppStyles from "../../assets/AppStyles";
+import AppStyles from "../AppUtils/AppStyles";
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';

@@ -13,7 +13,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
 import { EventRegister } from 'react-native-event-listeners';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from './forumBody';
 import { MediaPreview } from '../helperComponents.jsx/MediaPreview';

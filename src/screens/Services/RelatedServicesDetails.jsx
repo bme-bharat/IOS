@@ -19,7 +19,7 @@ import apiClient from '../ApiClient';
 import DisclaimerBox from '../Products/DisclaimerBox';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';

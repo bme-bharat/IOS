@@ -171,6 +171,8 @@ const styles = StyleSheet.create({
   backButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderBottomWidth:1,
+    borderColor:'#ddd'
   },
   container: {
     flex: 1,

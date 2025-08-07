@@ -22,6 +22,7 @@ import { OtpInput } from "react-native-otp-entry";
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
 import GamificationSection from './GamificationSection';
 
+
 const UserProfileScreen = () => {
   const navigation = useNavigation();
   const profile = useSelector(state => state.CompanyProfile.profile);
@@ -271,7 +272,6 @@ const UserProfileScreen = () => {
   const handleUpdate = () => {
     navigation.navigate('UserProfileUpdate', { profile, imageUrl: profile?.imageUrl, });
   };
-
 
   return (
 

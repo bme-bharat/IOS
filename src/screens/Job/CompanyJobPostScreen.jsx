@@ -17,7 +17,7 @@ import apiClient from '../ApiClient';
 import default_image from '../../images/homepage/buliding.jpg'
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { EventRegister } from 'react-native-event-listeners';
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;

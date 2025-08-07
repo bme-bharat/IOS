@@ -18,7 +18,7 @@ import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
 import { showToast } from '../AppUtils/CustomToast';
 import { EventRegister } from 'react-native-event-listeners';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import {products} from '../../assets/Constants';
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 10;

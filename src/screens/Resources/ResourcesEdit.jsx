@@ -25,7 +25,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
 import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
@@ -538,6 +538,11 @@ const ResourcesEditScreen = () => {
         thumbnailFileKey = post.thumbnail_fileKey || '';
       }
   
+      const extraDataToSend = 
+      (file || fileKey) 
+        ? (mediaMeta || post.extraData || {}) 
+        : {};
+
       const payload = {
         command: "updateResourcePost",
         user_id: myId,
@@ -545,9 +550,8 @@ const ResourcesEditScreen = () => {
         title: trimmedTitle,
         resource_body: cleanedBody,
         fileKey,
-        mediaType: fileType || postData.mediaType || '',
         thumbnail_fileKey: thumbnailFileKey,
-        extraData: mediaMeta || {},
+        extraData: extraDataToSend,
       };
   
       const response = await apiClient.post('/updateResourcePost', payload);
@@ -557,9 +561,8 @@ const ResourcesEditScreen = () => {
         title: trimmedTitle,
         resource_body: cleanedBody,
         fileKey,
-        mediaType: fileType || postData.mediaType || '',
         thumbnail_fileKey: thumbnailFileKey,
-        extraData: mediaMeta || {},
+        extraData: extraDataToSend,
       };
   
       if (response.data.status === 'success') {

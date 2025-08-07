@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import apiClient from '../ApiClient';
 import { Dimensions } from 'react-native';
-import { fetchForumReactionsRaw } from '../helperComponents.jsx/ForumReactions';
+
 import { fetchCommentCount } from '../AppUtils/CommentCount';
 import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { fetchForumReactionsRaw } from './useForumReactions';
 
 const withTimeout = (promise, timeout = 10000) => {
   return Promise.race([
@@ -47,6 +48,7 @@ export const enrichForumPost = async (post, myId) => {
 
 export default function useForumFetcher({ command, type, fetchLimit = 10, isConnected = true, preloadUrls, myId }) {
   const [localPosts, setLocalPosts] = useState([]);
+  const [forumIds, setForumIds] = useState([]);
   const [paginationState, setPaginationState] = useState({
     lastEvaluatedKey: null,
     hasMorePosts: true,
@@ -83,6 +85,9 @@ export default function useForumFetcher({ command, type, fetchLimit = 10, isConn
         }));
         return;
       }
+
+      const forumIds = newPosts.map(post => post.forum_id);
+      setForumIds(forumIds); 
 
       const enrichedPosts = await Promise.all(
         newPosts.map(async post => {
@@ -153,6 +158,7 @@ export default function useForumFetcher({ command, type, fetchLimit = 10, isConn
     localPosts,
     setLocalPosts,
     fetchPosts,
+    forumIds,
     hasMorePosts: paginationState.hasMorePosts,
     loading: paginationState.isLoading,
     loadingMore: paginationState.isLoading && !paginationState.isRefreshing,

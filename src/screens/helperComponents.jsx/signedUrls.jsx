@@ -2,15 +2,7 @@
 import { Image, Text } from 'react-native';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import apiClient from '../ApiClient';
-import maleImage from '../../images/homepage/dummy.png';
-import femaleImage from '../../images/homepage/female.jpg';
-import companyImage from '../../images/homepage/buliding.jpg';
 import FastImage from 'react-native-fast-image';
-
-const defaultImageUriCompany = Image.resolveAssetSource(companyImage).uri;
-const defaultImageUriFemale = Image.resolveAssetSource(femaleImage).uri;
-const defaultImageUriMale = Image.resolveAssetSource(maleImage).uri;
-
 
 
 export const getSignedUrl = async (id, key) => {
@@ -155,7 +147,8 @@ export const getTimeDisplay = (timestampInSeconds) => {
   const hoursAgo = Math.floor(minutesAgo / 60);
   if (hoursAgo < 24) return `${hoursAgo} hours ago`;
 
-  return new Date(timestampInSeconds * 1000).toLocaleDateString('en-GB');
+  return new Date(timestampInSeconds * 1000).toLocaleDateString('en-GB').replace(/\//g, '-');
+
 };
 
 export const getTimeDisplayHome = (timestampInSeconds) => {
@@ -174,6 +167,7 @@ export const getTimeDisplayHome = (timestampInSeconds) => {
 };
 
 export const getTimeDisplayForum = (timestampInSeconds) => {
+
   const secondsAgo = Math.floor(Date.now() / 1000 - timestampInSeconds);
 
   if (secondsAgo < 60) return `few sec ago`;
@@ -206,7 +200,7 @@ export const highlightMatch = (
     paddingHorizontal: 2,
   }
 ) => {
- 
+
   if (!query?.trim()) return <Text>{text}</Text>;
 
   const safeQuery = escapeRegExp(query);
@@ -227,6 +221,4 @@ export const highlightMatch = (
     </Text>
   );
 };
-
-
 

@@ -23,6 +23,8 @@ const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
 const UserHomeScreen = React.lazy(() => import('../UserHomeScreen'));
 const PageView = React.lazy(() => import('../Forum/PagerViewForum'));
 
+const BANNER_H = 250; 
+const COLLAPSED_SIZE = 40; 
 
 const tabNameMap = {
   CompanyJobList: "Jobs",
@@ -70,10 +72,10 @@ const UserSettingScreen = () => {
   const [deviceInfo, setDeviceInfo] = useState({
     appVersion: '',
   });
+  const hasSubscription =
+    myData?.subscription_expires_on &&
+    Math.floor(Date.now() / 1000) < Number(myData.subscription_expires_on);
 
-  const hasSubscription = myData?.subscription_expires_on
-    ? Math.floor(Date.now() / 1000) < myData.subscription_expires_on
-    : false;
 
   useEffect(() => {
     // Fetch device information
@@ -105,11 +107,13 @@ const UserSettingScreen = () => {
               user_id: myId,
             }
           );
+          // console.log('response', response.data)
 
           // Filter only completed transactions
           const completedTransactions = response.data.response.filter(
             transaction => transaction.transaction_status === "captured"
           );
+
           setTransactions(completedTransactions);
         } catch (err) {
 
@@ -182,171 +186,169 @@ const UserSettingScreen = () => {
       imageUrl: profile?.imageUrl,
     });
   };
-  const scrollOffsetY = useRef(new Animated.Value(0)).current;
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
-    {
-      useNativeDriver: true,
-      listener: (event) => {
-        const offsetY = event.nativeEvent.contentOffset.y;
-        console.log('offsetY:', offsetY); // ✅ This logs the current scroll offset
-      },
-    }
-  );
-  useEffect(() => {
-    const loadGamificationData = async () => {
-      try {
-        const savedData = await AsyncStorage.getItem('gamificationData');
-        if (savedData) {
-          const { score: savedScore, badgeUnlocked: savedBadge } = JSON.parse(savedData);
-          setScore(savedScore);
-          setBadgeUnlocked(savedBadge);
-        }
-      } catch (error) {
-        console.error('Failed to load gamification data', error);
-      }
-    };
-    loadGamificationData();
-  }, []);
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const [badgeUnlocked, setBadgeUnlocked] = useState(false);
-  const [score, setScore] = useState(0);
-
-  const headerHeight = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [280, 80],
-    extrapolate: 'clamp',
-  });
-
-  const imageSize = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [140, 40],
-    extrapolate: 'clamp',
-  });
-
-  const imageMarginTop = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [20, 10],
-    extrapolate: 'clamp',
-  });
-
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const collapsedHeaderOpacity = scrollY.interpolate({
-    inputRange: [100, 180],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const textOpacity = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const translateY = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [0, -50],
-    extrapolate: 'clamp',
-  });
-
-
-
-
+  const scrollA = useRef(new Animated.Value(0)).current;
 
   return (
 
     <SafeAreaView style={styles.container1} >
-
-      {/* <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.backButton} >
-          <Icon name="arrow-left" size={24} color="#075cab" />
-        </TouchableOpacity>
-      </View > */}
-          <Animated.View 
-          
-          style={[
-        styles.collapsedHeader,
-        { 
-          opacity: collapsedHeaderOpacity,
-          transform: [{ translateY }]
+      <Animated.View style={[
+        styles.header,
+        {
+          opacity: scrollA.interpolate({
+            inputRange: [BANNER_H - 40, BANNER_H],
+            outputRange: [0, 1],
+            extrapolate: 'clamp'
+          }),
+          transform: [
+            {
+              translateY: scrollA.interpolate({
+                inputRange: [BANNER_H - 40, BANNER_H],
+                outputRange: [20, 0],
+                extrapolate: 'clamp'
+              })
+            }
+          ]
         }
-        
       ]}>
-        <View style={styles.collapsedContent}>
-          <FastImage
-            source={{ uri: profile?.imageUrl }}
-            style={styles.collapsedImage}
-          />
-          <View>
-            <Text style={styles.collapsedName}>
-              {profile?.first_name} {profile?.last_name}
-            </Text>
-            {badgeUnlocked && (
-              <View style={styles.badgeContainer}>
-                <Icon name="shield-check" size={16} color="#FFD700" />
-                <Text style={styles.badgeText}>Career Expert</Text>
-              </View>
-            )}
-          </View>
-        </View>
+        <Text style={styles.collapsedName}>{profile?.first_name} {profile?.last_name}</Text>
+        <TouchableOpacity
+          activeOpacity={0}
+          onPress={() => { navigation.navigate("UserProfile") }}
+          style={[
+            styles.profilePic,
+            {
+              opacity: scrollA.interpolate({
+                inputRange: [BANNER_H - 40, BANNER_H],
+                outputRange: [0, 1],
+                extrapolate: 'clamp'
+              }),
+              transform: [
+                {
+                  scale: scrollA.interpolate({
+                    inputRange: [BANNER_H - 40, BANNER_H],
+                    outputRange: [0.8, 1],
+                    extrapolate: 'clamp'
+                  })
+                }
+              ]
+            }
+          ]}
+        >
+
+          {profile?.imageUrl ? (
+            <FastImage
+              source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+              cache="immutable"
+              style={styles.detailImage}
+              resizeMode='contain'
+              onError={() => { }}
+            />
+          ) : (
+            <View style={[styles.avatarContainerMini, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+              <Text style={[styles.avatarTextMini, { color: profile?.companyAvatar?.textColor }]}>
+                {profile?.companyAvatar?.initials}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </Animated.View>
 
-
-
-
       <Animated.ScrollView contentContainerStyle={[styles.container, { paddingBottom: '44%', }]}
-        showsVerticalScrollIndicator={false}  
+        showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+          [{ nativeEvent: { contentOffset: { y: scrollA } } }],
+          { useNativeDriver: true },
         )}
-        scrollEventThrottle={16}
->
+      >
 
         {isConnected ? (
-           <Animated.View style={[
-            styles.header,
-            { 
-              height: headerHeight,
-              opacity: headerOpacity 
+          <Animated.View style={[
+            styles.banner,
+            {
+              transform: [
+                {
+                  translateY: scrollA.interpolate({
+                    inputRange: [-BANNER_H, 0, BANNER_H],
+                    outputRange: [-BANNER_H , 0, BANNER_H ],
+                  }),
+                },
+                {
+                  scale: scrollA.interpolate({
+                    inputRange: [-BANNER_H, 0, BANNER_H],
+                    outputRange: [2, 1, 0.8],
+                  }),
+                },
+              ],
             }
-          ]}>
-            <Animated.View style={[
-              styles.imageContainer,
-              { 
-                width: imageSize,
-                height: imageSize,
-                marginTop: imageMarginTop
-              }
-            ]}>
-              <FastImage
-                source={{ uri: profile?.imageUrl }}
-                style={styles.profileImage}
-              />
-              {badgeUnlocked && (
-                <View style={styles.floatingBadge}>
-                  <Icon name="crown" size={24} color="#FFD700" />
+          ]}
+          >
+            <TouchableOpacity activeOpacity={1} onPress={() => { navigation.navigate("UserProfile") }}
+              style={styles.profileContainer} >
+
+
+              <TouchableOpacity style={styles.editProfileButton} onPress={handleUpdate}>
+                <Text style={styles.editProfileText}>Edit Profile</Text>
+              </TouchableOpacity>
+
+
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => { navigation.navigate("UserProfile") }}
+                style={styles.imageContainer}
+              >
+
+                {profile?.imageUrl ? (
+                  <FastImage
+                    source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+                    cache="immutable"
+                    style={styles.detailImage}
+                    resizeMode='contain'
+                    onError={() => { }}
+                  />
+                ) : (
+                  <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                    <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+                      {profile?.companyAvatar?.initials}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.profileDetails}>
+
+                <View style={styles.title1}>
+                  <Icon1 name="person" size={20} color="#075cab" />
+                  <Text style={styles.colon}>|</Text>
+                  <Text style={styles.value}>{(profile?.first_name || "").trimStart().trimEnd()} {profile?.last_name}</Text>
+
                 </View>
-              )}
-            </Animated.View>
-  
-            <Animated.View style={{ opacity: textOpacity }}>
-              <Text style={styles.name}>
-                {profile?.first_name} {profile?.last_name}
-              </Text>
-              <Text style={styles.points}>Career Points: {score}</Text>
-            </Animated.View>
-            <TouchableOpacity onPress={() => { navigation.navigate("UserProfile") }}> 
-            <Text>profile</Text>
+                <View style={styles.title1}>
+                  <Icon1 name="phone" size={20} color="#075cab" />
+                  <Text style={styles.colon}>|</Text>
+
+                  <Text style={styles.value}>{(profile?.user_phone_number || "").trimStart().trimEnd()}</Text>
+                </View>
+                <View style={styles.title1}>
+                  <Icon1 name="email" size={20} color="#075cab" />
+                  <Text style={styles.colon}>|</Text>
+
+                  <Text style={styles.value}>{profile?.user_email_id || ""}</Text>
+                </View>
+                {profile?.college?.trim() && (
+                  <View style={styles.title1}>
+                    <Icon1 name="school" size={20} color="#075cab" />
+                    <Text style={styles.colon}>|</Text>
+                    <Text style={styles.value}>{profile.college.trimStart().trimEnd()}</Text>
+                  </View>
+                )}
+
+              </View>
+              <Icon name="gesture-tap" size={18} color="#888" style={{ alignSelf: 'flex-end' }} />
+
+
             </TouchableOpacity>
           </Animated.View>
-  
 
         ) : null}
         {DrawerList.filter(Boolean).map((item, index) => (
@@ -429,12 +431,14 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 80,
     marginBottom: 10,
+    overflow: 'hidden',
+
   },
   detailImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 80,
-    overflow: 'hidden',
+    borderRadius: 100,
+    backgroundColor:'red'
 
   },
   label: {
@@ -478,10 +482,10 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    // borderRadius: 16,
+    borderRadius: 5,
     padding: 10,
-    // marginHorizontal: 10,
-    // marginTop: 10,
+    marginHorizontal: 10,
+    marginTop: 5,
     elevation: 4,
     shadowColor: '#aaa',
     shadowOffset: { width: 0, height: 3 },
@@ -633,156 +637,46 @@ const styles = StyleSheet.create({
     color: '#075cab',
   },
 
-
-
-  collapsedProfile: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 55,
-    backgroundColor: '#ffffff',
-    zIndex: 10,
-    elevation: 6,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#dcdcdc',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+  avatarContainer: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
-  },
-
-  miniProfileContent: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    borderRadius: 8,
   },
-
-  miniLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  avatarText: {
+    fontSize: 50,
+    fontWeight: 'bold',
   },
-
-  miniImage: {
+  avatarContainerMini: {
     width: 40,
     height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 1.2,
-    borderColor: '#7baee9',
-    backgroundColor: '#e6f0ff',
   },
-
-  miniName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1e2a38',
-    // letterSpacing: 0.4,
-
-  },
-
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  avatarTextMini: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   header: {
-    alignItems: 'center',
-    backgroundColor: '#075cab',
-    paddingBottom: 20,
-    overflow: 'hidden',
-  },
-  collapsedHeader: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 60,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     zIndex: 100,
-    elevation: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingHorizontal: 15,
-    justifyContent: 'center',
-  },
-  collapsedContent: {
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  collapsedImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 2,
-    borderColor: '#075cab',
+    elevation: 4,
+    flexDirection: 'row',
+    paddingHorizontal:15
   },
   collapsedName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-  },
-  imageContainer: {
-    borderRadius: 70,
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 70,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  points: {
-    fontSize: 16,
-    color: '#fff',
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  floatingBadge: {
-    position: 'absolute',
-    bottom: -10,
-    right: -10,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFD700',
-    elevation: 3,
-  },
-  badgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 3,
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#FF9800',
-    marginLeft: 5,
-    fontWeight: '600',
-  },
-  content: {
-    padding: 15,
-    paddingBottom: 100,
   },
 
 

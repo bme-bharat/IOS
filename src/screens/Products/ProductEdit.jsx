@@ -17,7 +17,7 @@ import CustomDropDownMenu from "../../components/DropDownMenu";
 import Message3 from "../../components/Message3";
 import { showToast } from "../AppUtils/CustomToast";
 import { EventRegister } from "react-native-event-listeners";
-import AppStyles from "../../assets/AppStyles";
+import AppStyles from "../AppUtils/AppStyles";
 import apiClient from "../ApiClient";
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';

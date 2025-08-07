@@ -43,10 +43,10 @@ import { EventRegister } from 'react-native-event-listeners';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from '../helperComponents.jsx/signedUrls';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import { ForumReactions } from '../helperComponents.jsx/ForumReactions';
 import ReactionSheet, { ReactionUserSheet } from '../helperComponents.jsx/ReactionUserSheet';
 import { ForumBody, normalizeHtml } from './forumBody';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import useForumReactions, { fetchForumReactionsRaw } from './useForumReactions';
 
 
 const screenHeight = Dimensions.get('window').height;
@@ -63,7 +63,6 @@ const CommentScreen = ({ route }) => {
 
   const [post, setPost] = useState(null);
 
-  const [showFullText, setShowFullText] = useState(false);
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaUrl1, setMediaUrl1] = useState('');
 
@@ -98,17 +97,22 @@ const CommentScreen = ({ route }) => {
   }, [highlightReactId, forum_id]);
 
   const reactionSheetRef = useRef();
+  const [reaction, setReaction] = useState()
 
-  const {
-    reactionsCount,
-    userReaction,
-    totalReactions,
-    fetching,
-    updating,
-    updateReaction,
-    refetchReactions,
-  } = ForumReactions({ forumId: forum_id, userId: myId });
+  useEffect(() => {
+    async function logReactions() {
+      try {
+        const reactions = await fetchForumReactionsRaw(forum_id, myId);
+        setReaction(reactions);
 
+      } catch (error) {
+
+      }
+    }
+    logReactions();
+  }, []);
+
+  const { handleReactionUpdate } = useForumReactions(myId);
 
   const reactionConfig = [
     { type: 'Like', emoji: '👍', color: 'text-blue-600', label: 'Like', outlineIcon: 'thumb-up-outline' },
@@ -118,14 +122,9 @@ const CommentScreen = ({ route }) => {
     { type: 'Thanks', emoji: '🙏', color: 'text-rose-500', label: 'Thanks', outlineIcon: 'hand-heart-outline' },
   ];
 
-  const selectedReaction = reactionConfig.find(r => r.type === userReaction && userReaction !== 'None');
-  const [showReactions, setShowReactions] = useState(false);
+  const selectedReaction = reactionConfig.find(r => r.type === reaction?.userReaction && reaction?.userReaction !== 'None');
 
-  const handleSelectReaction = async (type) => {
-    const newReaction = userReaction === type ? 'None' : type;
-    await updateReaction?.(newReaction);
-    setShowReactions(false);
-  };
+  const [showReactions, setShowReactions] = useState(false);
 
   const openCommentsSheet = () => {
     openSheet(
@@ -158,33 +157,6 @@ const CommentScreen = ({ route }) => {
 
 
 
-  const isFocused = useIsFocused();
-  useEffect(() => {
-    if (!isFocused) {
-      setIsVideoPlaying(false);
-    }
-  }, [isFocused]);
-
-  const getFallbackImage = (comment) => {
-    const defaultImageUriCompany = Image.resolveAssetSource(companyImage).uri;
-    const defaultImageUriFemale = Image.resolveAssetSource(femaleImage).uri;
-    const defaultImageUriMale = Image.resolveAssetSource(maleImage).uri;
-
-    const userType = comment.user_type || comment.userType;
-    const gender = comment.author_gender || comment.user_gender;
-
-    return userType === "company"
-      ? defaultImageUriCompany
-      : gender === "Female"
-        ? defaultImageUriFemale
-        : defaultImageUriMale;
-  };
-
-
-
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
-
   const withTimeout = (promise, timeout = 5000) => {
     return Promise.race([
       promise,
@@ -194,12 +166,12 @@ const CommentScreen = ({ route }) => {
 
   const fetchPosts = async () => {
     if (!isConnected) {
-      console.log('[fetchPosts] Skipped fetch — not connected.');
+
       return;
     }
 
     seLoading(true);
-    console.log('[fetchPosts] Started fetching post:', forum_id);
+
 
     try {
       const requestData = {
@@ -208,19 +180,17 @@ const CommentScreen = ({ route }) => {
       };
 
       const res = await withTimeout(apiClient.post('/getForumPost', requestData), 5000);
-      console.log('[fetchPosts] API response:', res.data);
+
 
       // Handle both array and object formats
       const postData = Array.isArray(res.data.response)
         ? res.data.response[0]
         : res.data.response;
 
-      console.log('[fetchPosts] Raw response:', res.data.response);
-      console.log('[fetchPosts] Parsed postData:', postData);
 
       // If post is missing or empty object
       if (!postData || Object.keys(postData).length === 0) {
-        console.warn('[fetchPosts] No valid post data. Showing removed message.');
+
         setErrorMessage('This post was removed by the author');
         setMediaUrl('');
         setMediaUrl1('');
@@ -235,10 +205,7 @@ const CommentScreen = ({ route }) => {
       setPost(postData);
       await fetchCommentsCount(forum_id);
 
-      console.log('[fetchPosts] fileKey:', postData.fileKey);
-      console.log('[fetchPosts] author_fileKey:', postData.author_fileKey);
 
-      // Media fetch
       const mediaUrlPromise = postData.fileKey
         ? getSignedUrl('mediaUrl', postData.fileKey)
         : Promise.resolve({ mediaUrl: '' });
@@ -249,27 +216,20 @@ const CommentScreen = ({ route }) => {
 
       const [mediaRes, authorMediaRes] = await Promise.all([mediaUrlPromise, mediaUrl1Promise]);
 
-      console.log('[fetchPosts] mediaRes:', mediaRes);
-      console.log('[fetchPosts] authorMediaRes:', authorMediaRes);
-
       setMediaUrl(mediaRes.mediaUrl || '');
 
       if (authorMediaRes.mediaUrl1) {
-        console.log('[fetchPosts] Using signed author image URL.');
+
         setMediaUrl1(authorMediaRes.mediaUrl1);
       } else {
         const fallbackName = postData?.author || 'BME';
         const avatarData = generateAvatarFromName(fallbackName);
-
-        console.log('[fetchPosts] No author fileKey, generating avatar from:', fallbackName);
-        console.log('[fetchPosts] Generated avatar data:', avatarData);
 
         setMediaUrl1(avatarData);
       }
 
       seLoading(false);
     } catch (error) {
-      console.error('[fetchPosts] Error while fetching:', error);
 
       if (error.message === 'Network Error' || !error.response) {
         showToast('Network error, please check your connection', 'error');
@@ -283,9 +243,6 @@ const CommentScreen = ({ route }) => {
       seLoading(false);
     }
   };
-
-
-
 
 
 
@@ -534,7 +491,6 @@ const CommentScreen = ({ route }) => {
               )}
 
 
-
               <View style={styles.authorInfo}>
                 <Text style={styles.author} onPress={() => handleNavigate(post)}>{post?.author || ''}</Text>
                 <Text style={styles.authorCategory}>{post?.author_category || ''}</Text>
@@ -549,7 +505,7 @@ const CommentScreen = ({ route }) => {
           </View>
 
 
-          <View style={{ paddingHorizontal: 16, }}>
+          <View style={{ marginHorizontal: 10, }}>
             <ForumBody
               html={normalizeHtml(post?.forum_body, '')}
               forumId={post?.forum_id}
@@ -560,7 +516,7 @@ const CommentScreen = ({ route }) => {
           </View>
           {mediaUrl ? (
             <TouchableOpacity
-              style={[styles.mediaContainer, { width: '100%', height: height }]}
+              style={[styles.mediaContainer, { width: '100%', height: height, }]}
               activeOpacity={1}
             >
               {isVideo ? (
@@ -579,34 +535,64 @@ const CommentScreen = ({ route }) => {
 
                 </View>
               ) : (
-                <Image
-                  source={{ uri: mediaUrl }}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
+                <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: mediaUrl }])} activeOpacity={1}>
+
+                  <Image
+                    source={{ uri: mediaUrl }}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
               )}
             </TouchableOpacity>
           ) : null}
-          <View style={styles.divider} />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 5, height: 40 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',  height: 40,  }}>
             <View>
               <TouchableOpacity
                 onPress={async () => {
-                  const selectedType = userReaction && userReaction !== 'None' ? 'None' : 'Like';
+                  const selectedType = reaction?.userReaction && reaction?.userReaction !== 'None' ? 'None' : 'Like';
 
-                  await updateReaction?.(selectedType);
+                  setReaction(prev => {
+                    const currentReaction = prev?.userReaction || 'None';
+                    let newTotal = Number(prev?.totalReactions || 0);
+                    const hadReaction = currentReaction && currentReaction !== 'None';
+
+                    const updatedCounts = { ...prev?.reactionsCount };
+
+                    if (selectedType === 'None' && hadReaction) {
+                      updatedCounts[currentReaction] = Math.max(0, (updatedCounts[currentReaction] || 1) - 1);
+                      newTotal -= 1;
+                    } else if (!hadReaction) {
+                      updatedCounts['Like'] = (updatedCounts['Like'] || 0) + 1;
+                      newTotal += 1;
+                    } else if (hadReaction && currentReaction !== 'Like') {
+                      updatedCounts[currentReaction] = Math.max(0, (updatedCounts[currentReaction] || 1) - 1);
+                      updatedCounts['Like'] = (updatedCounts['Like'] || 0) + 1;
+                    }
+
+                    return {
+                      ...prev,
+                      userReaction: selectedType === 'None' ? null : 'Like',
+                      totalReactions: newTotal,
+                      reactionsCount: updatedCounts,
+                    };
+                  });
+
+                  await handleReactionUpdate(forum_id, selectedType);
                 }}
+
                 onLongPress={() => {
-                  console.log('🟡 onLongPress triggered → showing emoji picker');
                   setShowReactions(true);
                 }}
 
                 activeOpacity={0.7}
                 style={{
-                  padding: 8,
+                  paddingHorizontal:10,
+                  padding:4,
                   flexDirection: 'row',
                   alignItems: 'center',
+                  
                 }}
               >
                 {selectedReaction ? (
@@ -620,16 +606,15 @@ const CommentScreen = ({ route }) => {
                     <Icon name="thumb-up-outline" size={20} color="#999" />
                   </>
                 )}
-                {totalReactions > 0 && (
+                {reaction?.totalReactions > 0 && (
                   <TouchableOpacity
                     onPress={() => {
                       reactionSheetRef.current?.open(post?.forum_id, 'All');
                     }}
-                    disabled={updating}
                     style={{ paddingHorizontal: 8 }}
                   >
                     <Text style={{ color: '#333', fontSize: 12, fontWeight: '500' }}>
-                      ({totalReactions})
+                      ({reaction?.totalReactions})
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -656,32 +641,46 @@ const CommentScreen = ({ route }) => {
                     </TouchableWithoutFeedback>
 
                     <View
-                      style={{
-                        flexDirection: 'row',
-                        padding: 6,
-                        backgroundColor: '#fff',
-                        borderRadius: 40,
-                        elevation: 6,
-                        shadowColor: '#000',
-                        shadowOpacity: 0.1,
-                        shadowRadius: 6,
-                        shadowOffset: { width: 0, height: 2 },
-
-                      }}
+                      style={styles.reactionContainer}
                     >
                       {reactionConfig.map(({ type, emoji, label }) => {
-                        const isSelected = userReaction === type;
+                        const isSelected = reaction?.userReaction === type;
                         return (
                           <TouchableOpacity
                             key={type}
-                            onPress={() => handleSelectReaction(type)}
-                            disabled={updating}
-                            style={{
-                              borderRadius: 30,
-                              padding: 8,
-                              backgroundColor: isSelected ? '#e0f2f1' : 'transparent',
-                              alignItems: 'center',
+                            onPress={async () => {
+                              setReaction(prev => {
+                                const currentReaction = prev?.userReaction || 'None';
+                                let newTotal = Number(prev?.totalReactions || 0);
+                                const hadReaction = currentReaction && currentReaction !== 'None';
+
+                                const updatedCounts = { ...prev?.reactionsCount };
+
+                                if (type === 'None' && hadReaction) {
+                                  updatedCounts[currentReaction] = Math.max(0, (updatedCounts[currentReaction] || 1) - 1);
+                                  newTotal -= 1;
+                                } else if (!hadReaction) {
+                                  updatedCounts[type] = (updatedCounts[type] || 0) + 1;
+                                  newTotal += 1;
+                                } else if (hadReaction && currentReaction !== type) {
+                                  updatedCounts[currentReaction] = Math.max(0, (updatedCounts[currentReaction] || 1) - 1);
+                                  updatedCounts[type] = (updatedCounts[type] || 0) + 1;
+                                }
+
+                                return {
+                                  ...prev,
+                                  userReaction: type === 'None' ? null : type,
+                                  totalReactions: newTotal,
+                                  reactionsCount: updatedCounts,
+                                };
+                              });
+
+                              await handleReactionUpdate(forum_id, type);
+                              setShowReactions(false); // hide the popup after selection
                             }}
+
+
+                            style={styles.reactionButton}
                           >
                             <Text style={{ fontSize: 20 }}>{emoji}</Text>
                             {/* <Text style={{ fontSize: 8 }}>{label}</Text> */}
@@ -694,44 +693,7 @@ const CommentScreen = ({ route }) => {
               </View>
             </View>
 
-            {/* 
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {totalReactions > 0 && (
-                <TouchableOpacity
-                  onPress={() => {
-                    reactionSheetRef.current?.open(post?.forum_id, 'All');
-                  }}
-                  disabled={updating}
-                  style={{ paddingHorizontal: 8 }}
-                >
-                  <Text style={{ color: '#333', fontSize: 12, fontWeight: '500' }}>
-                    ({totalReactions})
-                  </Text>
-                </TouchableOpacity>
-              )}
 
-              <View style={{ flexDirection: 'row' }}>
-                {reactionConfig.map(({ type, emoji }, index) => (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => reactionSheetRef.current?.open(post?.forum_id, 'All')}
-                    activeOpacity={0.8}
-                    style={{
-                      marginLeft: index === 0 ? 0 : -10,
-                      backgroundColor: '#fff',
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: '#f0f0f0',
-                      padding: 4,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ fontSize: 10 }}>{emoji}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View> */}
           </View>
 
 
@@ -822,9 +784,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 15,
-    paddingHorizontal: 16,
-
+    marginBottom: 5,
+    marginHorizontal: 10,
 
   },
   headerContainer1: {
@@ -918,9 +879,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between', // Space out the icons
-    marginVertical: 15,
-    paddingHorizontal: 10
-    // borderWidth:1,
+    paddingVertical: 10,
+    marginHorizontal: 10,
+
 
   },
 
@@ -1150,7 +1111,21 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: '#666',
   },
-
+  reactionButton: {
+    padding: 8,
+    margin: 4,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc'
+  },
+  reactionContainer: {
+    position: 'absolute',
+   
+    left: 0,
+    borderRadius: 40,
+    flexDirection: 'row',
+  },
 });
 
 export default CommentScreen; 

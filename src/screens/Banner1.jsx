@@ -1,190 +1,160 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
+  FlatList,
+  Dimensions,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  Animated,
-  Linking,
+  Linking
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
+import FastImage from 'react-native-fast-image';
 import apiClient from './ApiClient';
 
-const windowWidth = Dimensions.get('window').width;
+const { width } = Dimensions.get('window');
+const MARGIN = 4;
+const ITEM_WIDTH = width - 2 * MARGIN;
 
-const Banner01 = ({ isVisible }) => {
+const BannerCarousel = () => {
   const [banners, setBanners] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [slideAnim] = useState(new Animated.Value(0));
-  const timeoutRef = useRef(null);
-  const [error, setError] = useState(null);
+  const flatListRef = useRef(null);
+  const currentIndexRef = useRef(0);
 
-  const fetchHomeBannerImages = useCallback(async () => {
+  const fetchBanners = useCallback(async () => {
     try {
       const response = await apiClient.post('/getBannerImages', {
         command: 'getBannerImages',
-        banners_id: '00000',
+        banners_id: 'ban01',
       });
 
       if (response.data.status === 'success') {
-        const bannerHomeData = response.data.response;
-        const bannerItems = [];
+        
+        const data = [];
+        for (const banner of response.data.response || []) {
+          for (const file of banner.files || []) {
+            
+            const { fileKey, redirect } = file;
+            const res = await apiClient.post('/getObjectSignedUrl', {
+              command: 'getObjectSignedUrl',
+              bucket_name: 'bme-app-admin-data',
+              key: fileKey,
+            });
 
-        for (const banner of bannerHomeData) {
-          if (banner.files?.length > 0) {
-            for (const file of banner.files) {
-              const { fileKey, redirect } = file;
-              try {
-                const res = await apiClient.post('/getObjectSignedUrl', {
-                  command: 'getObjectSignedUrl',
-                  bucket_name: 'bme-app-admin-data',
-                  key: fileKey,
-                });
-
-                const signedUrl = res.data;
-
-                if (signedUrl) {
-                  const type = fileKey.endsWith('.mp4') ? 'video' : 'image';
-                  bannerItems.push({
-                    url: signedUrl,
-                    type,
-                    redirect: redirect?.target_url || null,
-                  });
-                }
-              } catch (err) {
-                console.warn(`Error fetching URL for ${fileKey}:`, err);
-              }
+            const url = res.data;
+            if (url) {
+              const type = fileKey.endsWith('.mp4') ? 'video' : 'image';
+              data.push({ url, type, redirect: redirect?.target_url || null });
             }
           }
         }
 
-        setBanners(bannerItems);
+        setBanners(data);
       }
     } catch (err) {
-      console.error('Error fetching banner data:', err);
-      setError(err);
+      console.error('Failed to fetch banners:', err);
     }
   }, []);
 
   useEffect(() => {
-    fetchHomeBannerImages();
-  }, [fetchHomeBannerImages]);
+    fetchBanners();
+  }, [fetchBanners]);
 
   useEffect(() => {
-    if (isVisible) {
-      Animated.timing(slideAnim, {
-        toValue: -currentIndex * windowWidth,
-        duration: 800,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [currentIndex, isVisible]);
+    const interval = setInterval(() => {
+      if (banners.length === 0) return;
+      currentIndexRef.current = (currentIndexRef.current + 1) % banners.length;
+      flatListRef.current?.scrollToIndex({
+        index: currentIndexRef.current,
+        animated: true,
+      });
+    }, 3000);
 
-  useEffect(() => {
-    if (!isVisible || banners.length === 0) return;
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    const currentBanner = banners[currentIndex];
-    const delay = currentBanner.type === 'video' ? 10000 : 3000;
-
-    timeoutRef.current = setTimeout(() => {
-      goToNext();
-    }, delay);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [currentIndex, banners, isVisible]);
-
-  const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % banners.length);
-  };
+    return () => clearInterval(interval);
+  }, [banners]);
 
   const handleRedirect = (url) => {
-    if (url && typeof url === 'string') {
-      if (!url.startsWith('http')) {
-        url = 'https://' + url;
-      }
+    if (url) {
+      if (!url.startsWith('http')) url = 'https://' + url;
       Linking.openURL(url).catch((err) =>
         console.warn('Failed to open URL:', err)
       );
     }
   };
 
-  if (error || banners.length === 0) return null;
-
-  return (
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       activeOpacity={1}
-      onPress={() => handleRedirect(banners[currentIndex]?.redirect)}
-      style={styles.carouselContainer}
+      onPress={() => handleRedirect(item.redirect)}
+      style={styles.slide}
     >
-      <View style={styles.imageContainer}>
-        <Animated.View
-          style={[
-            styles.imageRow,
-            { transform: [{ translateX: slideAnim }] },
-          ]}
-        >
-          {banners.map((item, index) => (
-            <View key={index} style={styles.bannerSlide}>
-              {item.type === 'image' ? (
-                <FastImage
-                  source={{ uri: item.url }}
-                  style={styles.media}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Video
-                  key={currentIndex === index ? `video-${index}-${Date.now()}` : `video-${index}`}
-                  source={{ uri: item.url }}
-                  style={styles.media}
-                  resizeMode="cover"
-                  repeat
-                  
-                  paused={!isVisible || currentIndex !== index}
-                />
-              )}
-            </View>
-          ))}
-        </Animated.View>
-      </View>
+      {item.type === 'video' ? (
+        <Video
+          source={{ uri: item.url }}
+          style={styles.media}
+          resizeMode="cover"
+          repeat
+          muted
+        />
+      ) : (
+        <FastImage
+          source={{ uri: item.url }}
+          style={styles.media}
+          resizeMode="cover"
+        />
+      )}
     </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.carouselContainer}>
+      <FlatList
+        ref={flatListRef}
+        data={banners}
+        renderItem={renderItem}
+        keyExtractor={(_, index) => index.toString()}
+        horizontal
+        pagingEnabled
+        snapToInterval={ITEM_WIDTH + 2 * MARGIN}
+        decelerationRate="fast"
+        showsHorizontalScrollIndicator={false}
+        getItemLayout={(_, index) => ({
+          length: ITEM_WIDTH + 2 * MARGIN,
+          offset: (ITEM_WIDTH + 2 * MARGIN) * index,
+          index,
+        })}
+        onMomentumScrollEnd={(e) => {
+          const offsetX = e.nativeEvent.contentOffset.x;
+          const index = Math.round(offsetX / (ITEM_WIDTH + 2 * MARGIN));
+          currentIndexRef.current = index;
+        }}
+      />
+
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   carouselContainer: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  imageContainer: {
-    flex: 1,
-    flexDirection: 'row',
     height: 216,
-    width: windowWidth,
     alignSelf: 'center',
- 
-  },
-  imageRow: {
-    flexDirection: 'row',
-    height: 216,
-    width: windowWidth * 10,
-    backgroundColor: '#DDDDDD',
-  },
-  bannerSlide: {
-    width: windowWidth,
-    height: 216,
-
+    borderRadius: 14,
     overflow: 'hidden',
+  },
+  
+  slide: {
+    width: ITEM_WIDTH,
+    height: 216,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginHorizontal: MARGIN,
   },
   media: {
     width: '100%',
     height: '100%',
-
+    borderRadius: 14,
+    
   },
 });
 
-export default Banner01;
+
+export default BannerCarousel;

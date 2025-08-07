@@ -1,182 +1,132 @@
-import axios from 'axios';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Dimensions, PanResponder, Text, Animated } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
 import apiClient from './ApiClient';
 
-
+const { width } = Dimensions.get('window');
+const MARGIN = 4;
+const ITEM_WIDTH = width - 2 * MARGIN; // = width - 8
 
 const Banner03 = () => {
   const [bannerHomeImages, setBannerHomeImages] = useState([]);
-  const [error, setError] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const swipeThreshold = 40; // Minimum swipe distance to change slides
-  const [isFetchingBanner3, setIsFetchingBanner3] = useState(true);
+  const [isFetching, setIsFetching] = useState(true);
+  const flatListRef = useRef(null);
+  const currentIndexRef = useRef(0);
 
-  const fetchHomeBannerImages = useCallback(async () => {
-    setIsFetchingBanner3(true);
+  const fetchImages = useCallback(async () => {
+    setIsFetching(true);
     try {
       const response = await apiClient.post('/getBannerImages', {
         command: 'getBannerImages',
-        banners_id: '12121',
+        banners_id: 'adban02',
       });
 
       if (response.data.status === 'success') {
-        const bannerHomeData = response.data.response;
-        const urlsObject = {};
+        const banners = response.data.response;
+        const urls = [];
 
-        await Promise.all(
-          bannerHomeData.map(async (banner) => {
-            if (banner.files?.length > 0) {
-              await Promise.all(
-                banner.files.map(async (fileKey) => {
-                  try {
-                    const res = await apiClient.post('/getObjectSignedUrl', {
-                      command: 'getObjectSignedUrl',
-                      bucket_name: 'bme-app-admin-data',
-                      key: fileKey,
-                    });
+        for (const banner of banners) {
+          for (const fileKey of banner.files || []) {
+            
+            try {
+              const res = await apiClient.post('/getObjectSignedUrl', {
+                command: 'getObjectSignedUrl',
+                bucket_name: 'bme-app-admin-data',
+                key: fileKey,
+              });
 
-                    const img_url = res.data;
-                    if (img_url) {
-                      urlsObject[fileKey] = img_url;
-                    }
-                  } catch {
-                    // Handle individual file fetch errors silently
-                  }
-                })
-              );
-            }
-          })
-        );
+              if (res.data) {
+                urls.push(res.data);
+              }
+            } catch {}
+          }
+        }
 
-        setBannerHomeImages(Object.values(urlsObject));
+        setBannerHomeImages(urls);
       }
-    } catch (error) {
-      setError(error);
+    } catch (err) {
+      console.error('Error fetching images:', err);
     }
-    setIsFetchingBanner3(false);
-
+    setIsFetching(false);
   }, []);
 
   useEffect(() => {
-    fetchHomeBannerImages();
-  }, [fetchHomeBannerImages]);
+    fetchImages();
+  }, [fetchImages]);
 
-  // const [currentIndex, setCurrentIndex] = useState(0);
-  const windowWidth = Dimensions.get('window').width;
-  const [slideAnim] = useState(new Animated.Value(0)); // Animated value for sliding
-
-
-  // Auto sliding effect every 3 seconds
+  // Auto-slide logic
   useEffect(() => {
-    if (bannerHomeImages.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerHomeImages.length);
-      }, 2000);
+    if (!bannerHomeImages.length) return;
 
-      return () => clearInterval(interval);
-    }
+    const interval = setInterval(() => {
+      currentIndexRef.current =
+        (currentIndexRef.current + 1) % bannerHomeImages.length;
+
+      flatListRef.current?.scrollToIndex({
+        index: currentIndexRef.current,
+        animated: true,
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [bannerHomeImages]);
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: -currentIndex * windowWidth, // Slide to the new index
-      duration: 800, // Duration of the slide
-      useNativeDriver: true, // Use native driver for better performance
-    }).start();
-  }, [currentIndex, slideAnim, windowWidth]);
 
-  // Handle swipe gestures
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => false, // Allow default behavior initially
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Only activate the responder if the swipe is primarily horizontal
-      return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      if (gestureState.dx > swipeThreshold) {
-        setCurrentIndex((prevIndex) => (prevIndex === 0 ? bannerHomeImages.length - 1 : prevIndex - 1));
-      } else if (gestureState.dx < -swipeThreshold) {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerHomeImages.length);
-      }
-    },
-  });
+  const renderItem = ({ item }) => (
+    <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+  );
 
-  if (error) {
-    return (
-
-      null
-
-    );
-  }
+  // if (isFetching) {
+  //   return <ActivityIndicator style={{ marginTop: 30 }} size="large" color="#000" />;
+  // }
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      style={styles.carouselContainer}{...panResponder.panHandlers}>
-      <View style={styles.imageContainer}>
-        <Animated.View
-          style={[
-            styles.imageContainer1,
-            {
-              transform: [{ translateX: slideAnim }],
-            },
-          ]}
-        >
-          {bannerHomeImages.map((image, index) => (
-            <Image
-              key={index}
-              source={{ uri: image }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          ))}
-        </Animated.View>
-      </View>
+    <View style={styles.container}>
+<FlatList
+  ref={flatListRef}
+  data={bannerHomeImages}
+  renderItem={renderItem}
+  keyExtractor={(_, index) => index.toString()}
+  horizontal
+  pagingEnabled
+  snapToInterval={ITEM_WIDTH + 2 * MARGIN}
+  decelerationRate="fast"
+  showsHorizontalScrollIndicator={false}
+  getItemLayout={(_, index) => ({
+    length: ITEM_WIDTH + 2 * MARGIN,
+    offset: (ITEM_WIDTH + 2 * MARGIN) * index,
+    index,
+  })}
+  onMomentumScrollEnd={(e) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / (ITEM_WIDTH + 2 * MARGIN));
+    currentIndexRef.current = index;
+  }}
+/>
 
-    </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  carouselContainer: {
-    flex: 1,
+  container: {
+    height: 200,
+    borderRadius: 14,
     overflow: 'hidden',
-
+    marginHorizontal: MARGIN,
   },
-
-  imageContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 200,
-    width: Dimensions.get('window').width - 8,
-    gap: 8,
-    resizeMode: 'contain',
-    alignSelf: 'center',
-    borderRadius: 14,
-  },
-
-  imageContainer1: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 200,
-    width: '100%',
-    gap: 8,
-    resizeMode: 'contain',
-    alignSelf: 'center',
-    borderRadius: 14,
-
-
-  },
-
-  image: {
-    width: '100%',
-    height: "100%",
-    flexx: 1,
-    borderRadius: 14,
-  },
-
+image: {
+  width: ITEM_WIDTH,
+  height: 200,
+  borderRadius: 14,
+  marginHorizontal: MARGIN,
+},
 
 });
-
 
 export default Banner03;

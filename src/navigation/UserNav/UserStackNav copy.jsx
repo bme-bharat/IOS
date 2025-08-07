@@ -20,7 +20,6 @@ import ForumEditScreen from '../../screens/Forum/ForumEditScreen';
 import YourForumListScreen from '../../screens/Forum/myForums';
 import CommentScreen from '../../screens/Forum/forumPostDetails';
 import ForumPostScreen from '../../screens/Forum/ForumPost';
-import ForumPostScreenCopy from '../../screens/Forum/ForumPostCopy';
 
 // Profile related screens
 import UserProfilescreen from '../../screens/Profile/UserProfilescreen';
@@ -98,7 +97,6 @@ function UserStackNav() {
       <MainStack.Screen name="YourForumList" component={YourForumListScreen} />
       <MainStack.Screen name="Comment" component={CommentScreen} />
       <MainStack.Screen name="ForumPost" component={ForumPostScreen} />
-      <MainStack.Screen name="ForumPostCopy" component={ForumPostScreenCopy} />
       <MainStack.Screen name="UserProfile" component={UserProfilescreen} />
       <MainStack.Screen name="UserProfileUpdate" component={UserProfileUpdateScreen} />
       <MainStack.Screen name="BlockedUsers" component={BlockedUsers} />

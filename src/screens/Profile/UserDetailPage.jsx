@@ -435,7 +435,7 @@ const UserDetailsPage = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).replace(/ /g, '/');
+    }).replace(/ /g, '-');
 
     // Define video file extensions
     const videoExtensions = ['mp4', 'mov', 'quicktime', 'avi', 'flv', 'wmv', 'mkv', 'webm', 'mpeg'];
@@ -485,7 +485,7 @@ const UserDetailsPage = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).replace(/ /g, '/');
+    }).replace(/ /g, '-');
 
     const videoExtensions = ['.mp4', '.mov', '.quicktime', '.avi', '.flv', '.wmv', '.mkv', '.webm', '.mpeg'];
 

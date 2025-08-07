@@ -11,7 +11,7 @@ import apiClient from '../ApiClient';
 import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 

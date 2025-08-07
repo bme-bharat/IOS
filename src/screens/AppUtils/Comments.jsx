@@ -21,7 +21,7 @@ const defaultImageUriMale = Image.resolveAssetSource(maleImage).uri;
 
 const CommentsSection = forwardRef(({ forum_id, currentUserId, onEditComment, highlightCommentId }, ref) => {
     const profile = useSelector(state => state.CompanyProfile.profile);
-    console.log('profile',profile)
+    console.log('profile', profile)
     const navigation = useNavigation();
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -342,6 +342,14 @@ const CommentsSection = forwardRef(({ forum_id, currentUserId, onEditComment, hi
         }, 300);
     };
 
+    const [expandedComments, setExpandedComments] = useState({});
+    const toggleExpand = (commentId) => {
+        setExpandedComments((prev) => ({
+            ...prev,
+            [commentId]: !prev[commentId],
+        }));
+    };
+
     const renderComment = ({ item }) => {
         const imageUrl = item.signedUrl;
         const isNotAdmin = item.user_type !== "BME_ADMIN";
@@ -459,7 +467,22 @@ const CommentsSection = forwardRef(({ forum_id, currentUserId, onEditComment, hi
 
                             </View>
 
-                            <Text style={styles.commentText}>{item.text?.trim()}</Text>
+                            {item.text && (
+                                <>
+                                    <Text style={styles.commentText} numberOfLines={expandedComments[item.comment_id] ? undefined : 3}>
+                                        {item.text.trim()}
+                                    </Text>
+
+                                    {item.text.trim().length > 100 && ( // Optional threshold
+                                        <TouchableOpacity onPress={() => toggleExpand(item.comment_id)}>
+                                            <Text style={styles.readMoreText}>
+                                                {expandedComments[item.comment_id] ? 'Read Less' : 'Read More'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </>
+                            )}
+
 
                         </View>
 
@@ -575,7 +598,7 @@ const styles = StyleSheet.create({
     timestampText: {
         color: '#666',
         fontSize: 13,
-        fontWeight:"300",
+        fontWeight: "300",
         maxWidth: '30%',
         textAlign: 'right',
         marginLeft: 20,
@@ -593,11 +616,17 @@ const styles = StyleSheet.create({
     commentText: {
         marginTop: 2,
         fontSize: 15,
-        lineHeight:'20',
+        lineHeight: '20',
         paddingHorizontal: 2,
-color:"#333"
+        color: "#333"
     },
 
+    readMoreText: {
+        color: '#075cab',
+        fontWeight: '500',
+        marginTop: 4,
+    },
+    
     buttonContainer: {
         flexDirection: 'row',
         position: "absolute",

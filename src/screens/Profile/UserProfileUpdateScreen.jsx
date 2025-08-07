@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Image, StyleSheet, TouchableOpacity, Text, ScrollView, TextInput, Alert, View, Modal, Platform, Pressable, SafeAreaView, ActivityIndicator, ActionSheetIOS, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, Text, ScrollView, TextInput, Alert, View, Modal, Platform, Pressable, SafeAreaView, ActivityIndicator, ActionSheetIOS, KeyboardAvoidingView, TouchableWithoutFeedback, Linking } from 'react-native';
 import axios from 'axios';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
@@ -25,11 +25,14 @@ import { useDispatch } from 'react-redux';
 import { updateCompanyProfile } from '../Redux/MyProfile/CompanyProfile_Actions';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { launchCamera } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
+import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
 
 
+const defautImage = Image.resolveAssetSource(defaultImage).uri;
 
 const UserProfileUpdateScreen = () => {
   const navigation = useNavigation();
@@ -54,6 +57,9 @@ const UserProfileUpdateScreen = () => {
   const [selectedProfile, setSelectedProfile] = useState(profile.select_your_profile || "");
   const [selectedCategory, setSelectedCategory] = useState(profile.category || "");
   const [availableCategories, setAvailableCategories] = useState([]);
+  const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState('');
+
 
   useEffect(() => {
     if (selectedProfile) {
@@ -89,7 +95,7 @@ const UserProfileUpdateScreen = () => {
   const handleCategorySelect = (item) => {
     console.log('Selected Category:', item);
     setSelectedCategory(item.label); // store only the label string
-    setHasChanges(true); 
+    setHasChanges(true);
   };
 
 
@@ -147,14 +153,14 @@ const UserProfileUpdateScreen = () => {
       last_name: profile.last_name || '',
       state: profile.state || '',
       select_your_profile: profile.select_your_profile || "",
-      category: profile.category || ""
+      category: selectedCategory || ""
     };
 
     const hasAnyChanges = Object.keys(initialPostData).some(
       (key) => postData[key] !== initialPostData[key]
     ) || isImageChanged;
     setHasChanges(hasAnyChanges);
-  }, [postData, profile, isImageChanged, selectedProfile, selectedCategory]);
+  }, [postData, profile, isImageChanged, selectedCategory]);
 
   const hasUnsavedChanges = Boolean(hasChanges);
   const [pendingAction, setPendingAction] = React.useState(null);
@@ -189,7 +195,6 @@ const UserProfileUpdateScreen = () => {
 
 
 
-  const [isModalVisiblephone, setModalVisiblePhone] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(""); // Phone number state
   const [countryCode, setCountryCode] = useState("+91"); // Default country code
   const [isOTPVerified, setIsOTPVerified] = useState(false); // OTP verified flag
@@ -468,7 +473,6 @@ const UserProfileUpdateScreen = () => {
 
   const [imageUri, setImageUri] = useState(null);
   const [fileUri, setFileUri] = useState(null);
-  const [fileType, setFileType] = useState('');
   const [fileKey, setFileKey] = useState(null);
   const [isMediaSelection, setIsMediaSelection] = useState(false);
 
@@ -524,7 +528,7 @@ const UserProfileUpdateScreen = () => {
         const uri = image.path;
         setImageUri(uri);
         setFileUri(uri);
-        setIsMediaSelection(false);
+
         setFileType(image.mime);
         setIsImageChanged(true);
 
@@ -590,7 +594,6 @@ const UserProfileUpdateScreen = () => {
   };
 
 
-
   const openGallery = () => {
     ImagePicker.openPicker({
       mediaType: 'photo',
@@ -607,21 +610,18 @@ const UserProfileUpdateScreen = () => {
         const uri = image.path;
         setImageUri(uri);
         setFileUri(uri);
-        setIsMediaSelection(false);
         setFileType(image.mime);
         setIsImageChanged(true);
-
 
         ImageResizer.createResizedImage(uri, 800, 600, 'JPEG', 80)
           .then((resizedImage) => {
             const resizedImageSize = resizedImage.size / 1024 / 1024;
 
             if (resizedImage.size > image.size) {
-              return;
+              return; // Don't update if compression made it worse
             }
 
             if (resizedImageSize > 5) {
-
               showToast("Image size shouldn't exceed 5MB", 'error');
               return;
             }
@@ -631,19 +631,36 @@ const UserProfileUpdateScreen = () => {
           })
           .catch((err) => {
             console.error('Image Resizing Error: ', err);
+            showToast("Failed to resize the image", 'error');
           });
       })
       .catch((error) => {
-        if (error.code === 'E_PICKER_CANCELLED') {
-
+        if (error.message?.includes('User did not grant library permission')) {
+          if (Platform.OS === 'ios') {
+            Alert.alert(
+              'Permission Required',
+              'Photo access is needed to select an image. Please enable it in Settings.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Turn On',
+                  onPress: () => {
+                    Linking.openSettings();
+                  },
+                },
+              ]
+            );
+          } else {
+            showToast("Permission denied. Go to settings and enable photo access.", 'error');
+          }
+        } else if (error.code === 'E_PICKER_CANCELLED') {
+          // User canceled, do nothing
         } else {
-
+          showToast(`Media Picker failed: ${error.message || 'Unknown error'}`, 'error');
         }
       });
+
   };
-
-
-
 
 
   async function uriToBlob(uri) {
@@ -804,6 +821,7 @@ const UserProfileUpdateScreen = () => {
       {
         command: "sendUpdateEmailOtp",
         email: postData.user_email_id,
+        mode: "update"
       },
       {
         headers: {
@@ -1083,13 +1101,13 @@ const UserProfileUpdateScreen = () => {
         command: 'getUserDetails',
         user_id: profile.user_id,
       });
-  
+
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
         const fileKey = profileData?.fileKey;
         profileData.fileKey = fileKey;
         let imageUrl = null;
-  
+
         if (fileKey) {
           const res = await apiClient.post('/getObjectSignedUrl', {
             command: 'getObjectSignedUrl',
@@ -1098,18 +1116,18 @@ const UserProfileUpdateScreen = () => {
           imageUrl = res.data;
           profileData.imageUrl = imageUrl;
         }
-  
+
         const authorImagePayload = {
           authorId: profile.user_id,
           newFileKey: fileKey,
           newImageUrl: imageUrl,
         };
-  
+
         dispatch({
           type: 'UPDATE_AUTHOR_IMAGE_FOR_POSTS',
           payload: authorImagePayload,
         });
-  
+
         console.log('Dispatching UPDATE_COMPANY_PROFILE with payload:', profileData);
         dispatch(updateCompanyProfile(profileData));
         return profileData;
@@ -1121,11 +1139,10 @@ const UserProfileUpdateScreen = () => {
     }
   };
 
-  
 
 
 
-
+  const defaultImage = profile?.imageUrl ? localImageUrl : (imageUri || defautImage) ;
 
 
   return (
@@ -1142,21 +1159,14 @@ const UserProfileUpdateScreen = () => {
 
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer}>
 
-          {profile?.imageUrl || localImageUrl || imageUri? (
-            <FastImage
-              source={{ uri: imageUri || localImageUrl, priority: FastImage.priority.normal }}
-              cache="immutable"
-              style={styles.image}
-              resizeMode='contain'
-              onError={() => { }}
-            />
-          ) : (
-            <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-              <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
-                {profile?.companyAvatar?.initials}
-              </Text>
-            </View>
-          )}
+          <FastImage
+            source={{ uri: defaultImage , priority: FastImage.priority.normal }}
+            cache="immutable"
+            style={styles.image}
+            resizeMode='contain'
+            onError={() => { }}
+          />
+
           <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
             <Icon name="camera-enhance" size={22} color="#333" />
           </TouchableOpacity>

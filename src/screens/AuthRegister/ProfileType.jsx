@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import image from '../../images/homepage/logo.jpeg'
 import FastImage from 'react-native-fast-image';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 
 const ProfileSelect = {
   "Biomedical Engineering Company Manufacturer": [

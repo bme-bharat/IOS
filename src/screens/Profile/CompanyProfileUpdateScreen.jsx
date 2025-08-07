@@ -35,11 +35,12 @@ import { updateCompanyProfile } from '../Redux/MyProfile/CompanyProfile_Actions'
 import { useDispatch, useSelector } from 'react-redux';
 import default_image from '../../images/homepage/buliding.jpg';
 import { showToast } from '../AppUtils/CustomToast';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import apiClient from '../ApiClient';
 import FastImage from 'react-native-fast-image';
 import CustomDropdown from '../../components/CustomDropDown';
 
+const resolvedDefaultImage = Image.resolveAssetSource(default_image).uri;
 
 const CompanyUserSignupScreen = () => {
   const { jobPosts: jobs } = useSelector(state => state.jobs);
@@ -51,6 +52,7 @@ const CompanyUserSignupScreen = () => {
   const route = useRoute();
   const { profile, imageUrl } = route.params;
 
+  const [localImageUrl, setLocalImageUrl] = useState(imageUrl)
   const [imageUri, setImageUri] = useState(null);
   const [fileUri, setFileUri] = useState(null);
   const [fileType, setFileType] = useState('');
@@ -81,11 +83,9 @@ const CompanyUserSignupScreen = () => {
   const intervalRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [isImageChanged, setIsImageChanged] = useState(false);
-  const resolvedDefaultImage = Image.resolveAssetSource(default_image).uri;
   const [selectedProfile, setSelectedProfile] = useState(profile?.select_your_profile || "");
   const [selectedCategory, setSelectedCategory] = useState(profile?.category || "");
 
-  const [availableCategories, setAvailableCategories] = useState([]);
 
   useEffect(() => {
     if (selectedProfile) {
@@ -101,18 +101,6 @@ const CompanyUserSignupScreen = () => {
     }
   }, [selectedProfile]);
 
-
-  const handleProfileSelect = (item) => {
-    console.log('Selected Profile:', item);
-    setSelectedProfile(item.label); // store only the label string
-    setHasChanges(true);
-  };
-
-  const handleCategorySelect = (item) => {
-    console.log('Selected Category:', item);
-    setSelectedCategory(item.label); // store only the label string
-    setHasChanges(true);
-  };
 
   const inputRefs = useRef([]);
   // Generic focus function for any field
@@ -143,16 +131,6 @@ const CompanyUserSignupScreen = () => {
   };
 
 
-
-
-
-
-  const [messageModal, setMessageModal] = React.useState({
-    visible: false,
-    title: '',
-    message: '',
-    iconType: '',
-  });
 
   const sendOTPHandle = () => {
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
@@ -365,7 +343,9 @@ const CompanyUserSignupScreen = () => {
     company_address: profile.company_address || "",
     company_description: profile.company_description || "",
     fileKey: profile.fileKey || null,
-    brochureKey: profile.brochureKey || ""
+    brochureKey: profile.brochureKey || "",
+    select_your_profile: profile.select_your_profile,
+    category: profile.category,
 
   });
 
@@ -390,8 +370,8 @@ const CompanyUserSignupScreen = () => {
       company_description: profile.company_description || "",
       fileKey: profile.fileKey || null,
       brochureKey: profile.brochureKey || "",
-      select_your_profile: profile.select_your_profile,
-      category: profile.category,
+      select_your_profile: selectedProfile,
+      category: selectedCategory,
     };
 
     const hasAnyChanges =
@@ -407,9 +387,9 @@ const CompanyUserSignupScreen = () => {
       }) || isImageChanged;
 
     setHasChanges(hasAnyChanges);
-  }, [postData, profile, isImageChanged]);
+  }, [postData, profile, isImageChanged, selectedCategory]);
 
-
+  console.log('hasAnyChanges', hasChanges)
   const hasUnsavedChanges = Boolean(hasChanges);
   const [pendingAction, setPendingAction] = React.useState(null);
 
@@ -482,10 +462,11 @@ const CompanyUserSignupScreen = () => {
     setLoading(true);
 
     const otpResponse = await apiClient.post(
-      "/sendEmailOtp",
+      "/sendUpdateEmailOtp",
       {
         command: "sendUpdateEmailOtp",
         email: postData.company_email_id,
+        mode: "update"
       },
       {
         headers: {
@@ -726,7 +707,7 @@ const CompanyUserSignupScreen = () => {
 
       if (deleteResult) {
         setImageUri(null);
-
+        setLocalImageUrl(null)
         setPostData(prevState => {
           const newState = {
             ...prevState,
@@ -792,10 +773,17 @@ const CompanyUserSignupScreen = () => {
           });
       })
       .catch((error) => {
-        if (error.code !== 'E_PICKER_CANCELLED') {
+        console.error('Image Picker Error:', error);
 
+        if (error.message?.includes('User did not grant library permission')) {
+          showToast("Permission denied. Go to settings and enable photo access.", 'error');
+        } else if (error.code === 'E_PICKER_CANCELLED') {
+          // User canceled, do nothing
+        } else {
+          showToast(`Media Picker failed: ${error.message || 'Unknown error'}`, 'error');
         }
       });
+
   };
 
 
@@ -1070,8 +1058,6 @@ const CompanyUserSignupScreen = () => {
       const imageFileKey = imageUri ? await handleUploadImage(imageUri, fileType) : postData.fileKey;
       const documentFileKey = postData.brochureKey || "";
 
-      setHasChanges(false);
-
       const payload = {
         command: "updateCompanyProfile",
         company_id: profile.company_id,
@@ -1217,6 +1203,7 @@ const CompanyUserSignupScreen = () => {
   };
 
 
+  const defaultImage = profile?.imageUrl ? localImageUrl : (imageUri || resolvedDefaultImage);
 
 
 
@@ -1254,21 +1241,15 @@ const CompanyUserSignupScreen = () => {
                   <Text style={styles.header}>Edit your profile</Text>
 
                   <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer}>
-                    {imageUri || postData.fileKey ? (
-                      <FastImage
-                        source={{ uri: imageUri || imageUrl, priority: FastImage.priority.normal }}
-                        cache="immutable"
-                        style={styles.image}
-                        resizeMode='contain'
-                        onError={() => { }}
-                      />
-                    ) : (
-                      <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-                        <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
-                          {profile?.companyAvatar?.initials}
-                        </Text>
-                      </View>
-                    )}
+
+                    <FastImage
+                      source={{ uri: defaultImage || (imageUri || resolvedDefaultImage), priority: FastImage.priority.normal }}
+                      cache="immutable"
+                      style={styles.image}
+                      resizeMode='cover'
+                      onError={() => { }}
+                    />
+
                     <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
                       <Icon name="camera-enhance" size={22} color="#333" />
                     </TouchableOpacity>
@@ -1278,7 +1259,7 @@ const CompanyUserSignupScreen = () => {
 
             case 'formInputs':
               return (
-                <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 15, paddingBottom: '20%' }}>
+                <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 10, paddingBottom: '20%' }}>
                   {[
                     {
                       placeholder: 'Company name',
@@ -1371,7 +1352,7 @@ const CompanyUserSignupScreen = () => {
                     }}
                     selectedItem={selectedProfile}
                     setSelectedItem={setSelectedProfile}
-                    placeholder={selectedProfile || "Select Profile Type"}
+                    placeholder={selectedProfile || "Select profile type"}
                     buttonStyle={styles.dropdownButton}
                     buttonTextStyle={styles.dropdownButtonText}
                     placeholderTextColor="gray"
@@ -1381,7 +1362,7 @@ const CompanyUserSignupScreen = () => {
 
                   {selectedProfile && (
                     <>
-                      <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Category <Text style={{ color: 'red' }}>*</Text></Text>
+                      <Text style={[styles.label]}>Category <Text style={{ color: 'red' }}>*</Text></Text>
 
                       <CustomDropdown
                         label="Category"
@@ -1391,6 +1372,7 @@ const CompanyUserSignupScreen = () => {
                         onSelect={setSelectedCategory}
                         selectedItem={selectedCategory}
                         setSelectedItem={setSelectedCategory}
+
                         buttonStyle={styles.dropdownButton}
                         buttonTextStyle={styles.dropdownButtonText}
                         placeholderTextColor="gray"
@@ -1399,7 +1381,7 @@ const CompanyUserSignupScreen = () => {
 
                     </>
                   )}
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, paddingBottom: 10 }]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
+                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
 
                   <View style={styles.inputContainer}>
                     <TouchableOpacity style={styles.inputWrapper} onPress={() => setModalVisiblePhone(true)}>
@@ -1415,7 +1397,7 @@ const CompanyUserSignupScreen = () => {
                     </TouchableOpacity>
                   </View>
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, paddingBottom: 10 }]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>State <Text style={{ color: 'red' }}>*</Text></Text>
                   <View style={styles.inputContainer}>
                     <CustomDropdown1
                       label="State"
@@ -1426,7 +1408,7 @@ const CompanyUserSignupScreen = () => {
                     />
                   </View>
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, paddingBottom: 10 }]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>City <Text style={{ color: 'red' }}>*</Text></Text>
                   <View style={styles.inputContainer}>
                     <CustomDropdown1
                       label="City"
@@ -1796,12 +1778,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    marginBottom: 10
   },
   dropdownButtonText: {
     fontSize: 16,
@@ -1964,7 +1947,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     minHeight: 50,
-    maxHeight: 150
+    maxHeight: 150,
+    marginBottom: 10,
+
   },
   inputWithButton: {
     flexDirection: 'row',
@@ -2067,10 +2052,9 @@ const styles = StyleSheet.create({
 
   },
   label: {
-    paddingTop: 10,
-    paddingBottom: 10,
+    marginBottom: 10,
     fontSize: 15,
-    fontWeight: '500'
+    fontWeight: '500',
   },
 
   dropdownItemText: {

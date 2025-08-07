@@ -12,8 +12,8 @@ import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import AppStyles from '../../assets/AppStyles';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import AppStyles from '../AppUtils/AppStyles';
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 const JobDetailScreen = ({ route }) => {
@@ -548,7 +548,7 @@ const JobDetailScreen = ({ route }) => {
                       const month = String(date.getMonth() + 1).padStart(2, '0');
                       const year = String(date.getFullYear());
 
-                      return `${day}/${month}/${year}`;
+                      return `${day}-${month}-${year}`;
                     })()
                     : ''
                 }

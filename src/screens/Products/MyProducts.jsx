@@ -34,6 +34,7 @@ const MyProducts = () => {
     const { myId, myData } = useNetwork();
  
     const [products, setProducts] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [signedUrls, setSignedUrls] = useState({});
     const navigation = useNavigation();

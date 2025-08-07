@@ -2,7 +2,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Dimensions, View, Text, StyleSheet,
-  TouchableWithoutFeedback, Keyboard, FlatList,
+  TouchableWithoutFeedback, FlatList,
   TouchableOpacity,
   ActivityIndicator,
   Pressable,
@@ -10,13 +10,16 @@ import {
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
-  runOnJS, useAnimatedReaction, interpolate, Extrapolation
+  runOnJS, useAnimatedReaction, interpolate, Extrapolation,
+  configureReanimatedLogger,
+  ReanimatedLogLevel
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { useForumReactionUsers } from './useForumReactionUsers';
+
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
+import { useForumReactionUsers } from '../Forum/useForumReactions';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.95;
@@ -32,33 +35,51 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
   const [forumId, setForumId] = useState(null);
   const [highlightReactId, setHighlightReactId] = useState(null);
 
-  const { usersByReaction, fetchUsers, loadMoreUsers, getting, lastEvaluatedKey, resetUsers } =
-    useForumReactionUsers(forumId);
+  const { usersByReaction, fetchUsers,
+    availableReactions, resetUsers,
+    getting,
+    gettingMore,
+    hasMore
+  } = useForumReactionUsers(forumId);
 
-  const reactionCounts = useMemo(() => {
-    const counts = {};
-    usersByReaction.forEach(item => {
-      counts[item.reaction_type] = (counts[item.reaction_type] || 0) + 1;
-    });
-    return counts;
-  }, [usersByReaction]);
+  const [availableLabels, setAvailableLabels] = useState([]);
 
-  const availableReactions = useMemo(() => {
-    return [
-      { type: 'Like', emoji: '👍', color: '#1e88e5', label: 'Like' },
-      { type: 'Insightful', emoji: '💡', color: '#fbc02d', label: 'Insightful' },
-      { type: 'Support', emoji: '🤝', color: '#43a047', label: 'Support' },
-      { type: 'Funny', emoji: '😂', color: '#fdd835', label: 'Funny' },
-      { type: 'Thanks', emoji: '🙏', color: '#e53935', label: 'Thanks' },
-    ].filter(reaction => reactionCounts[reaction.type] > 0);
-  }, [reactionCounts]);
+  configureReanimatedLogger({
+    level: ReanimatedLogLevel.warn,
+    strict: true, // Reanimated runs in strict mode by default
+  });
+
+
+  useEffect(() => {
+    if (!availableReactions) return;
+
+    const dynamicTabs = [
+      {
+        type: 'All',
+        emoji: '💬',
+        label: 'All',
+        count: availableReactions.All || 0,
+      },
+    ];
+
+    for (const config of reactionConfig) {
+      if (config.type === 'All') continue;
+
+      const count = availableReactions[config.type];
+      if (count > 0) {
+        dynamicTabs.push({
+          ...config,
+          count,
+        });
+      }
+    }
+
+    setAvailableLabels(dynamicTabs);
+  }, [availableReactions]);
+
 
   const flatListRef = useRef(null);
   const prevIsActive = useRef(false);
-
-  const closeKeyboard = () => {
-    Keyboard.dismiss();
-  };
 
   const updatePrevIsActive = (val) => {
     prevIsActive.current = val;
@@ -68,12 +89,6 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
     'worklet';
     const clamped = Math.max(destination, MAX_TRANSLATE_Y);
     const shouldClose = clamped === 0;
-
-    if (shouldClose) {
-      runOnJS(closeKeyboard)();
-    }
-
-    const wasActive = isActive.value;
     isActive.value = !shouldClose;
     runOnJS(setActive)(!shouldClose);
 
@@ -108,15 +123,17 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
     setForumId(null);
     setReactionType('All');
     setHighlightReactId(null);
-    resetUsers(); // 👈 expose this from useForumReactionUsers if needed
+    resetUsers();
   };
 
 
+
   useImperativeHandle(ref, () => ({
-    open: (forumIdParam, type = 'All', highlightId = null) => {
+    open: (forumIdParam, type = 'All', highlightId = null,) => {
       setForumId(forumIdParam);
       setReactionType(type);
-      setHighlightReactId(highlightId); // <== store it
+
+      setHighlightReactId(highlightId);
       scrollTo(MAX_TRANSLATE_Y);
       fetchUsers(type, highlightId);
     },
@@ -137,19 +154,6 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
       highlightedFlash.value = 0;
     }, 600); // reset after animation time
   }, [highlightReactId, usersByReaction]);
-
-  const highlightAfterOpen = () => {
-    if (!highlightReactId || usersByReaction.length === 0) return;
-
-    // Flash animation
-    highlightedFlash.value = 1;
-    setTimeout(() => {
-      highlightedFlash.value = 0;
-    }, 600);
-
-    // Optional: Scroll to item logic if needed
-    // TODO: scroll to item if needed
-  };
 
 
   const gesture = Gesture.Pan()
@@ -217,13 +221,14 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
 
   const ReactionItem = ({ item, isHighlighted, highlightedFlash, onPress, getEmojiForReaction, reactionType }) => {
     const animatedStyle = useAnimatedStyle(() => {
-      const flash = highlightedFlash.value;
+      const flash = highlightedFlash.value; // ✅ safe inside worklet
       return {
         backgroundColor: isHighlighted && flash ? '#e0f0ff' : '#ffffff',
         borderLeftWidth: isHighlighted && flash ? 4 : 0,
         borderLeftColor: isHighlighted && flash ? '#075cab' : 'transparent',
       };
-    }, [highlightedFlash.value]);
+    }, []); // ✅ don't include shared value `.value` in dependency array
+
 
     return (
       <TouchableOpacity onPress={onPress}>
@@ -268,7 +273,7 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
           )}
 
           <View>
-            <Text style={{ fontWeight: '500',fontSize:15,color:'black' }}>{item.author}</Text>
+            <Text style={{ fontWeight: '500', fontSize: 15, color: 'black' }}>{item.author}</Text>
             <Text style={{ fontSize: 12, color: '#555' }}>
               {(reactionType === 'All' || item.reaction_type !== reactionType)
                 ? `${getEmojiForReaction(item.reaction_type).label}  ${getEmojiForReaction(item.reaction_type).emoji}`
@@ -304,57 +309,38 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
           </View>
 
           <View style={styles.divider} />
-          <View style={styles.reactionTabsContainer}>
-            {/* Show "All" tab first with total count */}
-            <TouchableOpacity
-              onPress={() => {
-                setReactionType('All');
-                fetchUsers('All', highlightReactId);
-              }}
-              style={[
-                styles.reactionTab,
-                {
-                  backgroundColor: reactionType === 'All' ? '#e6effa' : '#f5f5f5',
-                  borderColor: reactionType === 'All' ? '#075cab' : '#ddd',
-                },
-              ]}
-            >
-              <Text style={[
-                styles.reactionTabText,
-                { color: reactionType === 'All' ? '#075cab' : '#555' },
-              ]}>
-                💬 All ({usersByReaction.length})
-              </Text>
-            </TouchableOpacity>
 
-            {/* Show available reaction tabs */}
-            {availableReactions.map(({ type, emoji, label }) => {
-              const selected = reactionType === type;
-              return (
+          {availableLabels.length > 0 && (
+            <View style={styles.reactionTabsContainer}>
+              {availableLabels.map((reaction) => (
                 <TouchableOpacity
-                  key={type}
+                  key={reaction.type}
                   onPress={() => {
-                    setReactionType(type);
-                    fetchUsers(type, highlightReactId);
+                    setReactionType(reaction.type);
+
+                    fetchUsers(reaction.type);
                   }}
                   style={[
                     styles.reactionTab,
                     {
-                      backgroundColor: selected ? '#e6effa' : '#f5f5f5',
-                      borderColor: selected ? '#075cab' : '#ddd',
+                      backgroundColor: reactionType === reaction.type ? '#e6effa' : '#f5f5f5',
+                      borderColor: reactionType === reaction.type ? '#075cab' : '#ddd',
                     },
                   ]}
                 >
-                  <Text style={[
-                    styles.reactionTabText,
-                    { color: selected ? '#075cab' : '#555' },
-                  ]}>
-                    {emoji} {label} ({reactionCounts[type] || 0})
+                  <Text
+                    style={[
+                      styles.reactionTabText,
+                      { color: reactionType === reaction.type ? '#075cab' : '#555' },
+                    ]}
+                  >
+                    {reaction.emoji} {reaction.label} ({reaction.count})
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
+              ))}
+            </View>
+          )}
+
 
 
           <View style={styles.divider1} />
@@ -375,18 +361,23 @@ const ReactionSheet = forwardRef(({ onClose }, ref) => {
               ref={flatListRef}
               data={usersByReaction}
               keyExtractor={(item, index) => item.user_id + index}
-              contentContainerStyle={{ paddingHorizontal: 10, marginBottom: 5, }}
+              contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: '55%' }}
               onEndReachedThreshold={0.4}
               onEndReached={() => {
-                if (lastEvaluatedKey && !getting) {
-                  loadMoreUsers();
+                if (!gettingMore && hasMore) {
+                  fetchUsers(reactionType, null, true); // ✅ only use reactionType and loadMore = true
                 }
               }}
-              ListFooterComponent={
-                lastEvaluatedKey && getting ? (
-                  <ActivityIndicator style={{ marginTop: 16 }} color="#075cab" />
-                ) : null
-              }
+
+              ListFooterComponent={() => {
+                if (!gettingMore) return null;
+                return (
+                  <View style={{ padding: 10, alignItems: 'center' }}>
+                    <ActivityIndicator color="#075cab" size="small" />
+                  </View>
+                );
+              }}
+
               renderItem={({ item, index }) => {
                 const isHighlighted = item.reaction_id === highlightReactId;
 
@@ -416,20 +407,21 @@ const styles = StyleSheet.create({
   reactionTabsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 5,
   },
 
   reactionTab: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    padding: 6,
     borderRadius: 20,
-    marginRight: 8,
+    marginRight: 6,
+    margin:2,
   },
 
   reactionTabText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '500',
+    
   },
 
   backdrop: {

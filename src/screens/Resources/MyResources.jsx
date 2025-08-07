@@ -27,7 +27,7 @@ const YourResourcesList = ({ navigation, route }) => {
   const { myId, myData } = useNetwork();
 
   const [allForumPost, setAllForumPost] = useState([]);
-  console.log('allForumPost',allForumPost)
+
   const [imageUrls, setImageUrls] = useState({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
@@ -77,7 +77,6 @@ const YourResourcesList = ({ navigation, route }) => {
       EventRegister.removeEventListener(deleteListener);
     };
   }, []);
-
 
 
 
@@ -306,7 +305,7 @@ const YourResourcesList = ({ navigation, route }) => {
         month: '2-digit',
         year: 'numeric',
       })
-      .replace(/\//g, '/');
+      .replace(/\//g, '-');
 
     const extensionMap = {
       'vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',

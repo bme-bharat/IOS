@@ -4,9 +4,6 @@ import Video from "react-native-video";
 import { useIsFocused } from "@react-navigation/native";
 import { scale } from 'react-native-size-matters';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import maleImage from '../../images/homepage/dummy.png';
-import femaleImage from '../../images/homepage/female.jpg';
-import companyImage from '../../images/homepage/buliding.jpg'
 import FastImage from "react-native-fast-image";
 import ParsedText from "react-native-parsed-text";
 import apiClient from "../ApiClient";
@@ -17,65 +14,36 @@ import Fuse from "fuse.js";
 import { useFileOpener } from "../helperComponents.jsx/fileViewer";
 
 import { useConnection } from "../AppUtils/ConnectionProvider";
-import AppStyles from "../../assets/AppStyles";
-import { getTimeDisplay, getTimeDisplayForum, highlightMatch } from "../helperComponents.jsx/signedUrls";
+import AppStyles from "../AppUtils/AppStyles";
+import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, highlightMatch } from "../helperComponents.jsx/signedUrls";
 import { openMediaViewer } from "../helperComponents.jsx/mediaViewer";
 import { ForumBody, normalizeHtml, } from "../Forum/forumBody";
 import { EventRegister } from "react-native-event-listeners";
+import { generateAvatarFromName } from "../helperComponents.jsx/useInitialsAvatar";
 
 const videoExtensions = [
     '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
     '.m4v', '.3gp', '.3g2', '.f4v', '.f4p', '.f4a', '.f4b', '.qt', '.quicktime'
 ];
-const extensionMap = {
-    'vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-    'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-    'vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-    'application/pdf': 'pdf',
-    'vnd.ms-excel': 'xls',
-    'application/msword': 'doc',
-    'application/vnd.ms-excel': 'xls',
-    'application/vnd.ms-powerpoint': 'ppt',
-    'text/plain': 'txt',
-    'image/webp': 'webp',
-    'sheet': 'xlsx',
-    'presentation': 'pptx',
-    'msword': 'doc',
-    'document': 'docx',
-    'ms-excel': 'xls',
-    'ms-powerpoint': 'ppt',
-    'plain': 'txt',
-};
-const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // or more if needed
 
-const fileIcons = {
-    pdf: 'file-pdf-box',
-    doc: 'file-word-box',
-    docx: 'file-word-box',
-    xls: 'file-excel-box',
-    xlsx: 'file-excel-box',
-    ppt: 'file-powerpoint-box',
-    pptx: 'file-powerpoint-box',
-    txt: 'file-document-outline',
-    jpeg: 'file-image',
-    jpg: 'file-image',
-    png: 'file-image',
-    webp: 'file-image',
-};
+
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const maxAllowedHeight = Math.round(deviceHeight * 0.6);
 
 const ResourcesList = ({ navigation, route }) => {
 
-    const posts = useSelector(state => state.resources.resourcePosts);
     const dispatch = useDispatch();
+    const profile = useSelector(state => state.CompanyProfile.profile);
+    console.log('profile', profile)
     const { isConnected } = useConnection();
     const videoRefs = useRef({});
     const [localPosts, setLocalPosts] = useState([]);
+    console.log('localPosts0', localPosts[0]);
+    console.log('localPosts1', localPosts[1])
+
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const listRef = useRef(null);
-console.log('localPosts',localPosts[0])
     const [activeVideo, setActiveVideo] = useState(null);
     const isFocused = useIsFocused();
     const [lastEvaluatedKey, setLastEvaluatedKey] = useState(null);
@@ -103,7 +71,28 @@ console.log('localPosts',localPosts[0])
             console.log('[onResourcePostCreated] New post received:', newPost);
 
             try {
-                const postWithMedia = await fetchMediaForPost(newPost);
+                const name = profile?.company_name
+                    ? profile.company_name
+                    : `${profile?.first_name || ''} ${profile?.last_name || ''}`;
+                const fileKey = newPost?.fileKey;
+                const resourceId = newPost?.resource_id;
+                const authorFileKey = newPost?.author_fileKey;
+
+                const fileKeySignedUrl = await getSignedUrl(resourceId, fileKey);
+
+                let authorSignedUrl;
+                if (authorFileKey) {
+                    authorSignedUrl = await getSignedUrl(resourceId, authorFileKey);
+                } else {
+                    authorSignedUrl = generateAvatarFromName(name);
+                }
+
+                const postWithMedia = {
+                    ...newPost,
+                    fileKeySignedUrl,
+                    authorSignedUrl,
+                };
+
                 console.log('[onResourcePostCreated] Post with media:', postWithMedia);
 
                 setLocalPosts((prevPosts) => {
@@ -126,6 +115,7 @@ console.log('localPosts',localPosts[0])
             console.log('[onResourcePostCreated] Listener removed');
         };
     }, []);
+
 
     const withTimeout = (promise, timeout = 10000) => {
         return Promise.race([
@@ -167,13 +157,38 @@ console.log('localPosts',localPosts[0])
 
             const postsWithExtras = await Promise.all(
                 sortedNewPosts.map(async (post) => {
-                    const postWithMedia = await fetchMediaForPost(post);
+                    const name = post.author || '';
+                    const fileKey = post?.fileKey;
+                    const resourceId = post?.resource_id;
+                    const authorFileKey = post?.author_fileKey;
+                    const thumbnailFileKey = post?.thumbnail_fileKey;
+                    const mimeType = post?.extraData?.mimeType || post?.extraData?.type || '';
+
+                    // Always fetch main file URL
+                    const fileKeySignedUrl = await getSignedUrl(resourceId, fileKey);
+
+                    // Only fetch thumbnail if it's a video
+                    let thumbnailSignedUrl = null;
+                    if (mimeType.startsWith('video')) {
+                        thumbnailSignedUrl = await getSignedUrl(resourceId, thumbnailFileKey);
+                    }
+
+                    let authorSignedUrl;
+                    if (authorFileKey) {
+                        authorSignedUrl = await getSignedUrl(resourceId, authorFileKey);
+                    } else {
+                        authorSignedUrl = generateAvatarFromName(name);
+                    }
 
                     return {
-                        ...postWithMedia,
+                        ...post,
+                        fileKeySignedUrl,
+                        thumbnailSignedUrl,
+                        authorSignedUrl,
                     };
                 })
             );
+
 
             setLocalPosts(prevPosts => {
                 const uniquePosts = [...prevPosts, ...postsWithExtras].filter(
@@ -202,11 +217,6 @@ console.log('localPosts',localPosts[0])
     ];
 
 
-    const getMappedExtension = (fileKey = '') => {
-        const rawExt = fileKey?.split('.').pop()?.toLowerCase();
-        return extensionMap[rawExt] || rawExt;
-      };
-      
     const fetchMediaForPost = async (post) => {
         const mediaData = { resource_id: post.resource_id };
 
@@ -375,88 +385,162 @@ console.log('localPosts',localPosts[0])
         }
     };
 
+    const getMediaCategory = (mimeType) => {
+        if (!mimeType) return null;
+
+        if (mimeType.startsWith('image/')) return 'image';
+        if (mimeType.startsWith('video/')) return 'video';
+
+        // All other supported document types
+        return 'document';
+    };
+
+    const getFileIcon = (mimeType) => {
+        if (!mimeType) return 'file-document';
+
+        if (mimeType.includes('pdf')) return 'file-pdf-box';
+        if (mimeType.includes('word')) return 'file-word-box';
+        if (mimeType.includes('excel')) return 'file-excel-box';
+        if (mimeType.includes('powerpoint')) return 'file-powerpoint-box';
+
+        return 'file-document-box';
+    };
+
+
+
+
+    const MediaPreview = ({
+        item,
+        handleOpenResume,
+        openMediaViewer,
+        activeVideo,
+        videoRefs,
+        maxAllowedHeight
+    }) => {
+        const mimeType = item.extraData?.mimeType || item.extraData?.type || '';
+        const mediaCategory = getMediaCategory(mimeType);
+        const aspectRatio = item.extraData?.aspectRatio || 1;
+        const height = Math.min(Math.round(deviceWidth / aspectRatio), maxAllowedHeight);
+        const fileUrl = item.fileKeySignedUrl?.[item.resource_id] || '';
+
+        if (mediaCategory === 'document') {
+            return (
+                <TouchableOpacity
+                    style={styles.centeredFileContainer}
+                    onPress={() => handleOpenResume(item.fileKey)}
+                >
+                    <Icon name={getFileIcon(mimeType)} size={50} color="#075cab" />
+                    <Text style={styles.actionText}>View</Text>
+                </TouchableOpacity>
+            );
+        }
+
+        if (mediaCategory === 'video' && fileUrl) {
+            return (
+                <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 5 }}>
+                    <Video
+                        ref={(ref) => {
+                            if (ref) {
+                                videoRefs.current[item.resource_id] = ref;
+                            }
+                        }}
+                        source={{ uri: fileUrl }}
+                        style={{
+                            width: '100%',
+                            height: height,
+                        }}
+                        controls
+                        paused={activeVideo !== item.resource_id}
+                        resizeMode="cover"
+                        poster={item.thumbnailSignedUrl}
+                        repeat
+                        posterResizeMode="cover"
+                        controlTimeout={2000}
+                    />
+                </TouchableOpacity>
+            );
+        }
+
+        if (mediaCategory === 'image' && !item.videoUrl) {
+            return (
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={{ paddingHorizontal: 5 }}
+                    onPress={() => openMediaViewer([{ type: 'image', url: fileUrl }])}
+                >
+                    <FastImage
+                        source={{ uri: fileUrl }}
+                        style={{
+                            width: '100%',
+                            aspectRatio: aspectRatio,
+                        }}
+                    />
+                </TouchableOpacity>
+            );
+        }
+
+        return null;
+    };
+
+
 
     const renderItem = useCallback(({ item }) => {
         let height;
         if (item.extraData?.aspectRatio) {
-          const aspectRatioHeight = Math.round(deviceWidth / item.extraData?.aspectRatio);
-    
-          height = aspectRatioHeight > maxAllowedHeight ? maxAllowedHeight : aspectRatioHeight;
+            const aspectRatioHeight = Math.round(deviceWidth / item.extraData.aspectRatio);
+            height = aspectRatioHeight > maxAllowedHeight ? maxAllowedHeight : aspectRatioHeight;
         } else {
-    
-          height = deviceWidth;
+            height = deviceWidth;
         }
-        const urlWithoutQuery = item.fileKey?.split('?')[0];
-        let fileExtension = urlWithoutQuery?.split('.').pop()?.toLowerCase();
-
-        const validExtensions = new Set(Object.values(extensionMap));
-
-        const isValidFileKey = (fileKey = '') => {
-            const extension = fileKey?.split('.').pop()?.toLowerCase();
-            const mappedExtension = extensionMap[extension] || extension;
-            return validExtensions.has(mappedExtension);
-          };
-          
-
-        const getFileIcon = (fileKey) => {
-            if (!fileKey) return 'file-document';
-
-            const parts = fileKey.split('.');
-            let extension = parts.length > 1 ? parts.pop().toLowerCase() : '';
-            extension = extensionMap[extension] || extension;
-            const icon = fileIcons[extension] || 'file-document';
-
-            return icon;
-        };
-
-
-        if (extensionMap[fileExtension]) {
-            fileExtension = extensionMap[fileExtension];
-        }
-
-        const isDocument = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExtension);
 
         return (
             <TouchableOpacity activeOpacity={1}>
                 <View style={styles.comments}>
                     <View style={styles.dpContainer}>
                         <TouchableOpacity style={styles.dpContainer1} onPress={() => handleNavigate(item)} activeOpacity={1}>
-                            <FastImage
-                                source={
-                                    item.author_fileKey
-                                        ? { uri: item.authorImageUrl }
-                                        : item.user_type === 'company'
-                                            ? companyImage
-                                            : item.user_type === 'BME_EDITOR' || item.user_type === 'BME_ADMIN' || item.author_gender === 'Male'
-                                                ? maleImage
-                                                : femaleImage
-                                }
-                                style={styles.image1}
-                            />
+                            {item.author_fileKey ? (
+                                <FastImage
+                                    source={{
+                                        uri: item.authorSignedUrl?.[item.resource_id] || '', // safely extract signed URL
+                                    }}
+                                    style={styles.image1}
+                                />
+                            ) : (
+                                <View
+                                    style={[
+                                        styles.image1,
+                                        {
+                                            backgroundColor: item.authorSignedUrl?.backgroundColor || '#ccc',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        },
+                                    ]}
+                                >
+                                    <Text style={{ color: item.authorSignedUrl?.textColor || '#000', fontWeight: 'bold' }}>
+                                        {item.authorSignedUrl?.initials || ''}
+                                    </Text>
+                                </View>
+                            )}
+
+
                         </TouchableOpacity>
                         <View style={styles.textContainer}>
                             <View style={styles.title3}>
                                 <TouchableOpacity onPress={() => handleNavigate(item)}>
                                     <Text style={{ flex: 1, alignSelf: 'flex-start', color: 'black', fontSize: 15, fontWeight: '500' }}>
-                                        {(item.author || '').trimStart().trimEnd()}
+                                        {(item.author || '').trim()}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                <View>
-                                    <Text style={styles.title}>{item.author_category || ''}</Text>
-                                </View>
-                                <View>
-                                    <Text style={[styles.date1]}>{getTimeDisplayForum(item.posted_on)}</Text>
-                                </View>
+                                <Text style={styles.title}>{item.author_category || ''}</Text>
+                                <Text style={styles.date1}>{getTimeDisplayForum(item.posted_on)}</Text>
                             </View>
                         </View>
-
                     </View>
 
                     <View style={{ paddingHorizontal: 15, marginVertical: 5 }}>
-                        {/* <Text style={styles.title1}>{item?.title}</Text> */}
-                        <Text  style={styles.title1}>{highlightMatch(item?.title || '', searchQuery)}</Text>
+                        <Text style={styles.title1}>{highlightMatch(item?.title || '', searchQuery)}</Text>
 
                         <ForumBody
                             html={normalizeHtml(item?.resource_body, searchQuery)}
@@ -465,67 +549,26 @@ console.log('localPosts',localPosts[0])
                             toggleFullText={toggleFullText}
                         />
                     </View>
+                    <MediaPreview
+                        item={item}
+                        handleOpenResume={handleOpenResume}
+                        openMediaViewer={openMediaViewer}
+                        activeVideo={activeVideo}
+                        videoRefs={videoRefs}
+                        maxAllowedHeight={maxAllowedHeight}
+                    />
 
-
-                    {item?.fileKey && isValidFileKey(item.fileKey) && (
-                        <TouchableOpacity
-                            style={styles.centeredFileContainer}
-                            onPress={() => handleOpenResume(item.fileKey)}
-                        >
-                            <Icon name={getFileIcon(item.fileKey)} size={50} color="#075cab" />
-                            {loading1 ? (
-                                <ActivityIndicator size="small" color="#075cab" style={styles.viewResumeText} />
-                            ) : (
-                                <Text style={styles.actionText}>View</Text>
-                            )}
-                        </TouchableOpacity>
-                    )}
-
-
-                    {/* Video Display */}
-                    {item.videoUrl && (
-                        <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 5, }}>
-
-                            <Video
-                                ref={(ref) => {
-                                    if (ref) {
-                                        videoRefs.current[item.resource_id] = ref;
-                                    }
-                                }}
-                                source={{ uri: item.videoUrl }}
-                                style={{
-                                    width: '100%',
-                                    height:height,
-
-                                }}
-                                controls
-                                paused={activeVideo !== item.resource_id}
-                                resizeMode="cover"
-                                poster={item.thumbnailUrl}
-                                repeat
-                                posterResizeMode="cover"
-                                controlTimeout={2000}
-
-                            />
-                        </TouchableOpacity>
-                    )}
-
-                    {item.imageUrl && !isDocument && !item.videoUrl && (
-                        <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 5 }} onPress={() => openMediaViewer([{ type: 'image', url: item.imageUrl }])}>
-                            <FastImage source={{ uri: item.imageUrl }} style={{ width: '100%', aspectRatio: item.aspectRatio || 1 }} />
-                        </TouchableOpacity>
-                    )}
 
 
                     <TouchableOpacity style={styles.shareButton} onPress={() => shareResource(item.resource_id)}>
                         <Icon name="share" size={22} color="#075cab" />
                         <Text style={styles.iconTextUnderlined}>Share</Text>
                     </TouchableOpacity>
-
                 </View>
             </TouchableOpacity>
         );
-    }, [activeVideo, expandedTexts,]);
+    }, [activeVideo, expandedTexts]);
+
 
     const searchInputRef = useRef(null);
     const isRefreshingRef = useRef(false);
@@ -762,7 +805,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 20,
-        backgroundColor:'red'
+
     },
     actionText: {
         marginTop: 5,

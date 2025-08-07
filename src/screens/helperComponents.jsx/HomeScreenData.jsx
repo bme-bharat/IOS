@@ -38,12 +38,13 @@ const useFetchData = ({ shouldFetch = false }) => {
   const [isFetchingProducts, setIsFetchingProducts] = useState(false);
   const [isFetchingServices, setIsFetchingServices] = useState(false);
 
-  const [jobImageUrls, setJobImageUrls] = useState({});
-  const [latestImageUrls, setLatestImageUrls] = useState({});
-  const [trendingImageUrls, setTrendingImageUrls] = useState({});
-  const [productImageUrls, setProductImageUrls] = useState({});
-  const [servicesImageUrls, setServicesImageUrls] = useState({});
-  const [authorImageUrls, setAuthorImageUrls] = useState({});
+  const [jobImageUrls, setJobImageUrls] = useState([]);
+  const [latestImageUrls, setLatestImageUrls] = useState([]);
+  const [trendingImageUrls, setTrendingImageUrls] = useState([]);
+  const [productImageUrls, setProductImageUrls] = useState([]);
+  const [servicesImageUrls, setServicesImageUrls] = useState([]);
+  const [authorImageUrls, setAuthorImageUrls] = useState([]);
+  const [avatars, setAvatars] = useState([])
 
   useEffect(() => {
     const jobDeleteListener = EventRegister.addEventListener('onJobDeleted', (data) => {
@@ -142,124 +143,137 @@ const useFetchData = ({ shouldFetch = false }) => {
   const fetchTrendingPosts = async () => {
     if (!isConnected) return;
     setIsFetchingTrendingPosts(true);
-
+  
     try {
       const response = await apiClient.post('/getAllTrendingPosts', {
         command: "getAllTrendingPosts",
-        limit: 10
+        limit: 10,
       });
-
+  
       if (response.data.status === "success") {
         const trendingData = response.data.response || [];
-
-        const fileKeyUrlPromises = trendingData.map(post =>
-          getSignedUrl(post.forum_id, post.fileKey)
-        );
-
-        // Author image signed URLs (skip if key is missing)
-        const authorKeyUrlPromises = trendingData.map(post =>
-          getSignedUrl(post.forum_id, post.author_fileKey)
-        );
-        const [fileKeyUrlsArray, authorKeyUrlsArray] = await Promise.all([
-          Promise.all(fileKeyUrlPromises),
-          Promise.all(authorKeyUrlPromises),
-        ]);
-        const fileKeyUrlMap = Object.assign({}, ...fileKeyUrlsArray);
-        const authorKeyUrlMap = Object.assign({}, ...authorKeyUrlsArray);
-
-        const signedUrlMap = Object.entries(fileKeyUrlMap).reduce((acc, [id, url]) => {
-          acc[id] = url || defaultLogo;
-          return acc;
-        }, {});
-
-        // ✅ Gender-based fallback logic for author images
-        const authorImageUrlMap = trendingData.reduce((acc, post) => {
-          const signedUrl = authorKeyUrlMap[post.forum_id];
-          if (signedUrl) {
-            acc[post.forum_id] = signedUrl;
-          } else if (post.author_gender?.toLowerCase() === 'female') {
-            acc[post.forum_id] = defaultImageUriFemale;
-          } else {
-            acc[post.forum_id] = defaultImageUriMale;
+  
+        const enrichedPostsPromises = trendingData.map(async (post) => {
+          let mediaUrl = defaultLogo;
+          let authorImage = null;
+          let avatar = null;
+  
+          // Get media file signed URL
+          try {
+            const mediaSignedUrl = await getSignedUrl(post.forum_id, post.fileKey);
+            if (mediaSignedUrl && mediaSignedUrl[post.forum_id]) {
+              mediaUrl = mediaSignedUrl[post.forum_id];
+            }
+          } catch (e) {
+            console.warn('Error fetching media URL for', post.forum_id);
           }
-          return acc;
-        }, {});
-        setTrendingPosts(trendingData);
-        setTrendingImageUrls(signedUrlMap);
-        setAuthorImageUrls(authorImageUrlMap);
-
-      } else {
-
+  
+          // Try to get signed author image URL
+          try {
+            if (post.author_fileKey) {
+              const authorSignedUrl = await getSignedUrl(post.forum_id, post.author_fileKey);
+              if (authorSignedUrl && authorSignedUrl[post.forum_id]) {
+                authorImage = authorSignedUrl[post.forum_id];
+              }
+            }
+          } catch (e) {
+            // fallback handled below
+          }
+  
+          // Fallback avatar if no authorImage
+          if (!authorImage) {
+            avatar = generateAvatarFromName(post.author || 'Unknown');
+          }
+  
+          // Return enriched post
+          return {
+            ...post,
+            mediaUrl,
+            authorImage,
+            avatar, // Only needed if authorImage is not present
+          };
+        });
+  
+        const enrichedPosts = await Promise.all(enrichedPostsPromises);
+        setTrendingPosts(enrichedPosts);
       }
     } catch (error) {
-
+      console.error('Error fetching trending posts:', error);
     } finally {
       setIsFetchingTrendingPosts(false);
-
     }
   };
+  
+  
 
   const fetchLatestPosts = async () => {
     if (!isConnected) return;
     setIsFetchingLatestPosts(true);
-
+  
     try {
-      const response = await apiClient.post('/getLatestPosts', {
-        command: "getLatestPosts",
+      const response = await apiClient.post('/getAllAdminForumPosts', {
+        command: "getAllAdminForumPosts",
         Type: 'Latest',
         limit: 10,
       });
-      // getAllAdminForumPosts
-      // getLatestPosts
+  // getLatestPosts
+  // getAllAdminForumPosts
       if (response.data.status === "success") {
         const latestData = response.data.response || [];
-
-        // Media image signed URLs
-        const fileKeyUrlPromises = latestData.map(post =>
-          getSignedUrl(post.forum_id, post.fileKey)
-        );
-
-        // Author image signed URLs (skip if key is missing)
-        const authorKeyUrlPromises = latestData.map(post =>
-          getSignedUrl(post.forum_id, post.author_fileKey)
-        );
-        const [fileKeyUrlsArray, authorKeyUrlsArray] = await Promise.all([
-          Promise.all(fileKeyUrlPromises),
-          Promise.all(authorKeyUrlPromises),
-        ]);
-
-        const fileKeyUrlMap = Object.assign({}, ...fileKeyUrlsArray);
-        const authorKeyUrlMap = Object.assign({}, ...authorKeyUrlsArray);
-
-        const signedUrlMap = Object.entries(fileKeyUrlMap).reduce((acc, [id, url]) => {
-          acc[id] = url || defaultLogo;
-          return acc;
-        }, {});
-
-        // ✅ Gender-based fallback logic for author images
-        const authorImageUrlMap = latestData.reduce((acc, post) => {
-          const signedUrl = authorKeyUrlMap[post.forum_id];
-          if (signedUrl) {
-            acc[post.forum_id] = signedUrl;
-          } else if (post.author_gender?.toLowerCase() === 'female') {
-            acc[post.forum_id] = defaultImageUriFemale;
-          } else {
-            acc[post.forum_id] = defaultImageUriMale;
+  
+        const enrichedPostsPromises = latestData.map(async (post) => {
+          let mediaUrl = defaultLogo;
+          let authorImage = null;
+          let avatar = null;
+  
+          // Get signed media URL
+          try {
+            const mediaSignedUrl = await getSignedUrl(post.forum_id, post.fileKey);
+            if (mediaSignedUrl && mediaSignedUrl[post.forum_id]) {
+              mediaUrl = mediaSignedUrl[post.forum_id];
+            }
+          } catch (e) {
+            console.warn('Error fetching media URL for', post.forum_id);
           }
-          return acc;
-        }, {});
-
-        setLatestPosts(latestData);
-        setLatestImageUrls(signedUrlMap);
-        setAuthorImageUrls(authorImageUrlMap);
-
+  
+          // Try to get signed author image URL
+          try {
+            if (post.author_fileKey) {
+              const authorSignedUrl = await getSignedUrl(post.forum_id, post.author_fileKey);
+              if (authorSignedUrl && authorSignedUrl[post.forum_id]) {
+                authorImage = authorSignedUrl[post.forum_id];
+              }
+            }
+          } catch (e) {
+            // fallback handled below
+          }
+  
+          // Fallback avatar if no authorImage
+          if (!authorImage) {
+            avatar = generateAvatarFromName(post.author || 'Unknown');
+          }
+  
+          // Return enriched post
+          return {
+            ...post,
+            mediaUrl,
+            authorImage,
+            avatar,
+          };
+        });
+  
+        const enrichedPosts = await Promise.all(enrichedPostsPromises);
+        setLatestPosts(enrichedPosts);
       }
     } catch (error) {
-      // handle error if needed
+      console.error('Error fetching latest posts:', error);
     } finally {
       setIsFetchingLatestPosts(false);
     }
   };
+  
+  
+  
 
 
   const fetchProducts = async () => {
@@ -339,8 +353,11 @@ const useFetchData = ({ shouldFetch = false }) => {
 
   const refreshData = async () => {
     setJobs([]);
-    setLatestPosts([]);
     setTrendingPosts([]);
+    setLatestPosts([]);
+    fetchProducts([]);
+    fetchServices([]);
+
     await Promise.all([
       fetchJobs(),
       fetchTrendingPosts(),
@@ -401,6 +418,7 @@ const useFetchData = ({ shouldFetch = false }) => {
     productImageUrls,
     servicesImageUrls,
     authorImageUrls,
+    avatars,
     refreshData
   };
 

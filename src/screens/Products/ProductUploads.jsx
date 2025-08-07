@@ -21,19 +21,14 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import Message1 from '../../components/Message1';
+import apiClient from '../ApiClient';
 
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 10;
 
-const apiClient = axios.create({
-  baseURL: 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev',
-  headers: {
-    'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk',
-    'Content-Type': 'application/json',
-  },
-});
+
 
 const CreateProduct = () => {
   const navigation = useNavigation();
@@ -330,17 +325,17 @@ const CreateProduct = () => {
     let sanitizedValue = value;
     let showToastFlag = false;
     let toastMessage = "";
-  
+
     if (sanitizedValue.startsWith(" ")) {
       showToastFlag = true;
       toastMessage = "Leading spaces are not allowed.";
       sanitizedValue = sanitizedValue.trimStart();
     }
-  
+
     const restrictions = {
       price: /[^0-9]/g,
     };
-  
+
     if (restrictions[key]) {
       if (restrictions[key].test(value)) {
         showToastFlag = true;
@@ -348,11 +343,11 @@ const CreateProduct = () => {
         sanitizedValue = sanitizedValue.replace(restrictions[key], "");
       }
     }
-  
+
     if (showToastFlag && toastMessage) {
       showToast(toastMessage, "error");
     }
-  
+
     setProductData(prevState => ({
       ...prevState,
       ...(nested
@@ -360,7 +355,7 @@ const CreateProduct = () => {
         : { [key]: sanitizedValue })
     }));
   };
-  
+
 
 
 
@@ -590,27 +585,35 @@ const CreateProduct = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.searchContainer}>
-        <TouchableOpacity
-          onPress={() => {
-            if (fromSignup) {
+        {fromSignup ? (
+          <TouchableOpacity
+            onPress={() => {
+              setHasChanges(false);
               showTrialSuccessAlert();
-            } else {
-              navigation.goBack();
-            }
-          }}
-          style={styles.backButton}
-        >
-          <Icon name="arrow-left" size={24} color="#075cab" />
-        </TouchableOpacity>
-
-
+            }}
+            style={[
+              AppStyles.PostbtnSkip,
+              (loading || isCompressing || submitting) && { opacity: 0.5 }
+            ]}
+          >
+            <Text style={AppStyles.PostbtnText}>Skip</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Icon name="arrow-left" size={24} color="#075cab" />
+          </TouchableOpacity>
+        )}
       </View>
+
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         onScrollBeginDrag={() => Keyboard.dismiss()}
         contentContainerStyle={{ paddingBottom: '20%', top: 15, paddingHorizontal: 10, }} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Add a product</Text>
+        <Text style={styles.title}>Add a product</Text>
         <TouchableOpacity activeOpacity={1}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Product name <Text style={{ color: 'red' }}>*</Text></Text>
@@ -995,7 +998,7 @@ const CreateProduct = () => {
             )}
           </View>
 
-          {showSkip && (
+          {/* {showSkip && (
             <Button
               title="Skip"
               onPress={() => {
@@ -1007,7 +1010,7 @@ const CreateProduct = () => {
                 }
               }}
             />
-          )}
+          )} */}
 
           <TouchableOpacity
             activeOpacity={0.8}
@@ -1030,24 +1033,24 @@ const CreateProduct = () => {
         </TouchableOpacity>
       </KeyboardAwareScrollView>
       <Message1
-  visible={showAlert}
-  title={alertTitle}
-  message={alertMessage}
-  iconType={alertIconType}
-  onOk={() => {
-    if (hasNavigated) return;
-    setHasNavigated(true);
-    setShowAlert(false);
-    setHasChanges(false);
-    // showToast('Signup successful', 'success');
-    setTimeout(() => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'CompanyBottom' }],
-      });
-    }, 300);
-  }}
-/>
+        visible={showAlert}
+        title={alertTitle}
+        message={alertMessage}
+        iconType={alertIconType}
+        onOk={() => {
+          if (hasNavigated) return;
+          setHasNavigated(true);
+          setShowAlert(false);
+          setHasChanges(false);
+          // showToast('Signup successful', 'success');
+          setTimeout(() => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'CompanyBottom' }],
+            });
+          }, 300);
+        }}
+      />
       <Message3
         visible={showModal}
         onClose={() => setShowModal(false)}  // Optional if you want to close it from outside

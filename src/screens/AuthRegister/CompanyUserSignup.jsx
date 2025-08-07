@@ -32,7 +32,7 @@ import messaging, { getMessaging, getToken } from '@react-native-firebase/messag
 import { getApp } from '@react-native-firebase/app';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { ActionSheetIOS } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 
@@ -204,58 +204,70 @@ const CompanyUserSignupScreen = () => {
 
   const sendEmailOtp = async () => {
     if (!emailVerify) {
-
       showToast("Enter a valid email Id", 'info');
       return;
     }
-
+  
     try {
       setLoading(true);
-
+      console.log("Sending first request to /sendUpdateEmailOtp...");
+  
       const checkEmailResponse = await apiClient.post(
         '/sendUpdateEmailOtp',
-        { command: 'sendUpdateEmailOtp', email }
+        {
+          command: 'sendUpdateEmailOtp',
+          email,
+          mode: "signup"
+        }
       );
-
-      if (checkEmailResponse.data.statusCode === 500 && checkEmailResponse.data.status === 'error') {
-
+  
+      console.log("First response (email check):", checkEmailResponse?.data);
+  
+      if (
+        checkEmailResponse?.data?.statusCode === 500 &&
+        checkEmailResponse?.data?.status === 'error'
+      ) {
         showToast(checkEmailResponse.data.errorMessage, 'error');
-
         setLoading(false);
         return;
       }
-
+  
+      console.log("Sending second request to /sendUpdateEmailOtp...");
+  
       const response = await apiClient.post(
         '/sendUpdateEmailOtp',
-        { command: 'sendUpdateEmailOtp', email }
+        { command: 'sendUpdateEmailOtp', 
+          email,
+          mode: "signup"
+         }
       );
-
-      if (response.data.statusCode === 200) {
-        if (response.data.status === 'success') {
+  
+      console.log("Second response (send OTP):", response?.data);
+  
+      if (response?.data?.statusCode === 200) {
+        if (response?.data?.status === 'success') {
           startOtpTimer();
-
+  
           setIsOtpSent(true);
           setEmailVerify(true);
           setModalVisibleemail(true);
-
+  
           showToast(response.data.successMessage, 'success');
-
         } else {
-
           showToast(response.data.successMessage, 'error');
         }
       } else {
-
-        showToast("Failed to send OTP\nTry again later", 'error');
+        showToast(response.data.errorMessage, 'error');
       }
+  
     } catch (error) {
-
+      console.error("Error while sending OTP:", error);
       showToast("Failed to send OTP\nTry again later", 'error');
-
     } finally {
       setLoading(false);
     }
   };
+  
 
   const [emailVerify1, setEmailVerify1] = useState(false);
 
@@ -428,7 +440,7 @@ const CompanyUserSignupScreen = () => {
     try {
       const fileStat = await RNFS.stat(fileUri);
       console.log(`Uploading ${fileType} - Size: ${fileStat.size} bytes`);
-  
+
       const res = await apiClient.post('/uploadFileToS3', {
         command: 'uploadFileToS3',
         headers: {
@@ -436,19 +448,19 @@ const CompanyUserSignupScreen = () => {
           'Content-Length': fileStat.size,
         },
       });
-  
+
       if (res.data.status === 'success') {
         const uploadUrl = res.data.url;
         const fileKey = res.data.fileKey;
-  
+
         const fileBlob = await uriToBlob(fileUri);
-  
+
         const uploadRes = await fetch(uploadUrl, {
           method: 'PUT',
           headers: { 'Content-Type': fileType },
           body: fileBlob,
         });
-  
+
         if (uploadRes.status === 200) {
           console.log(`${fileType} uploaded successfully.`);
           return fileKey;
@@ -468,7 +480,7 @@ const CompanyUserSignupScreen = () => {
       return null;
     }
   };
-  
+
 
 
   const uriToBlob = async (uri) => {
@@ -497,7 +509,7 @@ const CompanyUserSignupScreen = () => {
     } else {
       const options = ['Take Photo', 'Choose from Gallery', 'Cancel'];
       const cancelButtonIndex = 2;
-  
+
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
@@ -513,7 +525,7 @@ const CompanyUserSignupScreen = () => {
       );
     }
   };
-  
+
 
 
   const handleDeleteImageFromS3 = async () => {
@@ -561,28 +573,28 @@ const CompanyUserSignupScreen = () => {
     })
       .then((image) => {
         const initialImageSize = image.size / 1024 / 1024;
-  
+
         const uri = image.path;
         setimageUri(uri);
         setFileUri(uri);
         setIsMediaSelection(false);
         setFileType(image.mime);
-  
+
         if (image.size < 1024 * 10) {
           console.log("Image size is less than 100KB, no compression needed.");
           return;
         }
-  
+
         ImageResizer.createResizedImage(uri, 800, 600, 'JPEG', 80)
           .then((resizedImage) => {
             const resizedImageSize = resizedImage.size / 1024 / 1024;
             console.log(`Resized image size: ${resizedImageSize.toFixed(2)} MB`);
-  
+
             if (resizedImageSize > 5) {
               showToast("Image size shouldn't exceed 5MB", 'error');
               return;
             }
-  
+
             setimageUri(resizedImage.uri);
             setFileUri(resizedImage.uri);
           })
@@ -596,7 +608,7 @@ const CompanyUserSignupScreen = () => {
         }
       });
   };
-  
+
 
   const openGallery = () => {
     ImagePicker.openPicker({
@@ -892,7 +904,7 @@ const CompanyUserSignupScreen = () => {
           showToast("Failed to fetch details", 'error');
         }
       } else {
-        showToast("This profile already exists", 'error');
+        showToast(response.data.errorMessage, 'error');
       }
     } catch (err) {
       showToast("Something went wrong. Check your internet connection", 'error');
@@ -983,16 +995,16 @@ const CompanyUserSignupScreen = () => {
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 15, paddingBottom: '20%' }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: '20%' }} showsVerticalScrollIndicator={false}>
 
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer} activeOpacity={0.8}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.image} />
           ) : (<Image source={require('../../images/homepage/buliding.jpg')} style={styles.image} />
           )}
-           <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
-                        <Icon name="camera-enhance" size={22} color="#333" />
-                      </TouchableOpacity>
+          <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
+            <Icon name="camera-enhance" size={22} color="#333" />
+          </TouchableOpacity>
         </TouchableOpacity>
 
         <Text style={styles.heading} >Company name <Text style={{ color: 'red' }}>*</Text></Text>
@@ -1117,7 +1129,7 @@ const CompanyUserSignupScreen = () => {
         </View>
 
 
-        <Text style={[styles.heading, { top: 1 }]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={[styles.heading,]}>State <Text style={{ color: 'red' }}>*</Text></Text>
         <CustomDropdown
           label="State"
           data={states}
@@ -1131,7 +1143,7 @@ const CompanyUserSignupScreen = () => {
 
         />
 
-        <Text style={[styles.heading, { top: 1 }]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={[styles.heading,]}>City <Text style={{ color: 'red' }}>*</Text></Text>
         <CustomDropdown
           label="City"
           data={cities}
@@ -1318,7 +1330,7 @@ const styles = StyleSheet.create({
     height: 140,
     width: 140,
     marginBottom: 20,
-    alignSelf:'center'
+    alignSelf: 'center'
   },
   image: {
     width: '100%',
@@ -1376,11 +1388,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     borderRadius: 8,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     marginBottom: 15,
-    marginTop: 10
+
   },
   buttoncontainer1: {
     alignSelf: 'center',
@@ -1471,9 +1483,11 @@ const styles = StyleSheet.create({
   heading: {
     color: "black",
     fontSize: 15,
-    fontWeight: "500"
+    fontWeight: "500",
+    marginBottom: 10,
 
   },
+
   button1: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -1655,7 +1669,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginBottom:10
+    marginBottom: 10
   },
   dropdownButtonText: {
     fontSize: 16,

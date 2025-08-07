@@ -478,7 +478,7 @@ const UserJobProfileUpdateScreen = () => {
           style={styles.container}
         >
           <View style={styles.inputContainer}>
-            <Text style={[styles.title]}> Industry Type <Text style={{ color: 'red' }}>*</Text></Text>
+            <Text style={[styles.title]}>Industry Type <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropDownMenu
               items={industryType}
               onSelect={(item) => handleInputChange('industry_type', item.label)}
@@ -492,7 +492,7 @@ const UserJobProfileUpdateScreen = () => {
 
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.title]}> Expert In <Text style={{ color: 'red' }}>*</Text></Text>
+            <Text style={[styles.title]}>Expert In <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropDownMenu
               key={expertiseKey}
               items={expertiseOptions.map(item => ({ label: item, value: item }))}

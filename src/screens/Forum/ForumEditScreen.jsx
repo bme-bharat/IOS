@@ -259,9 +259,7 @@ const ForumEditScreen = () => {
       .trim(); // trim outer whitespace
   };
 
-  const extraDataToSend = file || (!signedUrl && Object.keys(mediaMeta || {}).length > 0)
-  ? mediaMeta || {}
-  : post.extraData || {};
+
 
   const handlePostSubmission = async () => {
     console.log('🔄 handlePostSubmission called');
@@ -310,6 +308,10 @@ const ForumEditScreen = () => {
         fileKey = post.fileKey || '';
         thumbnailFileKey = post.thumbnail_fileKey || '';
       }
+      const extraDataToSend = 
+      (file || fileKey) 
+        ? (mediaMeta || post.extraData || {}) 
+        : {};
 
       const postPayload = {
         command: 'updateForumPost',

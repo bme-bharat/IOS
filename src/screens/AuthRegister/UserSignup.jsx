@@ -32,7 +32,7 @@ import ImageResizer from 'react-native-image-resizer';
 import { getApp } from '@react-native-firebase/app';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import DeviceInfo from 'react-native-device-info';
 
 const UserSignupScreen = () => {
@@ -191,21 +191,26 @@ const UserSignupScreen = () => {
 
   const sendEmailOtp = async () => {
     if (!emailVerify) {
-
       showToast("Enter a valid email Id", 'info');
       return;
     }
 
     try {
       setLoading(true);
+      console.log("Sending OTP to email:", email);
 
       const checkEmailResponse = await apiClient.post(
         '/sendUpdateEmailOtp',
         { command: 'sendUpdateEmailOtp', email }
       );
 
-      if (checkEmailResponse.data.statusCode === 500 && checkEmailResponse.data.status === 'error') {
+      console.log("Check email response:", checkEmailResponse.data);
 
+      if (
+        checkEmailResponse.data.statusCode === 500 &&
+        checkEmailResponse.data.status === 'error'
+      ) {
+        console.error("Error from server (check email):", checkEmailResponse.data.errorMessage);
         showToast(checkEmailResponse.data.errorMessage, 'error');
         setLoading(false);
         return;
@@ -213,8 +218,14 @@ const UserSignupScreen = () => {
 
       const response = await apiClient.post(
         '/sendUpdateEmailOtp',
-        { command: 'sendUpdateEmailOtp', email }
+        {
+          command: 'sendUpdateEmailOtp',
+          email,
+          mode: "signup"
+        }
       );
+
+      console.log("OTP send response:", response.data);
 
       if (response.data.statusCode === 200) {
         if (response.data.status === 'success') {
@@ -222,23 +233,23 @@ const UserSignupScreen = () => {
           startOtpTimer();
           setIsOtpSent(true);
           setModalVisibleemail(true);
-
           showToast("OTP sent", 'success');
         } else {
-
+          console.warn("OTP send failed:", response.data.successMessage);
           showToast(response.data.successMessage || 'Failed to send OTP', 'error');
         }
       } else {
 
-        showToast("Please try again later", 'error');
+        showToast(response.data.errorMessage, 'error');
       }
     } catch (error) {
-
-      showToast("Please try again later", 'error');
+      console.error("Exception in sendEmailOtp:", error);
+      showToast(error, 'error');
     } finally {
       setLoading(false);
     }
   };
+
 
 
   const handleEmail = (e) => {
@@ -718,17 +729,29 @@ const UserSignupScreen = () => {
         setAlertIconType('congratulations');
         setShowAlert(true);
       } else {
-        showToast('User already exists', info);
+        console.log("Signup Failed Response:", response.data);
+        const message = response.data.message || 'Something went wrong';
+        showToast(message, 'error');
+
       }
     } catch (err) {
+      console.error("Signup Error:", err); // Logs full error object
+
       if (err.response) {
+        console.log("Error Response Data:", err.response.data);       // Detailed error message from server
+        console.log("Error Response Status:", err.response.status);   // HTTP status code
+        console.log("Error Response Headers:", err.response.headers); // Response headers
+
         showToast(`Server Error: ${err.response.status} - ${err.response.data.message || 'An error occurred'}`);
       } else if (err.request) {
+        console.log("Error Request:", err.request); // The request was made but no response was received
         showToast('You don’t have an internet connection');
       } else {
+        console.log("General Error Message:", err.message); // Error setting up the request
         showToast(`Error: ${err.message}`);
       }
     }
+
   };
 
   const FILE_SIZE_LIMIT_MB = 5;
@@ -823,7 +846,7 @@ const UserSignupScreen = () => {
             />
           </View>
 
-          <Text style={[styles.label, ]}>Gender <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={[styles.label,]}>Gender <Text style={{ color: 'red' }}>*</Text></Text>
           <CustomDropdown
             label="Gender"
             data={['Male', 'Female', 'Other']}
@@ -831,7 +854,7 @@ const UserSignupScreen = () => {
             onSelect={handleGender}
             placeholder="Select gender"
             placeholderTextColor="gray"
-            buttonStyle={[styles.dropdownButton, ]}
+            buttonStyle={[styles.dropdownButton,]}
             buttonTextStyle={styles.dropdownButtonText}
           />
 
@@ -859,7 +882,7 @@ const UserSignupScreen = () => {
             />
           )}
 
-          <Text style={[styles.label, ]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={[styles.label,]}>State <Text style={{ color: 'red' }}>*</Text></Text>
           <View>
             <CustomDropdown
               label="State"
@@ -871,11 +894,11 @@ const UserSignupScreen = () => {
               }}
               placeholder="Select state"
               placeholderTextColor="gray"
-              buttonStyle={[styles.dropdownButton, ]}
+              buttonStyle={[styles.dropdownButton,]}
               buttonTextStyle={styles.dropdownButtonText}
             />
 
-            <Text style={[styles.label, ]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+            <Text style={[styles.label,]}>City <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropdown
               label="City"
               data={cities}
@@ -1239,7 +1262,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginBottom:10
+    marginBottom: 10
 
   },
   dropdownButtonText: {

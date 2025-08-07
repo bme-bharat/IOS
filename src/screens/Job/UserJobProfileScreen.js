@@ -11,6 +11,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 
 const UserJobProfilescreen = () => {
@@ -21,7 +22,7 @@ const UserJobProfilescreen = () => {
   const [resumeUrl, setResumeUrl] = useState(null);
   const scrollViewRef = useRef(null);
   const profileImage = useSelector(state => state.CompanyProfile.profile);
-  const [modalVisible, setModalVisible] = useState(false); 
+  const [modalVisible, setModalVisible] = useState(false);
   const [modalTitleDelete, setModalTitleDelete] = useState('');
   const [modalMessageDelete, setModalMessageDelte] = useState('');
 
@@ -81,8 +82,8 @@ const UserJobProfilescreen = () => {
     if (isNaN(date.getTime())) {
       return 'Invalid Date';
     }
-    const day = String(date.getDate()).padStart(2, '0'); 
-    const month = String(date.getMonth() + 1).padStart(2, '0'); 
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
 
     return `${day}/${month}/${year}`;
@@ -134,12 +135,19 @@ const UserJobProfilescreen = () => {
         if (profileData) {
           setProfile(profileData);
 
+          let first_name = profileData?.first_name
+
           if (profileData.fileKey && profileData.fileKey !== 'null') {
             const imgUrlResponse = await apiClient.post('/getObjectSignedUrl', {
               command: 'getObjectSignedUrl',
               key: profileData.fileKey,
             });
             setImageUrl(imgUrlResponse.data);
+          } else {
+            const initialAvatars = generateAvatarFromName(first_name)
+        
+            setImageUrl(initialAvatars);
+
           }
 
           if (profileData.resume_key) {
@@ -222,16 +230,28 @@ const UserJobProfilescreen = () => {
           showsHorizontalScrollIndicator={false} ref={scrollViewRef}>
 
           <View style={[styles.postContainer]}>
-            {profile ? (
-              <View style={styles.imageContainer}>
+
+            <View style={styles.imageContainer}>
+              {typeof imageUrl === 'string' ? (
                 <FastImage
                   source={{ uri: profileImage?.imageUrl }}
                   style={styles.detailImage}
                   resizeMode={FastImage.resizeMode.cover}
                   onError={() => { }}
                 />
-              </View>
-            ) : null}
+              ) : (
+                <View
+                  style={[
+                    styles.detailImage,
+                    { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+                  ]}
+                >
+                  <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
+                    {imageUrl?.initials}
+                  </Text>
+                </View>
+              )}
+            </View>
 
             <View style={styles.Heading}>
 
@@ -343,13 +363,13 @@ const UserJobProfilescreen = () => {
                   </Text>
                 </View>
               )}
-              
+
             </View>
 
 
             <TouchableOpacity onPress={handleOpenResume} disabled={loading} style={{ alignItems: 'center' }}>
               {loading ? (
-                <ActivityIndicator size="small" color="#075cab" style={styles.viewResumeText}/>
+                <ActivityIndicator size="small" color="#075cab" style={styles.viewResumeText} />
               ) : (
                 <Text style={styles.viewResumeText}>View Resume</Text>
               )}
@@ -423,7 +443,9 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 80,
     overflow: 'hidden',
-
+    backgroundColor: '#ccc',
+    alignItems:'center',
+    justifyContent:'center'
   },
   textContainer: {
 

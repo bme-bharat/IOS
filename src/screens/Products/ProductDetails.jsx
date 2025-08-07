@@ -14,7 +14,7 @@ import DisclaimerBox from './DisclaimerBox';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 
 const { width } = Dimensions.get('window');
 

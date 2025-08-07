@@ -465,13 +465,13 @@ const CompanyDetailsPage = () => {
         command: 'getCompanyDetails',
         company_id: userId,
       });
-  
+
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
         setProfile(profileData);
-  
+
         const displayName = profileData.company_name?.trim() || 'Bme';
-  
+
         if (profileData.user_type === 'company') {
           if (profileData.fileKey && profileData.fileKey !== 'null') {
             try {
@@ -479,7 +479,7 @@ const CompanyDetailsPage = () => {
                 command: 'getObjectSignedUrl',
                 key: profileData.fileKey,
               });
-  
+
               const imgUrlData = res.data;
               if (imgUrlData && typeof imgUrlData === 'string') {
                 setImageUrl(imgUrlData);
@@ -507,7 +507,7 @@ const CompanyDetailsPage = () => {
       setLoading(false);
     }
   };
-  
+
 
 
 
@@ -522,30 +522,30 @@ const CompanyDetailsPage = () => {
     <View style={styles.profileBox}>
 
 
- 
+
       <View style={styles.imageContainerprofile}>
-  {typeof imageUrl === 'string' ? (
-    <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
-      <FastImage
-        source={{ uri: imageUrl }}
-        style={styles.imagerprofile}
-        resizeMode="contain"
-        onError={() => setImageUrl(null)}
-      />
-    </TouchableOpacity>
-  ) : (
-    <View
-      style={[
-        styles.imagerprofile,
-        { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
-      ]}
-    >
-      <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
-        {imageUrl?.initials || '?'}
-      </Text>
-    </View>
-  )}
-</View>
+        {typeof imageUrl === 'string' ? (
+          <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
+            <FastImage
+              source={{ uri: imageUrl }}
+              style={styles.imagerprofile}
+              resizeMode="contain"
+              onError={() => setImageUrl(null)}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View
+            style={[
+              styles.imagerprofile,
+              { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+            ]}
+          >
+            <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
+              {imageUrl?.initials}
+            </Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.textContainer}>
 
@@ -722,7 +722,7 @@ const CompanyDetailsPage = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).replace(/ /g, '/');
+    }).replace(/ /g, '-');
 
     // Define video file extensions
     const videoExtensions = ['mp4', 'mov', 'quicktime', 'avi', 'flv', 'wmv', 'mkv', 'webm', 'mpeg'];
@@ -772,7 +772,7 @@ const CompanyDetailsPage = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).replace(/ /g, '/');
+    }).replace(/ /g, '-');
 
     const videoExtensions = ['.mp4', '.mov', '.quicktime', '.avi', '.flv', '.wmv', '.mkv', '.webm', '.mpeg'];
 
@@ -1122,8 +1122,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 100,
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
 
   image: {

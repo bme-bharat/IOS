@@ -64,7 +64,7 @@ import EnquiryDetails from '../../screens/Services/EnquiryDetails';
 import InPrivacyPolicy from '../../screens/Bme_content/InPrivacyPolicy';
 import UserHomeScreen from '../../screens/UserHomeScreen';
 import { createStackNavigator } from '@react-navigation/stack';
-import ForumPostScreenCopy from '../../screens/Forum/ForumPostCopy';
+
 
 const Stack = createStackNavigator();
 
@@ -202,7 +202,6 @@ const UserForumNav = () => {
       />
       <Stack.Screen name="Home3" component={HomeScreen} options={screenOption} />
       <Stack.Screen name="ForumPost" component={ForumPostScreen} options={screenOption} />
-      <Stack.Screen name="ForumPostCopy" component={ForumPostScreenCopy} options={screenOption} />
 
       <Stack.Screen name="ForumEdit" component={ForumEditScreen} options={screenOption} />
       <Stack.Screen name="AllNotification" component={AllNotification} options={screenOption} />
@@ -245,7 +244,6 @@ const UserProfileNav = () => (
 
     <Stack.Screen name="BlockedUsers" component={BlockedUsers} options={screenOption} />
     <Stack.Screen name="ForumPost" component={ForumPostScreen} options={screenOption} />
-    <Stack.Screen name="ForumPostCopy" component={ForumPostScreenCopy} options={screenOption} />
 
     <Stack.Screen name="ForumEdit" component={ForumEditScreen} options={screenOption} />
     <Stack.Screen name="YourForumList" component={YourForumListScreen} options={screenOption} />

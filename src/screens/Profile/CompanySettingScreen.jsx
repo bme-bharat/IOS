@@ -241,11 +241,22 @@ const CompanySettingScreen = () => {
           activeOpacity={0.8}
         >
           <View style={styles.miniLeft}>
-            <FastImage
-              source={{ uri: profile?.imageUrl }}
-              style={styles.miniImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
+          
+            {profile?.imageUrl ? (
+              <FastImage
+                source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+                cache="immutable"
+                style={styles.miniImage}
+                resizeMode='contain'
+                onError={() => { }}
+              />
+            ) : (
+              <View style={[styles.avatarContainerMini, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                <Text style={[styles.avatarTextMini, { color: profile?.companyAvatar?.textColor }]}>
+                  {profile?.companyAvatar?.initials}
+                </Text>
+              </View>
+            )}
             <Text style={styles.miniName}>
               {profile?.company_name?.trim()}
             </Text>
@@ -268,31 +279,31 @@ const CompanySettingScreen = () => {
 
 
               <TouchableOpacity style={styles.editProfileButton} onPress={handleUpdate}>
-                          <Icon name="account-edit" size={20} color="#075cab" />
+                <Icon name="account-edit" size={20} color="#075cab" />
                 <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => { navigation.navigate("CompanyProfile") }}
-                  style={styles.imageContainer}
-                >
-             
-                  {profile?.imageUrl ? (
-                    <FastImage
-                      source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-                      cache="immutable"
-                      style={styles.detailImage}
-                      resizeMode='contain'
-                      onError={() => { }}
-                    />
-                  ) : (
-                    <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-                      <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
-                        {profile?.companyAvatar?.initials}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                activeOpacity={1}
+                onPress={() => { navigation.navigate("CompanyProfile") }}
+                style={styles.imageContainer}
+              >
+
+                {profile?.imageUrl ? (
+                  <FastImage
+                    source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+                    cache="immutable"
+                    style={styles.detailImage}
+                    resizeMode='contain'
+                    onError={() => { }}
+                  />
+                ) : (
+                  <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                    <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+                      {profile?.companyAvatar?.initials}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
               <View style={styles.profileDetails}>
 
                 <View style={styles.title1}>
@@ -489,7 +500,7 @@ const styles = StyleSheet.create({
     fontSize: 50,
     fontWeight: 'bold',
   },
-  avatarTextMini:{
+  avatarTextMini: {
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -652,10 +663,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1e2a38',
-    // letterSpacing: 0.4,
+    marginLeft:10
 
   },
-
+  avatarContainerMini: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  avatarTextMini: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 
 });
 

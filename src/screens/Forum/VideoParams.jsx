@@ -65,46 +65,55 @@ export const captureFinalThumbnail = async (overlayRef) => {
 const getFileSizeMB = async (uri) => {
   try {
     const stats = await RNFS.stat(uri.replace('file://', ''));
-    return (Number(stats.size) / (1024 * 1024)).toFixed(1); // in MB
-  } catch (error) {
-    console.warn('⚠️ Failed to get file size:', error);
-    return '0';
+    return parseFloat((Number(stats.size) / (1024 * 1024)).toFixed(2));
+  } catch {
+    return 0;
   }
 };
 
+
 export const compressVideo = async (videoUri, attempt = 1) => {
   try {
-    const originalSize = parseFloat(await getFileSizeMB(videoUri));
+    const MAX_ALLOWED_SIZE_MB = 10;
+
+    const originalSizeMB = await getFileSizeMB(videoUri);
 
     const meta = await createThumbnail({
       url: videoUri.replace('file://', ''),
       timeStamp: 1000,
     });
 
-    let width = meta?.width || 1280;
-    let height = meta?.height || 720;
-    const durationSec = 10;
+    const width = meta?.width || 1280;
+    const height = meta?.height || 720;
+    const durationSec = meta?.duration ? meta.duration / 1000 : 10; // fallback to 10s
     const fps = meta?.fps && meta.fps > 0 ? Math.min(meta.fps, 60) : 30;
 
-    const estimatedBitrate = ((originalSize * 8 * 1024 * 1024) / durationSec).toFixed(0);
-    console.log(`📊 Original Resolution: ${width}x${height}`);
-    console.log(`📊 Estimated Bitrate: ${estimatedBitrate} bps`);
-    console.log(`📊 FPS: ${fps}`);
+    const estimatedBitrate = ((originalSizeMB * 8 * 1024 * 1024) / durationSec); // bits per second
 
+    console.log(`📊 Video Meta:
+      - Resolution: ${width}x${height}
+      - Duration: ${durationSec}s
+      - FPS: ${fps}
+      - Original Size: ${originalSizeMB} MB
+      - Estimated Bitrate: ${Math.round(estimatedBitrate)} bps
+    `);
 
-    const qualityPresets = [
-      { scale: 1.0, bitrateFactor: 0.3 }, 
-      { scale: 0.75, bitrateFactor: 0.2 }, 
-      { scale: 0.5, bitrateFactor: 0.15 },
+    // Aggressive compression presets
+    const presets = [
+      { scale: 0.6, bitrateFactor: 0.18 },
+      { scale: 0.45, bitrateFactor: 0.14 },
+      { scale: 0.35, bitrateFactor: 0.1 },
     ];
 
-    const { scale, bitrateFactor } = qualityPresets[attempt - 1] || qualityPresets[2];
+    const { scale, bitrateFactor } = presets[attempt - 1] || presets[2];
 
     const targetWidth = Math.round(width * scale);
     const targetHeight = Math.round(height * scale);
     let targetBitrate = Math.floor(estimatedBitrate * bitrateFactor);
 
-    if (targetBitrate < 600_000) targetBitrate = 600_000;
+    // Clamp bitrate between 500Kbps and 1.2Mbps
+    if (targetBitrate < 500_000) targetBitrate = 500_000;
+    if (targetBitrate > 1_200_000) targetBitrate = 1_200_000;
 
     const compressionSettings = {
       compressionMethod: 'manual',
@@ -118,29 +127,28 @@ export const compressVideo = async (videoUri, attempt = 1) => {
     console.log('🛠️ Compression Settings:', compressionSettings);
 
     const compressedUri = await Compressor.Video.compress(videoUri, compressionSettings);
-    const compressedSize = parseFloat(await getFileSizeMB(compressedUri));
+    const compressedSizeMB = await getFileSizeMB(compressedUri);
 
-    console.log(`✅ Compression Complete`);
-    console.log(`📦 Compressed Size: ${compressedSize} MB`);
-    console.log(`🎞️ Compressed URI: ${compressedUri}`);
+    console.log(`✅ Compressed URI: ${compressedUri}`);
+    console.log(`📦 Compressed Size: ${compressedSizeMB} MB`);
 
-    const MAX_ALLOWED_SIZE = 10;
-
-    if (compressedSize > MAX_ALLOWED_SIZE && attempt < 3) {
+    if (compressedSizeMB > MAX_ALLOWED_SIZE_MB && attempt < 3) {
+      console.log(`📉 Retry #${attempt + 1} — Still too large`);
       return await compressVideo(compressedUri, attempt + 1);
     }
 
-    if (compressedSize > MAX_ALLOWED_SIZE) {
-      showToast("Video too large even after compression. Please select a file under 10 MB.", "error");
+    if (compressedSizeMB > MAX_ALLOWED_SIZE_MB) {
+      showToast("Video is too large even after compression. Try trimming it shorter.", "error");
       return null;
     }
 
     return compressedUri;
   } catch (error) {
-    console.error('❌ Video compression failed:', error);
+    console.error('❌ Compression failed:', error);
     return videoUri;
   }
 };
+
 
 
 

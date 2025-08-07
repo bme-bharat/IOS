@@ -1,0 +1,574 @@
+import { useCallback, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, Share, Dimensions, StyleSheet } from 'react-native';
+import FastImage from 'react-native-fast-image';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { ForumBody, normalizeHtml } from './forumBody';
+import useForumReactions, { fetchForumReactionsRaw, reactionConfig } from './useForumReactions';
+import { getTimeDisplayForum } from '../helperComponents.jsx/signedUrls';
+import { useNavigation } from '@react-navigation/native';
+import { useNetwork } from '../AppUtils/IdProvider';
+import Video from 'react-native-video';
+import VideoModal from './videoModal';
+
+const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
+const maxAllowedHeight = Math.round(deviceHeight * 0.6);
+
+export default function useRenderForumItem({
+  localPosts,
+  setLocalPosts,
+  forumIds,
+  searchResults,        // Add this
+  setSearchResults,
+  isTabActive,
+  activeVideo,
+  setActiveVideo,
+  videoEndStates,
+  setVideoEndStates,
+  isFocused,
+  videoRefs,
+  activeReactionForumId,
+  setActiveReactionForumId,
+  openCommentSheet,
+  searchQuery,
+  getMediaForItem,
+  getAuthorImage,
+  openMediaViewer,
+  reactionSheetRef,
+
+}) {
+
+  const navigation = useNavigation();
+  const [expandedTexts, setExpandedTexts] = useState({});
+  const { myId, myData } = useNetwork();
+  const { handleReactionUpdate } = useForumReactions(myId);
+
+
+  const [reactions, setReactions] = useState([])
+
+  // useEffect(() => {
+  //   if (!forumIds.length || !myId) return;
+
+  //   const fetchAllReactions = async () => {
+  //     try {
+  //       const results = await Promise.all(
+  //         forumIds.map((id) => fetchForumReactionsRaw(id, myId))
+  //       );
+
+  //       const combined = forumIds.map((forumId, index) => ({
+  //         forumId,
+  //         ...results[index],
+  //       }));
+
+  //       setReactions(combined);
+  //     } catch (e) {
+  //       console.error('Failed to fetch forum reactions', e);
+  //       setReactions([]);
+  //     }
+  //   };
+
+  //   fetchAllReactions();
+  // }, [forumIds, myId]);
+
+  const handleNavigate = (item) => {
+    setTimeout(() => {
+      if (item.user_type === "company") {
+        navigation.navigate('CompanyDetailsPage', { userId: item.user_id });
+      } else if (item.user_type === "users") {
+        navigation.navigate('UserDetailsPage', { userId: item.user_id });
+      }
+    }, 100);
+  };
+
+  const toggleFullText = (id) => {
+    setExpandedTexts(prev => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const sharePost = async (item) => {
+    try {
+      const baseUrl = 'https://bmebharat.com/latest/comment/';
+      const jobUrl = `${baseUrl}${item.forum_id}`;
+
+      const result = await Share.share({
+        message: `Checkout this post: ${jobUrl}`, // Added message prefix
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+        } else {
+          // shared without specifying activity type
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
+  const updatePostReaction = (forumId, selectedType, currentReaction) => {
+    // Update localPosts if this post exists there
+    setLocalPosts(prev => prev.map(p => {
+      if (p.forum_id !== forumId) return p;
+      let newTotal = Number(p.totalReactions || 0);
+      const hadReaction = currentReaction && currentReaction !== 'None';
+      if (selectedType === 'None' && hadReaction) newTotal -= 1;
+      else if (!hadReaction) newTotal += 1;
+      return {
+        ...p,
+        userReaction: selectedType === 'None' ? null : selectedType,
+        totalReactions: newTotal,
+      };
+    }));
+
+    // Also update searchResults if this post exists there
+    if (searchResults) {
+      setSearchResults(prev => prev.map(p => {
+        if (p.forum_id !== forumId) return p;
+        let newTotal = Number(p.totalReactions || 0);
+        const hadReaction = currentReaction && currentReaction !== 'None';
+        if (selectedType === 'None' && hadReaction) newTotal -= 1;
+        else if (!hadReaction) newTotal += 1;
+        return {
+          ...p,
+          userReaction: selectedType === 'None' ? null : selectedType,
+          totalReactions: newTotal,
+        };
+      }));
+    }
+  };
+
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [fullscreenVideo, setFullscreenVideo] = useState({
+    visible: false,
+    videoUrl: null,
+    thumbnailUrl: null,
+  });
+
+  const renderItem = useCallback(({ item }) => {
+
+    let height;
+    if (item.extraData?.aspectRatio) {
+      const aspectRatioHeight = Math.round(deviceWidth / item.extraData?.aspectRatio);
+
+      height = aspectRatioHeight > maxAllowedHeight ? maxAllowedHeight : aspectRatioHeight;
+    } else {
+
+      height = deviceWidth;
+    }
+
+    return (
+      <View style={styles.comments}>
+        {/* Author section */}
+        <View style={styles.dpContainer}>
+          <TouchableOpacity
+            style={styles.dpContainer1}
+            onPress={() => handleNavigate(item)}
+            activeOpacity={0.8}
+          >
+            {item?.authorSignedUrl ? (
+              <FastImage
+                source={{ uri: item?.authorSignedUrl }}
+                style={styles.image1}
+              />
+            ) : (
+              <View style={[styles.dpContainer1, { backgroundColor: item?.authorImageUri?.backgroundColor }]}>
+                <Text style={{ color: item?.authorImageUri?.textColor, fontWeight: 'bold' }}>
+                  {item?.authorImageUri?.initials || '?'}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.textContainer}>
+            <View style={styles.title3}>
+              <TouchableOpacity onPress={() => handleNavigate(item)}>
+                <Text style={{ flex: 1, alignSelf: 'flex-start', color: 'black', fontSize: 15, fontWeight: '500' }}>
+                  {(item.author || '').trim()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <Text style={styles.title}>{item.author_category || ''}</Text>
+              <Text style={styles.date1}>{getTimeDisplayForum(item.posted_on)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Post content */}
+        <View style={{ paddingHorizontal: 10, marginBottom: 10 }}>
+          <ForumBody
+            html={normalizeHtml(item?.forum_body, searchQuery)}
+            forumId={item.forum_id}
+            isExpanded={expandedTexts[item.forum_id]}
+            toggleFullText={toggleFullText}
+          />
+        </View>
+
+        {/* Media content */}
+        {item.fileKey && (
+          <TouchableOpacity style={{
+            width: '100%', height: height,
+            borderRadius: 6,
+            overflow: 'hidden',
+            backgroundColor: '#fff'
+
+          }}
+            onPress={() => {
+              setActiveVideo(null);
+
+              setFullscreenVideo({
+              visible: true,
+              videoUrl: item?.fileKeySignedUrl,
+              thumbnailUrl: item?.thumbnailSignedUrl,
+            })}}
+
+            activeOpacity={1} >
+            {item?.extraData?.type?.startsWith('video/') ? (
+              <View style={{ position: 'relative' }}>
+
+                <Video
+                  ref={(ref) => {
+                    if (ref) {
+                      videoRefs[item.forum_id] = ref;
+                    } else {
+                      delete videoRefs[item.forum_id];
+                    }
+                  }}
+                  source={{ uri: item?.fileKeySignedUrl }}
+                  style={{
+                    width: '100%',
+                    height: height,
+                    backgroundColor: '#fff'
+                  }}
+
+                  paused={!isTabActive || activeVideo !== item.forum_id || !isFocused}
+                  resizeMode="cover"
+                  poster={item?.thumbnailSignedUrl}
+                  posterResizeMode='cover'
+
+                  onEnd={() => {
+                    setVideoEndStates(prev => {
+                      // Only update if this is the currently active video
+                      if (activeVideo === item.forum_id) {
+                        return { ...prev, [item.forum_id]: true };
+                      }
+                      return prev;
+                    });
+                  }}
+                  onPlay={() => {
+                    setVideoEndStates(prev => {
+                      const newState = { ...prev };
+                      delete newState[item.forum_id];
+                      return newState;
+                    });
+                  }}
+
+                />
+
+                <VideoModal
+                  visible={fullscreenVideo.visible}
+                  videoUrl={fullscreenVideo.videoUrl}
+                  thumbnailUrl={fullscreenVideo.thumbnailUrl}
+                  onClose={() => {setFullscreenVideo({
+                    visible: false,
+                    videoUrl: null,
+                    thumbnailUrl: null,
+                  })
+                  setActiveVideo(item.forum_id);
+
+                }}
+                />
+
+
+                {videoEndStates[item.forum_id] && (
+                  <TouchableOpacity
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(0,0,0,0.5)'
+                    }}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setActiveVideo(null);
+        
+                      setFullscreenVideo({
+                      visible: true,
+                      videoUrl: item?.fileKeySignedUrl,
+                      thumbnailUrl: item?.thumbnailSignedUrl,
+                    })}}
+                  >
+                    <Icon name="replay" size={34} color="#fff" />
+                    <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#fff' }}>watch again</Text>
+                  </TouchableOpacity>
+                )}
+
+              </View>
+
+            ) : (
+              <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: item?.fileKeySignedUrl }])} activeOpacity={1}>
+                <FastImage
+                  source={{ uri: item?.fileKeySignedUrl }}
+                  style={{ width: '100%', height: height }}
+                  resizeMode={FastImage.resizeMode.cover}
+                />
+              </TouchableOpacity>
+            )}
+          </TouchableOpacity>
+        )}
+
+
+        <View style={styles.iconContainer}>
+          <View>
+            <TouchableOpacity
+              onLongPress={() => setActiveReactionForumId(prev => prev === item.forum_id ? null : item.forum_id)}
+              activeOpacity={0.7}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              onPress={async () => {
+                const currentReaction = item.userReaction || 'None';
+                const selectedType = currentReaction !== 'None' ? 'None' : 'Like';
+
+                updatePostReaction(item.forum_id, selectedType, currentReaction);
+
+                await handleReactionUpdate(item.forum_id, selectedType, item);
+              }}
+            >
+              {item.userReaction && item.userReaction !== 'None' ? (
+                <>
+                  <Text style={{ fontSize: 15 }}>
+                    {reactionConfig.find(r => r.type === item.userReaction)?.emoji || '👍'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>
+                    {reactionConfig.find(r => r.type === item.userReaction)?.label || 'Like'}
+                  </Text>
+                </>
+              ) : (
+                <View style={{ alignItems: 'center', flexDirection: 'row' }}>
+                  <Icon name="thumb-up-outline" size={20} color="#999" />
+                </View>
+              )}
+
+              <TouchableOpacity
+                onPress={() => reactionSheetRef.current?.open(item.forum_id, 'All')}
+                style={{ padding: 5, paddingHorizontal: 10 }}
+              >
+                {item.totalReactions > 0 && (
+                  <Text style={{ color: "#666" }}>({item.totalReactions})</Text>
+                )}
+              </TouchableOpacity>
+            </TouchableOpacity>
+
+            {activeReactionForumId === item.forum_id && (
+              <>
+                <TouchableWithoutFeedback onPress={() => setActiveReactionForumId(null)}>
+                  <View style={styles.reactionOverlay} />
+                </TouchableWithoutFeedback>
+                <View style={styles.reactionContainer}>
+                  {reactionConfig.map(({ type, emoji }) => {
+                    const isSelected = item.userReaction === type;
+                    return (
+                      <TouchableOpacity
+                        key={type}
+                        onPress={async () => {
+                          const selectedType = isSelected ? 'None' : type;
+                          await handleReactionUpdate(item.forum_id, selectedType, item);
+                          setActiveReactionForumId(null);
+                        }}
+                        style={[
+                          styles.reactionButton,
+                          isSelected && styles.selectedReaction
+                        ]}
+                      >
+                        <Text style={{ fontSize: 20 }}>{emoji}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* Action buttons */}
+        <View style={styles.iconContainer}>
+          <View>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => openCommentSheet(item.forum_id, item.user_id, myId, item)}
+            >
+              <Icon name="comment-outline" size={17} color="#075cab" />
+              <Text style={styles.iconTextUnderlined}>
+                Comments{item.commentCount > 0 ? ` ${item.commentCount}` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity style={styles.iconButton}>
+              <Icon name="eye-outline" size={20} color="#075cab" />
+              <Text style={styles.iconTextUnderlined}>Views {item.viewsCount || '0'}</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity style={styles.iconButton} onPress={() => sharePost(item)}>
+              <Icon name="share-outline" size={21} color="#075cab" />
+              <Text style={styles.iconTextUnderlined}>Share</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }, [
+    localPosts, activeVideo, isFocused, expandedTexts, activeReactionForumId, isTabActive,
+    getMediaForItem, getAuthorImage, handleNavigate, openMediaViewer, reactionSheetRef, deviceWidth
+  ]);
+
+  return renderItem;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'whitesmoke',
+  },
+
+
+  comments: {
+    paddingHorizontal: 5,
+    // borderTopWidth: 0.5,
+    // borderColor: '#ccc',
+    paddingVertical: 10,
+    backgroundColor: 'white',
+    minHeight: 120,
+    marginBottom: 5,
+
+  },
+
+  image1: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 100,
+    backgroundColor: '#eee'
+  },
+
+  title: {
+    fontSize: 13,
+    color: '#666',
+    // marginBottom: 5,
+    fontWeight: '300',
+    textAlign: 'justify',
+    alignItems: 'center',
+  },
+
+  title3: {
+    fontSize: 15,
+    color: 'black',
+    // marginBottom: 5,
+    fontWeight: '500',
+    flexDirection: 'row',  // Use row to align items horizontally
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+
+
+  },
+  date1: {
+    fontSize: 13,
+    color: '#666',
+    // marginBottom: 5,
+    fontWeight: '300',
+
+
+  },
+  title1: {
+    backgroundColor: 'red'
+
+  },
+
+  readMore: {
+    color: 'gray', // Blue color for "Read More"
+    fontWeight: '300', // Make it bold if needed
+    fontSize: 13,
+  },
+
+  dpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10
+
+  },
+  dpContainer1: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center'
+
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+    marginLeft: 10,
+
+  },
+  iconContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    height: 30
+  },
+  iconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+
+  },
+  iconText: {
+    fontSize: 12,
+    color: '#075cab',
+  },
+
+  iconTextUnderlined: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#075cab',
+    marginLeft: 1,
+    marginRight: 3
+  },
+
+  label: {
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  reactionContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    borderRadius: 40,
+    flexDirection: 'row',
+  },
+  reactionButton: {
+    padding: 8,
+    margin: 4,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc'
+  },
+  selectedReaction: {
+    backgroundColor: '#c2d8f0',
+  },
+
+
+});

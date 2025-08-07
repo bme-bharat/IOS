@@ -11,7 +11,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 
 const BlockedUsers = () => {
-      const { myId, myData } = useNetwork();
+  const { myId, myData } = useNetwork();
   const [blockedUsers, setBlockedUsers] = useState([]);
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ const BlockedUsers = () => {
 
   const fetchBlockedUsers = async () => {
     try {
-      
+
       setLoading(true);
 
       if (myId) {
@@ -150,7 +150,8 @@ const BlockedUsers = () => {
               <Text style={styles.userDetails}>{item.blocked_user_category}</Text>
 
               <Text style={styles.userDetails}>
-                Blocked On: {new Date(item.blocked_on * 1000).toLocaleDateString('en-GB')}
+                Blocked On: {new Date(item.blocked_on * 1000).toLocaleDateString('en-GB').replace(/\//g, '-')}
+
               </Text>
               <TouchableOpacity
                 style={styles.unblockButton}

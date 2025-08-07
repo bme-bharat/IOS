@@ -14,14 +14,12 @@ import ImageResizer from 'react-native-image-resizer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useDispatch, useSelector } from 'react-redux';
-import { addResourcePost, updateOrAddResourcePosts } from '../Redux/Resource_Actions';
-import { generateVideoThumbnail, selectVideo } from '../Forum/VideoParams';
 import PlayOverlayThumbnail from '../Forum/Play';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
 import { EventRegister } from 'react-native-event-listeners';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from '../Forum/forumBody';
 import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
@@ -247,15 +245,15 @@ const ResourcesPost = () => {
       console.log('📂 No file selected for upload');
       return { fileKey: null, thumbnailFileKey: null };
     }
-  
+
     setLoading(true);
     console.log('⏫ Upload starting for file:', file);
-  
+
     try {
       const fileStat = await RNFS.stat(file.uri);
       const fileSize = fileStat.size;
       console.log('📏 File size:', fileSize);
-  
+
       const res = await apiClient.post('/uploadFileToS3', {
         command: 'uploadFileToS3',
         headers: {
@@ -263,59 +261,49 @@ const ResourcesPost = () => {
           'Content-Length': fileSize,
         },
       });
-  
+
       if (res.data.status !== 'success') {
         console.error('❌ Failed to get S3 URL:', res.data);
         throw new Error(res.data.errorMessage || 'Failed to get upload URL');
       }
-  
+
       const { url: uploadUrl, fileKey } = res.data;
       console.log('✅ Got S3 Upload URL and fileKey:', { uploadUrl, fileKey });
-  
+
       const fileBlob = await uriToBlob(file.uri);
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': fileType },
         body: fileBlob,
       });
-  
+
       console.log('📤 Upload to S3 response status:', uploadRes.status);
-  
+
       if (uploadRes.status !== 200) {
         throw new Error('Failed to upload file to S3');
       }
-  
+
       let thumbnailFileKey = null;
-  
+
       if (file.type.startsWith("video/") && thumbnailUri) {
         console.log('🖼 Uploading thumbnail:', thumbnailUri);
         thumbnailFileKey = await handleThumbnailUpload(thumbnailUri, fileKey);
         console.log('🖼 Uploaded thumbnailFileKey:', thumbnailFileKey);
       }
-  
+
       return { fileKey, thumbnailFileKey };
-  
+
     } catch (error) {
       console.error('🚨 Error in handleUploadFile:', error);
       showToast("Something went wrong", 'error');
       return { fileKey: null, thumbnailFileKey: null };
-  
+
     } finally {
       setLoading(false);
     }
   };
-  
 
 
-  const dispatch = useDispatch();
-
-  const documentExtensions1 = [
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt",
-    "vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "vnd.openxmlformats-officedocument.presentationml.presentation",
-    "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "msword", 'webp'
-  ];
 
   const sanitizeHtmlBody = (html) => {
     const cleaned = cleanForumHtml(html); // your existing cleaner
@@ -330,28 +318,23 @@ const ResourcesPost = () => {
   const handlePostSubmission = async () => {
     setHasChanges(true);
     setLoading(true);
-  
+
     try {
       const trimmedTitle = postData.title?.trim();
       const rawBodyHtml = postData.body?.trim();
       console.log('📝 Title:', trimmedTitle);
       console.log('📝 Raw body:', rawBodyHtml);
-  
+
       if (!trimmedTitle || !rawBodyHtml) {
         showToast("Title and body are required", 'info');
         return;
       }
-  
+
       const cleanedBody = sanitizeHtmlBody(rawBodyHtml);
-      console.log('🧼 Cleaned body:', cleanedBody);
-  
-      console.log('🎬 File selected:', file);
-      console.log('🧾 Media meta:', mediaMeta);
-      console.log('🖼 Thumbnail URI:', thumbnailUri);
-  
+
       const { fileKey, thumbnailFileKey } = await handleUploadFile();
       console.log('📎 Uploaded keys:', { fileKey, thumbnailFileKey });
-  
+
       const postPayload = {
         command: "postInResources",
         user_id: myId,
@@ -361,26 +344,21 @@ const ResourcesPost = () => {
         ...(thumbnailFileKey && { thumbnail_fileKey: thumbnailFileKey }),
         extraData: mediaMeta || {}
       };
-  
+
       console.log('📦 Final postPayload:', postPayload);
-  
+
       const res = await apiClient.post('/postInResources', postPayload);
-  
+
       if (res.data.status === 'success') {
-        const newPost = res.data.resource_details;
-        console.log('✅ Post created:', newPost);
-        EventRegister.emit('onResourcePostCreated', { newPost });
-  
-        const postWithMedia = await fetchMediaForPost(newPost);
-        console.log('🔄 Fetched media details:', postWithMedia);
-  
-        if (newPost?.resource_id) {
-          dispatch(updateOrAddResourcePosts([postWithMedia]));
-        } else {
-          showToast("Post submission failed", 'error');
-          return;
-        }
-  
+        const enrichedPost = {
+          ...postPayload,
+          resource_id: res.data.resource_details?.resource_id,
+          posted_on: Date.now(), // or use `res.data.resource_details?.posted_on` if available
+        };
+
+        EventRegister.emit('onResourcePostCreated', { newPost: enrichedPost });
+
+    
         await clearCacheDirectory();
         setPostData({ title: '', body: '', fileKey: '' });
         setFile(null);
@@ -391,99 +369,22 @@ const ResourcesPost = () => {
         console.error('❌ Submission failed:', res.data);
         showToast("Failed to submit post", 'error');
       }
-  
+
     } catch (error) {
       console.error('🚨 Error in handlePostSubmission:', error);
       const message =
         error?.response?.data?.status_message ||
         error?.message ||
         'Something went wrong';
-  
+
       showToast(message, 'error');
-  
+
     } finally {
       setLoading(false);
       setHasChanges(false);
     }
   };
-  
 
-
-  const fetchMediaForPost = async (post) => {
-    const mediaData = { resource_id: post.resource_id };
-
-    if (post.fileKey) {
-      try {
-        const res = await apiClient.post('/getObjectSignedUrl', {
-          command: "getObjectSignedUrl",
-          key: post.fileKey
-        });
-
-        const url = res.data;
-
-        if (url) {
-          mediaData.fileUrl = url;
-
-          if (videoExtensions.some(ext => post.fileKey.toLowerCase().endsWith(ext))) {
-            mediaData.videoUrl = url;
-
-            // Fetch video thumbnail
-            if (post.thumbnail_fileKey) {
-              try {
-                const thumbRes = await apiClient.post('/getObjectSignedUrl', {
-                  command: "getObjectSignedUrl",
-                  key: post.thumbnail_fileKey
-                });
-                mediaData.thumbnailUrl = thumbRes.data;
-
-                await new Promise((resolve) => {
-                  Image.getSize(mediaData.thumbnailUrl, (width, height) => {
-                    mediaData.aspectRatio = width / height;
-                    resolve();
-                  }, resolve);
-                });
-              } catch (error) {
-                mediaData.thumbnailUrl = null;
-                mediaData.aspectRatio = 1;
-              }
-            } else {
-              mediaData.thumbnailUrl = null;
-              mediaData.aspectRatio = 1;
-            }
-          } else if (documentExtensions1.some(ext => post.fileKey.toLowerCase().endsWith(ext))) {
-            mediaData.documentUrl = url;
-          } else {
-
-            await new Promise((resolve) => {
-              Image.getSize(url, (width, height) => {
-                mediaData.aspectRatio = width / height;
-                resolve();
-              }, resolve);
-            });
-            mediaData.imageUrl = url;
-          }
-        }
-      } catch (error) {
-        mediaData.imageUrl = null;
-        mediaData.videoUrl = null;
-        mediaData.documentUrl = null;
-      }
-    }
-
-    if (post.author_fileKey) {
-      try {
-        const authorImageRes = await apiClient.post('/getObjectSignedUrl', {
-          command: "getObjectSignedUrl",
-          key: post.author_fileKey
-        });
-        mediaData.authorImageUrl = authorImageRes.data;
-      } catch (error) {
-        mediaData.authorImageUrl = null;
-      }
-    }
-
-    return { ...post, ...mediaData };
-  };
 
 
   const cleanUpFile = async (uri) => {
@@ -682,7 +583,7 @@ const ResourcesPost = () => {
         />
 
 
-      
+
 
 
         {file && (
@@ -734,11 +635,11 @@ const ResourcesPost = () => {
 
 
         {!file && (
-                <MediaPickerButton
-                  onPress={() => showMediaOptions()}
-                  isLoading={isCompressing}
-                />
-              )}
+          <MediaPickerButton
+            onPress={() => showMediaOptions()}
+            isLoading={isCompressing}
+          />
+        )}
 
         <Message3
           visible={showModal}

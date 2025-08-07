@@ -17,17 +17,14 @@ import { useBottomSheet } from "../AppUtils/SheetProvider";
 import CommentInputBar from "../AppUtils/InputBar";
 import { EventRegister } from "react-native-event-listeners";
 import { useConnection } from "../AppUtils/ConnectionProvider";
-import AppStyles from "../../assets/AppStyles";
 import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from "../helperComponents.jsx/signedUrls";
 import { openMediaViewer } from "../helperComponents.jsx/mediaViewer";
-import { fetchForumReactionsRaw } from "../helperComponents.jsx/ForumReactions";
 
 import ReactionSheet from "../helperComponents.jsx/ReactionUserSheet";
-import { ForumBody, generateHighlightedHTML, normalizeHtml } from "./forumBody";
-import { fetchMediaForPost, useForumMedia } from "../helperComponents.jsx/forumViewableItems";
+import { useForumMedia } from "../helperComponents.jsx/forumViewableItems";
 import { fetchCommentCount, fetchCommentCounts } from "../AppUtils/CommentCount";
 import useRenderForumItem from './useRenderForumItem';
-import { reactionConfig } from './useForumReactions';
+import { fetchForumReactionsRaw, reactionConfig } from './useForumReactions';
 import useForumFetcher, { enrichForumPost } from './useForumFetcher';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
@@ -312,6 +309,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     localPosts,
     fetchPosts,
     loading,
+    forumIds,
     loadingMore,
     hasMorePosts,
     lastEvaluatedKey,
@@ -495,7 +493,6 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey, fetchPosts]);
 
 
-
   const commentSectionRef = useRef();
   const bottomSheetRef = useRef(null);
 
@@ -537,7 +534,8 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   const renderItem = useRenderForumItem({
     localPosts,
     setLocalPosts,
-    searchResults,        // Add this
+    forumIds,
+    searchResults,
     setSearchResults,
     isTabActive: isTabActive && isFocused,
     activeVideo,
@@ -1155,8 +1153,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   const handleEndReached = useCallback(() => {
     if (loading || loadingMore || !hasMorePosts) return;
     fetchPosts(lastEvaluatedKey);
-  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey]);
-
+  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey, fetchPosts]);
 
 
 
@@ -1489,8 +1486,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
   const handleEndReached = useCallback(() => {
     if (loading || loadingMore || !hasMorePosts) return;
     fetchPosts(lastEvaluatedKey);
-  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey]);
-
+  }, [loading, loadingMore, hasMorePosts, lastEvaluatedKey, fetchPosts]);
 
 
 

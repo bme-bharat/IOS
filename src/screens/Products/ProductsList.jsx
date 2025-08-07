@@ -18,7 +18,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import Fuse from 'fuse.js';
 import { EventRegister } from 'react-native-event-listeners';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
 import FastImage from 'react-native-fast-image';
 

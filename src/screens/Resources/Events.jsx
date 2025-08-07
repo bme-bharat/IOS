@@ -9,7 +9,7 @@ import { COLORS } from '../../assets/Constants';
 import dayjs from 'dayjs';
 import Fuse from 'fuse.js';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { highlightMatch } from '../helperComponents.jsx/signedUrls';
 
 

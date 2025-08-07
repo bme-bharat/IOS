@@ -14,7 +14,7 @@ import { useNetwork } from '../AppUtils/IdProvider';
 import Fuse from 'fuse.js';
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { highlightMatch } from '../helperComponents.jsx/signedUrls';
 
 const ServicesList = () => {

@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, TouchableWithoutFeedback, Share, Dimensions, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ForumBody, normalizeHtml } from './forumBody';
-import useForumReactions, { reactionConfig } from './useForumReactions';
+import useForumReactions, { fetchForumReactionsRaw, reactionConfig } from './useForumReactions';
 import { getTimeDisplayForum } from '../helperComponents.jsx/signedUrls';
 import { useNavigation } from '@react-navigation/native';
 import { useNetwork } from '../AppUtils/IdProvider';
@@ -15,6 +15,7 @@ const maxAllowedHeight = Math.round(deviceHeight * 0.6);
 export default function useRenderForumItem({
   localPosts,
   setLocalPosts,
+  forumIds,
   searchResults,        // Add this
   setSearchResults,
   isTabActive,
@@ -39,6 +40,32 @@ export default function useRenderForumItem({
   const { myId, myData } = useNetwork();
   const { handleReactionUpdate } = useForumReactions(myId);
 
+
+const [reactions, setReactions] = useState([])
+
+// useEffect(() => {
+//   if (!forumIds.length || !myId) return;
+
+//   const fetchAllReactions = async () => {
+//     try {
+//       const results = await Promise.all(
+//         forumIds.map((id) => fetchForumReactionsRaw(id, myId))
+//       );
+
+//       const combined = forumIds.map((forumId, index) => ({
+//         forumId,
+//         ...results[index],
+//       }));
+
+//       setReactions(combined);
+//     } catch (e) {
+//       console.error('Failed to fetch forum reactions', e);
+//       setReactions([]);
+//     }
+//   };
+
+//   fetchAllReactions();
+// }, [forumIds, myId]);
 
   const handleNavigate = (item) => {
     setTimeout(() => {
@@ -278,7 +305,6 @@ export default function useRenderForumItem({
                 const selectedType = currentReaction !== 'None' ? 'None' : 'Like';
 
                 updatePostReaction(item.forum_id, selectedType, currentReaction);
-
 
                 await handleReactionUpdate(item.forum_id, selectedType, item);
               }}

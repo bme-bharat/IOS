@@ -17,7 +17,7 @@ import { updateJobPost } from '../Redux/Job_Actions';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { EventRegister } from 'react-native-event-listeners';
 
 const CompanyJobEditScreen = ({ route }) => {

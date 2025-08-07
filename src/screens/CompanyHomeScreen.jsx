@@ -17,7 +17,7 @@ import useFetchData from './helperComponents.jsx/HomeScreenData';
 import { useNetwork } from './AppUtils/IdProvider';
 import { useConnection } from './AppUtils/ConnectionProvider';
 import { getSignedUrl, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents.jsx/signedUrls';
-import AppStyles, { styles } from '../assets/AppStyles';
+import AppStyles, { styles } from './AppUtils/AppStyles';
 import { ForumPostBody } from './Forum/forumBody';
 import FastImage from 'react-native-fast-image';
 
@@ -55,15 +55,15 @@ const CompanyHomeScreen = React.memo(() => {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const flatListRef = useRef(null);
-  const [isProfileFetched, setIsProfileFetched] = useState(false);
   const scrollOffsetY = useRef(0);
+  const [isProfileFetched, setIsProfileFetched] = useState(false);
+
 
 
   const handleScroll = (event) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     scrollOffsetY.current = offsetY;
   };
-
 
 
   useEffect(() => {
@@ -105,7 +105,28 @@ const CompanyHomeScreen = React.memo(() => {
   const navigateToDetails = (job) => {
     navigation.navigate("JobDetail", { post_id: job.post_id, post: job });
   };
-  
+
+  const {
+    jobs,
+    latestPosts,
+    trendingPosts,
+    products,
+    services,
+    isFetchingProducts,
+    isFetchingServices,
+    isFetchingJobs,
+    isFetchingLatestPosts,
+    isFetchingTrendingPosts,
+    jobImageUrls,
+    latestImageUrls,
+    trendingImageUrls,
+    productImageUrls,
+    servicesImageUrls,
+    authorImageUrls,
+    refreshData,
+
+  } = useFetchData({ shouldFetch: isProfileFetched });
+
   const renderJobCard = ({ item }) => {
     if (!item || item.isEmpty) return null;
 
@@ -114,7 +135,7 @@ const CompanyHomeScreen = React.memo(() => {
 
     return (
       <TouchableOpacity
-      onPress={() => navigateToDetails(item)}
+        onPress={() => navigateToDetails(item)}
         activeOpacity={0.85}
         style={styles.eduCard}
       >
@@ -162,13 +183,7 @@ const CompanyHomeScreen = React.memo(() => {
 
   const renderForumCard = ({ item }) => {
     if (!item || !item.forum_id) return null;
-    const AuthorImageUrl = authorImageUrls?.[item.forum_id]
 
-    const rawHtml = (item.forum_body || '').trim();
-    const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawHtml);
-    const forumBodyHtml = hasHtmlTags ? rawHtml : `<p>${rawHtml}</p>`;
-
-    const imageUrl = trendingImageUrls?.[item.forum_id] || latestImageUrls?.[item.forum_id];
     const isVideo = item.fileKey?.endsWith('.mp4');
 
     return (
@@ -182,11 +197,28 @@ const CompanyHomeScreen = React.memo(() => {
           <View >
 
             <View style={[styles.authorRow]}>
-              <Image
-                source={{ uri: AuthorImageUrl }}
-                style={styles.authorImage}
-                resizeMode="cover"
-              />
+              {item?.authorImage ? (
+                <Image
+                  source={{ uri: item.authorImage }}
+                  style={styles.authorImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.authorImage,
+                    {
+                      backgroundColor: item.avatar?.backgroundColor || '#ccc',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }
+                  ]}
+                >
+                  <Text style={{ color: item.avatar?.textColor || '#fff', fontWeight: 'bold' }}>
+                    {item.avatar?.initials || 'B'}
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.authorInfo}>
                 <Text
@@ -196,7 +228,6 @@ const CompanyHomeScreen = React.memo(() => {
                 >
                   {item.author || 'No Name'}
                 </Text>
-
                 <Text style={styles.badgeText}>{item.author_category || ''}</Text>
 
               </View>
@@ -205,16 +236,13 @@ const CompanyHomeScreen = React.memo(() => {
               <Text style={styles.PostedLabel}>Posted on: <Text style={styles.articleTime}>{getTimeDisplayForum(item.posted_on)}</Text></Text>
 
             </View>
-
           </View>
 
 
-
-          {/* Post image or video if available */}
-          {imageUrl && (
+          {item.mediaUrl && (
             isVideo ? (
               <Video
-                source={{ uri: imageUrl }}
+                source={{ uri: item.mediaUrl }}
                 style={styles.articleMedia}
                 resizeMode="cover"
                 muted
@@ -222,7 +250,7 @@ const CompanyHomeScreen = React.memo(() => {
               />
             ) : (
               <Image
-                source={{ uri: imageUrl }}
+                source={{ uri: item.mediaUrl }}
                 style={styles.articleMedia}
                 resizeMode="cover"
               />
@@ -347,26 +375,6 @@ const CompanyHomeScreen = React.memo(() => {
   };
 
 
-  const {
-    jobs,
-    latestPosts,
-    trendingPosts,
-    products,
-    services,
-    isFetchingProducts,
-    isFetchingServices,
-    isFetchingJobs,
-    isFetchingLatestPosts,
-    isFetchingTrendingPosts,
-    jobImageUrls,
-    latestImageUrls,
-    trendingImageUrls,
-    productImageUrls,
-    servicesImageUrls,
-    authorImageUrls,
-    refreshData,
-
-  } = useFetchData({ shouldFetch: isProfileFetched });
 
 
 
@@ -563,7 +571,6 @@ const CompanyHomeScreen = React.memo(() => {
             case 'jobs':
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
                     <View style={styles.headingContainer}>
                       <Text style={styles.heading}>
@@ -574,18 +581,32 @@ const CompanyHomeScreen = React.memo(() => {
                       </TouchableOpacity>
                     </View>
 
-                    <FlatList
-                      data={jobs}
-                      renderItem={({ item }) => renderJobCard({ item })}
-                      keyExtractor={(item) => `job-${item.post_id}`}
-                    />
+                    {isRefreshing ? (
+                      // Skeleton placeholders when refreshing
+                      [...Array(4)].map((_, index) => (
+                        <View key={index} style={styles.eduCard}>
+                          <View style={styles.eduCardLeft} />
+                          <View style={styles.eduCardRight}>
+                            <Text numberOfLines={1} style={styles.eduTitle}></Text>
+                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                          </View>
+                        </View>
+                      ))
+                    ) : (
+                      // Real data after refreshing
+                      <FlatList
+                        data={jobs}
+                        renderItem={({ item }) => renderJobCard({ item })}
+                        keyExtractor={(item) => `job-${item.post_id}`}
+                      />
+                    )}
                   </>
-
                 </TouchableOpacity>
               );
 
             case 'banner2':
-              return <Banner02 />;
+              return <Banner02 isVisible={visibleItem === 'banner2'}/>;
 
             case 'trendingPosts':
               return (

@@ -19,6 +19,7 @@ import { useNetwork } from '../AppUtils/IdProvider';
 import { getTimeDisplay } from '../helperComponents.jsx/signedUrls';
 import { ForumBody } from '../Forum/forumBody';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 const ResourcesDetails = () => {
     const route = useRoute();
     const navigation = useNavigation();
@@ -30,20 +31,13 @@ const ResourcesDetails = () => {
     const [loadingMedia, setLoadingMedia] = useState(false);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
     const [thumbnailUrl, setThumbnailUrl] = useState(null);
-    const [expandedPosts, setExpandedPosts] = useState({});
+    const [authorImage, setAuthorImage] = useState();
 
     const toggleFullText = (forumId) => {
         setExpandedTexts((prev) => ({
             ...prev,
             [forumId]: !prev[forumId],
         }));
-    };
-
-    const getText1 = (text, forumId) => {
-        if (expandedPosts[forumId] || text.length <= 200) {
-            return text;
-        }
-        return text.slice(0, 200) + ' ...';
     };
 
 
@@ -73,6 +67,11 @@ const ResourcesDetails = () => {
                     if (post.fileKey) fetchMediaUrl(post.fileKey, 'content');
                     if (post.thumbnail_fileKey) fetchMediaUrl(post.thumbnail_fileKey, 'thumbnail');
                     if (post.author_fileKey) fetchMediaUrl(post.author_fileKey, 'author');
+                    if (!post.author_fileKey) {
+                        const authorImage = generateAvatarFromName(post?.author)
+                        console.log('authorImage', authorImage)
+                        setAuthorImage(authorImage)
+                    }
                 } else {
                     setPostData({ removed_by_author: true });
                 }
@@ -93,22 +92,6 @@ const ResourcesDetails = () => {
 
         fetchResourceDetails();
     }, [myId, resourceID]);
-
-
-
-    const handleUrlPress = (url) => {
-        Linking.openURL(url)
-            .catch((err) => {
-                console.error("Failed to open URL: ", err);
-                // Show a toast message if URL fails to open
-                Toast.show({
-                    type: 'error',
-                    position: 'bottom',
-                    text1: 'Failed to open the link',
-                    text2: 'Please try again later.',
-                });
-            });
-    };
 
 
     const fileTypeMap = {
@@ -226,14 +209,6 @@ const ResourcesDetails = () => {
     };
 
 
-
-    let authorImage = maleImage; // Default image
-    if (postData?.author_gender === 'Female') {
-        authorImage = femaleImage; // Female image
-    } else if (postData?.user_type === 'company') {
-        authorImage = companyImage; // Company image
-    }
-
     const videoExtensions = ['mp4', 'mov', 'quicktime', 'avi', 'flv', 'wmv', 'mkv', 'webm', 'mpeg'];
     const fileExtension = postData?.fileKey ? postData.fileKey.split('.').pop().toLowerCase() : '';
     const [expandedTexts, setExpandedTexts] = useState({});
@@ -314,11 +289,11 @@ const ResourcesDetails = () => {
                                 resizeMode="cover"
                             />
                         ) : (
-                            <FastImage
-                                source={authorImage}
-                                style={styles.authorImage}
-                                resizeMode="cover"
-                            />
+                            <View style={[styles.avatarContainerMini, { backgroundColor: authorImage?.backgroundColor }]}>
+                                <Text style={[styles.avatarTextMini, { color: authorImage?.textColor }]}>
+                                    {authorImage?.initials}
+                                </Text>
+                            </View>
                         )}
                         <View style={styles.authorInfo}>
                             <View style={styles.authorNameRow}>
@@ -465,13 +440,27 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginRight: 5,
     },
-    authorPlaceholder: {
-        backgroundColor: '#f0f0f0',
+    avatarContainerMini: {
+        width: 40,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: 20,
     },
+    avatarTextMini: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+
+    avatarText: {
+        fontSize: 50,
+        fontWeight: 'bold',
+    },
+
     authorInfo: {
         flex: 1,
+        marginLeft: 10
+
     },
     authorNameRow: {
         flexDirection: 'row',

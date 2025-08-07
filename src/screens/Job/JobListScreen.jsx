@@ -13,7 +13,7 @@ import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
 import buliding from '../../images/homepage/buliding.jpg';
 import { EventRegister } from 'react-native-event-listeners';

@@ -1,239 +1,216 @@
-import axios from 'axios';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions, Animated, Image } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useIsFocused } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import apiClient from './ApiClient';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
+const { width } = Dimensions.get('window');
 
 const Banner02 = () => {
+  const navigation = useNavigation();
   const [bannerHomeFiles, setBannerHomeFiles] = useState([]);
-  const [error, setError] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFetching, setIsFetching] = useState(true);
-  const [isPlaying, setIsPlaying] = useState({});
-  const videoRefs = useRef({});
-  const slideInterval = useRef(null);
-  const windowWidth = Dimensions.get('window').width;
-  const [slideAnim] = useState(new Animated.Value(0));
+  const [isVideoReady, setIsVideoReady] = useState({});
+  const [isVideoPlaying, setIsVideoPlaying] = useState({});
   const isFocused = useIsFocused();
-  const fetchHomeBannerFiles = useCallback(async () => {
-    setIsFetching(true);
+  const flatListRef = useRef(null);
+  const currentIndexRef = useRef(0);
+  const fetchBannerData = useCallback(async () => {
     try {
       const response = await apiClient.post('/getBannerImages', {
         command: 'getBannerImages',
-        banners_id: '12345',
+        banners_id: 'adban01',
       });
 
       if (response.data.status === 'success') {
-        const bannerData = response.data.response;
-        const mediaUrls = [];
 
-        await Promise.all(
-          bannerData.map(async (banner) => {
-            if (banner.files?.length > 0) {
-              await Promise.all(
-                banner.files.map(async (fileKey) => {
-                  try {
-                    const res = await apiClient.post('/getObjectSignedUrl', {
-                      command: 'getObjectSignedUrl',
-                      bucket_name: 'bme-app-admin-data',
-                      key: fileKey,
-                    });
+        const bannerData = response.data.response || [];
+        const media = [];
 
-                    if (res.data) {
-                      const type = fileKey.endsWith('.mp4') ? 'video' : 'image';
-                      mediaUrls.push({ url: res.data, type });
-                    }
-                  } catch {
-                    // Ignore individual fetch errors
-                  }
-                })
-              );
+        for (const banner of bannerData) {
+          for (const file of banner.files || []) {
+
+            try {
+              const res = await apiClient.post('/getObjectSignedUrl', {
+                command: 'getObjectSignedUrl',
+                bucket_name: 'bme-app-admin-data',
+                key: file.fileKey, // <-- FIXED
+              });
+
+              const url = res.data;
+              if (url) {
+                const type = file.fileKey.endsWith('.mp4') ? 'video' : 'image';
+
+                let id = null;
+                const targetUrl = file.redirect?.target_url;
+                const match = targetUrl?.match(/\/company\/([a-f0-9-]+)$/i);
+                if (match && match[1]) {
+                  id = match[1];
+                }
+                media.push({
+                  url,
+                  type,
+                  redirect: file.redirect || null, // optionally include redirect
+                  id
+                });
+              }
+            } catch (err) {
+              console.error('Error fetching signed URL:', err);
             }
-          })
-        );
+          }
 
-        setBannerHomeFiles(mediaUrls);
+        }
+
+        setBannerHomeFiles(media);
       }
-
-    } catch (error) {
-      setError(error);
+    } catch (err) {
+      console.error('Banner fetch error:', err);
     }
-    setIsFetching(false);
   }, []);
 
   useEffect(() => {
-    fetchHomeBannerFiles();
-  }, [fetchHomeBannerFiles]);
-
-  const startAutoSlide = () => {
-    if (bannerHomeFiles.length > 0) {
-      stopAutoSlide(); // Ensure no duplicate intervals
-      slideInterval.current = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerHomeFiles.length);
-      }, 2000);
-    }
-  };
-
-
-
-  const stopAutoSlide = () => {
-    if (slideInterval.current) {
-      clearInterval(slideInterval.current);
-      slideInterval.current = null;
-    }
-  };
-
+    fetchBannerData();
+  }, [fetchBannerData]);
 
   useEffect(() => {
     if (!isFocused) {
-      // Pause all videos when the screen is not in focus
-      setIsPlaying({});
+      setIsVideoPlaying({});
     }
   }, [isFocused]);
+
   useEffect(() => {
-    startAutoSlide();
-    return () => stopAutoSlide();
+    const interval = setInterval(() => {
+      if (!bannerHomeFiles.length) return;
+      currentIndexRef.current = (currentIndexRef.current + 1) % bannerHomeFiles.length;
+      flatListRef.current?.scrollToIndex({
+        index: currentIndexRef.current,
+        animated: true,
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, [bannerHomeFiles]);
 
-  useEffect(() => {
-    Animated.timing(slideAnim, {
-      toValue: -currentIndex * windowWidth,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-  }, [currentIndex, slideAnim, windowWidth]);
+  const handlePlayPause = (index) => {
+    setIsVideoPlaying((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
-  const togglePlayPause = (index) => {
-    if (videoRefs.current[index]) {
-      if (isPlaying[index]) {
-        // Pause the video and restart auto-slide
-        setIsPlaying((prevState) => ({
-          ...prevState,
-          [index]: false,
-        }));
-        startAutoSlide();
-      } else {
-        // Stop auto-slide when the video is playing
-        stopAutoSlide();
-        videoRefs.current[index].seek(0);
-        setIsPlaying((prevState) => ({
-          ...prevState,
-          [index]: true,
-        }));
-      }
+  const renderItem = ({ item, index }) => {
+    const isPlaying = isVideoPlaying[index] ?? true;
+    const videoReady = isVideoReady[index];
+
+    if (item.type === 'image') {
+      return (
+        <View style={styles.slide}>
+          <FastImage source={{ uri: item.url }} style={styles.media} resizeMode="cover" />
+        </View>
+      );
     }
+
+    return (
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => {
+          if (item.id) {
+            navigation.navigate('CompanyDetails', { userId: item.id });
+          } else {
+            handlePlayPause(index); // fallback behavior
+          }
+        }}
+
+        style={styles.slide}
+      >
+        {!videoReady && (
+          <ActivityIndicator
+            size="large"
+            color="#ffffff"
+            style={styles.loader}
+          />
+        )}
+        <Video
+          source={{ uri: item.url }}
+          style={styles.media}
+          resizeMode="cover"
+          repeat
+
+          paused={!isFocused || !isPlaying}
+          onLoad={() =>
+            setIsVideoReady((prev) => ({ ...prev, [index]: true }))
+          }
+        />
+        {!isPlaying && (
+          <Icon
+            name="play-circle-outline"
+            size={50}
+            color="white"
+            style={styles.playIcon}
+          />
+        )}
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      style={styles.carouselContainer}>
-      <View style={styles.imageContainer}>
-        <Animated.View
-          style={[styles.imageContainer1, { transform: [{ translateX: slideAnim }] }]}>
-          {bannerHomeFiles.map((file, index) => (
-            <View key={index} style={styles.videoWrapper}>
-              {file.type === 'video' ? (
-                <>
-                  <Video
-                    ref={(ref) => (videoRefs.current[index] = ref)}
-                    source={{ uri: file.url }}
-                    style={styles.video}
-                    resizeMode="cover"
-                    muted={true}
-                    // volume={1.0}
-                    ignoreSilentSwitch="ignore"
-                    // paused={!isPlaying[index] || currentIndex !== index || !isFocused}
-                    repeat
-                    onEnd={() => {
-                      setIsPlaying((prevState) => ({
-                        ...prevState,
-                        [index]: false,
-                      }));
-                      videoRefs.current[index]?.seek(0);
-                      startAutoSlide();
-                    }}
-                  />
-                  {/* <TouchableOpacity
-                    style={styles.playButton}
-                    onPress={() => togglePlayPause(index)}>
-                    <Icon
-                      name={isPlaying[index] ? 'pause-circle-outline' : 'play-circle-outline'}
-                      size={40}
-                      color="white"
-                      style={{ opacity: isPlaying[index] ? 0 : 0.7 }}
-                    />
-                  </TouchableOpacity> */}
-                </>
-              ) : (
-                <FastImage
-                  source={{ uri: file.url }}
-                  style={styles.video}
-                  resizeMode="cover"
-                />
-              )}
-            </View>
-          ))}
-        </Animated.View>
-
-      </View>
-    </TouchableOpacity>
+    <View style={styles.carouselContainer}>
+      <FlatList
+        ref={flatListRef}
+        data={bannerHomeFiles}
+        horizontal
+        pagingEnabled
+        renderItem={renderItem}
+        keyExtractor={(_, index) => index.toString()}
+        showsHorizontalScrollIndicator={false}
+        getItemLayout={(_, index) => ({
+          length: width - 8,
+          offset: (width - 8) * index,
+          index,
+        })}
+      />
+    </View>
   );
-
 };
 
 const styles = StyleSheet.create({
   carouselContainer: {
-    flex: 1,
-    overflow: 'hidden',
-
-  },
-
-  imageContainer: {
-    flex: 1,
-    flexDirection: 'row',
     height: 200,
-    width: Dimensions.get('window').width - 8,
-    gap: 8,
+    width: width - 8,
     alignSelf: 'center',
     borderRadius: 14,
+    overflow: 'hidden',
   },
-  imageContainer1: {
-    flex: 1,
-    flexDirection: 'row',
+  slide: {
+    width: width - 8,
     height: 200,
-    width: '100%',
-    gap: 8,
-    alignSelf: 'center',
-    borderRadius: 14,
-
-  },
-  videoWrapper: {
-    width: '100%',
-    height: '100%',
     borderRadius: 14,
     overflow: 'hidden',
-    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  video: {
+  media: {
     width: '100%',
     height: '100%',
     borderRadius: 14,
   },
-  playButton: {
+  loader: {
     position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 1,
+    zIndex: 2,
   },
-
+  playIcon: {
+    position: 'absolute',
+    zIndex: 2,
+    alignSelf: 'center',
+  },
 });
-
-
 
 export default Banner02;

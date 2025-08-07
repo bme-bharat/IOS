@@ -60,7 +60,7 @@ const UserSettingScreen = () => {
   const navigation = useNavigation();
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
-console.log('myData',myData)
+ 
   const profile = useSelector(state => state.CompanyProfile.profile);
   const parentNavigation = navigation.getParent();
   const currentRouteName = parentNavigation?.getState()?.routes[parentNavigation.getState().index]?.name;
@@ -70,9 +70,9 @@ console.log('myData',myData)
   const [deviceInfo, setDeviceInfo] = useState({
     appVersion: '',
   });
-const hasSubscription =
-  myData?.subscription_expires_on &&
-  Math.floor(Date.now() / 1000) < Number(myData.subscription_expires_on);
+  const hasSubscription =
+    myData?.subscription_expires_on &&
+    Math.floor(Date.now() / 1000) < Number(myData.subscription_expires_on);
 
 
   useEffect(() => {
@@ -105,9 +105,7 @@ const hasSubscription =
               user_id: myId,
             }
           );
-          console.log('response',response.data)
 
-          // Filter only completed transactions
           const completedTransactions = response.data.response.filter(
             transaction => transaction.transaction_status === "captured"
           );
@@ -192,7 +190,7 @@ const hasSubscription =
       useNativeDriver: true,
       listener: (event) => {
         const offsetY = event.nativeEvent.contentOffset.y;
-        console.log('offsetY:', offsetY); // ✅ This logs the current scroll offset
+    
       },
     }
   );
@@ -227,7 +225,7 @@ const hasSubscription =
           <Icon name="arrow-left" size={24} color="#075cab" />
         </TouchableOpacity>
       </View > */}
-      <Animated.View
+       <Animated.View
         style={[
           styles.collapsedProfile,
           {
@@ -242,23 +240,25 @@ const hasSubscription =
           activeOpacity={0.8}
         >
           <View style={styles.miniLeft}>
-             {profile?.imageUrl ? (
-                    <FastImage
-                      source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-                      cache="immutable"
-                      style={styles.detailImage}
-                      resizeMode='contain'
-                      onError={() => { }}
-                    />
-                  ) : (
-                    <View style={[styles.miniImage, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-                      <Text style={[styles.avatarTextMini, { color: profile?.companyAvatar?.textColor }]}>
-                        {profile?.companyAvatar?.initials}
-                      </Text>
-                    </View>
-                  )}
+          
+            {profile?.imageUrl ? (
+              <FastImage
+                source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+                cache="immutable"
+                style={styles.miniImage}
+                resizeMode='contain'
+                onError={() => { }}
+              />
+            ) : (
+              <View style={[styles.avatarContainerMini, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                <Text style={[styles.avatarTextMini, { color: profile?.companyAvatar?.textColor }]}>
+                  {profile?.companyAvatar?.initials}
+                </Text>
+              </View>
+            )}
             <Text style={styles.miniName}>
-              {profile?.first_name?.trim()} {profile?.last_name}
+            {profile?.first_name?.trim()} {profile?.last_name}
+
             </Text>
           </View>
           <Icon
@@ -284,30 +284,30 @@ const hasSubscription =
                 <Text style={styles.editProfileText}>Edit Profile</Text>
               </TouchableOpacity>
 
-        
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onPress={() => { navigation.navigate("UserProfile") }}
-                  style={styles.imageContainer}
-                >
-             
-                  {profile?.imageUrl ? (
-                    <FastImage
-                      source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-                      cache="immutable"
-                      style={styles.detailImage}
-                      resizeMode='contain'
-                      onError={() => { }}
-                    />
-                  ) : (
-                    <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-                      <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
-                        {profile?.companyAvatar?.initials}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-       
+
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => { navigation.navigate("UserProfile") }}
+                style={styles.imageContainer}
+              >
+
+                {profile?.imageUrl ? (
+                  <FastImage
+                    source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
+                    cache="immutable"
+                    style={styles.detailImage}
+                    resizeMode='contain'
+                    onError={() => { }}
+                  />
+                ) : (
+                  <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                    <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+                      {profile?.companyAvatar?.initials}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
               <View style={styles.profileDetails}>
 
                 <View style={styles.title1}>
@@ -659,8 +659,6 @@ const styles = StyleSheet.create({
   miniLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    
-    borderRadius:40
   },
 
   miniImage: {
@@ -668,21 +666,30 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
-    // borderWidth: 1.2,
-    // borderColor: '#7baee9',
-    // backgroundColor: '#e6f0ff',
-    alignItems: 'center',
-    justifyContent:'center'
+    borderWidth: 1.2,
+    borderColor: '#7baee9',
+    backgroundColor: '#e6f0ff',
   },
 
   miniName: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1e2a38',
-    // letterSpacing: 0.4,
+    marginLeft:10
 
   },
-
+  avatarContainerMini: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  avatarTextMini: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  
   avatarContainer: {
     width: '100%',
     height: '100%',
@@ -694,7 +701,7 @@ const styles = StyleSheet.create({
     fontSize: 50,
     fontWeight: 'bold',
   },
-  avatarTextMini:{
+  avatarTextMini: {
     fontSize: 18,
     fontWeight: 'bold',
   }

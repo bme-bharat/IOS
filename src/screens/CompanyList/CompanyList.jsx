@@ -14,7 +14,7 @@ import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;

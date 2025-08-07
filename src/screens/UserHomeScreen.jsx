@@ -17,7 +17,7 @@ import { useNetwork } from './AppUtils/IdProvider';
 import useFetchData from './helperComponents.jsx/HomeScreenData';
 import { useConnection } from './AppUtils/ConnectionProvider';
 import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents.jsx/signedUrls';
-import AppStyles, { styles } from '../assets/AppStyles';
+import AppStyles, { styles } from './AppUtils/AppStyles';
 import { ForumPostBody } from './Forum/forumBody';
 import FastImage from 'react-native-fast-image';
 import { generateAvatarFromName } from './helperComponents.jsx/useInitialsAvatar';
@@ -70,7 +70,6 @@ const UserHomeScreen = React.memo(() => {
 
 
 
-
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
@@ -110,6 +109,29 @@ const UserHomeScreen = React.memo(() => {
   const navigateToDetails = (job) => {
     navigation.navigate("JobDetail", { post_id: job.post_id, post: job });
   };
+
+  const {
+    jobs,
+    latestPosts,
+    trendingPosts,
+    products,
+    services,
+    isFetchingProducts,
+    isFetchingServices,
+    isFetchingJobs,
+    isFetchingLatestPosts,
+    isFetchingTrendingPosts,
+    jobImageUrls,
+    latestImageUrls,
+    trendingImageUrls,
+    productImageUrls,
+    servicesImageUrls,
+    authorImageUrls,
+    avatars,
+    refreshData,
+
+  } = useFetchData({ shouldFetch: isProfileFetched });
+
 
   const renderJobCard = ({ item }) => {
     if (!item || item.isEmpty) return null;
@@ -168,9 +190,7 @@ const UserHomeScreen = React.memo(() => {
 
   const renderForumCard = ({ item }) => {
     if (!item || !item.forum_id) return null;
-    const AuthorImageUrl = authorImageUrls?.[item.forum_id]
 
-    const imageUrl = trendingImageUrls?.[item.forum_id] || latestImageUrls?.[item.forum_id];
     const isVideo = item.fileKey?.endsWith('.mp4');
 
     return (
@@ -184,11 +204,29 @@ const UserHomeScreen = React.memo(() => {
           <View >
 
             <View style={[styles.authorRow]}>
-              <Image
-                source={{ uri: AuthorImageUrl }}
-                style={styles.authorImage}
-                resizeMode="cover"
-              />
+              {item?.authorImage ? (
+                <Image
+                  source={{ uri: item.authorImage }}
+                  style={styles.authorImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.authorImage,
+                    {
+                      backgroundColor: item.avatar?.backgroundColor || '#ccc',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }
+                  ]}
+                >
+                  <Text style={{ color: item.avatar?.textColor || '#fff', fontWeight: 'bold' }}>
+                    {item.avatar?.initials || 'B'}
+                  </Text>
+                </View>
+              )}
+
 
               <View style={styles.authorInfo}>
                 <Text
@@ -211,11 +249,10 @@ const UserHomeScreen = React.memo(() => {
 
 
 
-          {/* Post image or video if available */}
-          {imageUrl && (
+          {item.mediaUrl && (
             isVideo ? (
               <Video
-                source={{ uri: imageUrl }}
+                source={{ uri: item.mediaUrl }}
                 style={styles.articleMedia}
                 resizeMode="cover"
                 muted
@@ -223,7 +260,7 @@ const UserHomeScreen = React.memo(() => {
               />
             ) : (
               <Image
-                source={{ uri: imageUrl }}
+                source={{ uri: item.mediaUrl }}
                 style={styles.articleMedia}
                 resizeMode="cover"
               />
@@ -347,27 +384,6 @@ const UserHomeScreen = React.memo(() => {
     );
   };
 
-
-  const {
-    jobs,
-    latestPosts,
-    trendingPosts,
-    products,
-    services,
-    isFetchingProducts,
-    isFetchingServices,
-    isFetchingJobs,
-    isFetchingLatestPosts,
-    isFetchingTrendingPosts,
-    jobImageUrls,
-    latestImageUrls,
-    trendingImageUrls,
-    productImageUrls,
-    servicesImageUrls,
-    authorImageUrls,
-    refreshData,
-
-  } = useFetchData({ shouldFetch: isProfileFetched });
 
 
   useEffect(() => {
@@ -562,7 +578,6 @@ const UserHomeScreen = React.memo(() => {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
 
-
         renderItem={({ item }) => {
           switch (item.type) {
 
@@ -572,7 +587,6 @@ const UserHomeScreen = React.memo(() => {
             case 'jobs':
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
                     <View style={styles.headingContainer}>
                       <Text style={styles.heading}>
@@ -583,13 +597,27 @@ const UserHomeScreen = React.memo(() => {
                       </TouchableOpacity>
                     </View>
 
-                    <FlatList
-                      data={jobs}
-                      renderItem={({ item }) => renderJobCard({ item })}
-                      keyExtractor={(item) => `job-${item.post_id}`}
-                    />
+                    {isRefreshing ? (
+                      // Skeleton placeholders when refreshing
+                      [...Array(4)].map((_, index) => (
+                        <View key={index} style={styles.eduCard}>
+                          <View style={styles.eduCardLeft} />
+                          <View style={styles.eduCardRight}>
+                            <Text numberOfLines={1} style={styles.eduTitle}></Text>
+                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                          </View>
+                        </View>
+                      ))
+                    ) : (
+                      // Real data after refreshing
+                      <FlatList
+                        data={jobs}
+                        renderItem={({ item }) => renderJobCard({ item })}
+                        keyExtractor={(item) => `job-${item.post_id}`}
+                      />
+                    )}
                   </>
-
                 </TouchableOpacity>
               );
 
@@ -609,6 +637,7 @@ const UserHomeScreen = React.memo(() => {
                     <FlatList
                       key={'trending-columns'}
                       data={trendingPosts}
+                      extraData={authorImageUrls}
                       renderItem={({ item }) => renderForumCard({ item })}
                       keyExtractor={(item, index) => item.forum_id?.toString() || item.post_id?.toString() || `fallback-${index}`}
                       showsVerticalScrollIndicator={false}
@@ -636,6 +665,7 @@ const UserHomeScreen = React.memo(() => {
                     <FlatList
                       key={'latest-columns'}
                       data={latestPosts}
+                      extraData={authorImageUrls}
                       renderItem={({ item }) => renderForumCard({ item })}
                       keyExtractor={(item, index) => item.forum_id?.toString() || item.post_id?.toString() || `latest-${index}`}
                       showsVerticalScrollIndicator={false}

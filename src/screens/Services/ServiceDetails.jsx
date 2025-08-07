@@ -19,7 +19,7 @@ import apiClient from '../ApiClient';
 import DisclaimerBox from '../Products/DisclaimerBox';
 import { useFileOpener } from '../helperComponents.jsx/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
 
 

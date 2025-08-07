@@ -16,7 +16,7 @@ import Message3 from '../../components/Message3';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
-import AppStyles from '../../assets/AppStyles';
+import AppStyles from '../AppUtils/AppStyles';
 
 
 const UserJobProfileCreateScreen = () => {

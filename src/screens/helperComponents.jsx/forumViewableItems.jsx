@@ -67,7 +67,7 @@ export const fetchMediaForPost = async (input) => {
 };
 
 
-export const useForumMedia = (posts, isFocused,isTabActive, setActiveVideo) => {
+export const useForumMedia = (posts, isFocused, isTabActive, setActiveVideo) => {
   const signedUrlCache = useRef(new Map());
   const viewedForumIdsRef = useRef(new Set());
   const [version, setVersion] = useState(0);
@@ -122,7 +122,7 @@ export const useForumMedia = (posts, isFocused,isTabActive, setActiveVideo) => {
         command: 'forumViewCounts',
         forum_id: forumId,
       });
-    } catch {}
+    } catch { }
   };
 
   const fetchSignedUrlIfNeeded = async (item, idField, fileKeyField, thumbKeyField) => {
@@ -252,7 +252,7 @@ export const useForumMedia = (posts, isFocused,isTabActive, setActiveVideo) => {
 
     return generateAvatarFromName(item.author || '');
   }, [getUrlFor]);
-  
+
 
   useEffect(() => {
     preloadUrls(0, 4);

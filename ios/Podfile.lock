@@ -1874,6 +1874,8 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
+  - RNPermissions (5.4.2):
+    - React-Core
   - RNQuickAction (0.3.13):
     - React
   - RNReanimated (3.17.5):
@@ -2124,6 +2126,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
+  - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNQuickAction (from `../node_modules/react-native-quick-actions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2339,6 +2342,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-crop-picker"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
+  RNPermissions:
+    :path: "../node_modules/react-native-permissions"
   RNQuickAction:
     :path: "../node_modules/react-native-quick-actions"
   RNReanimated:
@@ -2456,6 +2461,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 7ab9fdedeb9070279284772c29b18de444948b06
   RNImageCropPicker: 8e39c01f205e00d739c31e682f068aac315587bf
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
+  RNPermissions: f4df15c4027ee5093d0436c67868216c046da115
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNReanimated: 2f1e598e285a746dc1e0fd265a35edc748b8adc7
   RNScreens: 67c6c2d9f4c917508c0414167fba805976e634f4

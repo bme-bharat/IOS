@@ -35,97 +35,76 @@ const LoginPhoneScreen = () => {
 
 
   const sendOTPHandle = async () => {
-
     if (!phone) {
-
       showToast("Please enter a valid phone number or email Id", 'error');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       let loginData, otpData;
-      const headers = { 'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk' };
-
+  
       if (isPhoneLogin) {
-
         const fullPhoneNumber = `${countryCode}${phone}`;
-
-        loginData = await axios.post(
-          'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/loginUser',
-          {
-            command: 'loginUser',
-            user_phone_number: fullPhoneNumber,
-          },
-          { headers }
-        );
-
+  
+        loginData = await apiClient.post('/loginUser', {
+          command: 'loginUser',
+          user_phone_number: fullPhoneNumber,
+        });
+  
         if (loginData.data.status === 'success') {
           const { user_id: userId } = loginData.data.login_user_details;
-
-          otpData = await axios.post(
-            'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/sendVerifyOtpMsg91',
-            {
-              command: 'sendVerifyOtpMsg91',
-              user_phone_number: fullPhoneNumber,
-            },
-            { headers }
-          );
-
+  
+          otpData = await apiClient.post('/sendVerifyOtpMsg91', {
+            command: 'sendVerifyOtpMsg91',
+            user_phone_number: fullPhoneNumber,
+          });
+  
           if (otpData.data.type === 'success') {
-
             showToast("OTP sent", 'success');
-
             navigation.navigate('LoginVerifyOTP', { fullPhoneNumber, userid: String(userId) });
-
           } else {
             throw new Error('Failed to send OTP to phone. Please try again.');
           }
         } else {
           throw new Error('User does not exist with this phone number.');
         }
+  
       } else {
-
-        loginData = await axios.post(
-          'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/loginUser',
-          {
-            command: 'loginUser',
-            email: phone,
-          },
-          { headers }
-        );
-
+        loginData = await apiClient.post('/loginUser', {
+          command: 'loginUser',
+          email: phone,
+        });
+  
         if (loginData.data.status === 'success') {
           const { user_id: userId } = loginData.data.login_user_details;
-
-          const requestData = {
+  
+          const res = await apiClient.post('/sendEmailOtp', {
             command: 'sendEmailOtp',
             email: phone,
-          };
-          const res = apiClient.post('/sendEmailOtp', requestData);
-
+          });
+  
           if (res.data.status === 'success') {
-
             showToast("OTP sent", 'success');
-
             navigation.navigate('LoginVerifyOTP', { phone, userid: String(userId) });
           } else {
             throw new Error('Failed to send OTP to email. Please try again.');
           }
         } else {
+          console.log(loginData.data.errorMessage)
           throw new Error('User does not exist with this email.');
         }
       }
     } catch (error) {
-
       showToast(error.message, 'info');
-
     } finally {
       setLoading(false);
       Keyboard.dismiss();
     }
   };
+  
+  
 
 
   const handleLoginMethodSwitch = () => {
