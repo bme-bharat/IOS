@@ -1,7 +1,7 @@
 
 import { TabView, TabBar } from 'react-native-tab-view';
 import React, { useState, useEffect, useCallback, useRef, Profiler, useMemo } from "react";
-import { View, Text, FlatList, Image, TouchableOpacity, textInputRef, TextInput, Dimensions, Modal, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, SafeAreaView, ActivityIndicator, Linking, Share, Button, RefreshControl, Animated, PanResponder, ScrollView, Platform, InputAccessoryView, InteractionManager } from "react-native";
+import { View, Text, FlatList, Image, TouchableOpacity, textInputRef, TextInput, Dimensions, Modal, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, SafeAreaView, ActivityIndicator, Linking, Share, Button, RefreshControl, PanResponder, ScrollView, Platform, InputAccessoryView, InteractionManager } from "react-native";
 import Video from "react-native-video";
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { useIsFocused } from "@react-navigation/native";
@@ -17,16 +17,20 @@ import { useBottomSheet } from "../AppUtils/SheetProvider";
 import CommentInputBar from "../AppUtils/InputBar";
 import { EventRegister } from "react-native-event-listeners";
 import { useConnection } from "../AppUtils/ConnectionProvider";
-import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from "../helperComponents.jsx/signedUrls";
-import { openMediaViewer } from "../helperComponents.jsx/mediaViewer";
+import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from "../helperComponents/signedUrls";
+import { openMediaViewer } from "../helperComponents/mediaViewer";
 
-import ReactionSheet from "../helperComponents.jsx/ReactionUserSheet";
-import { useForumMedia } from "../helperComponents.jsx/forumViewableItems";
+import ReactionSheet from "../helperComponents/ReactionUserSheet";
+import { useForumMedia } from "../helperComponents/forumViewableItems";
 import { fetchCommentCount, fetchCommentCounts } from "../AppUtils/CommentCount";
 import useRenderForumItem from './useRenderForumItem';
 import { fetchForumReactionsRaw, reactionConfig } from './useForumReactions';
 import useForumFetcher, { enrichForumPost } from './useForumFetcher';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
+import scrollAnimations from '../helperComponents/scrollAnimations';
+import AppStyles from '../AppUtils/AppStyles';
+import Animated from "react-native-reanimated";
 
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
@@ -38,6 +42,7 @@ const { height: screenHeight } = Dimensions.get('window');
 
 const PageView = () => {
   const navigation = useNavigation();
+  const { onScroll, headerStyle, bottomStyle } = scrollAnimations();
 
   const tabConfig = [
     { name: "Home", component: CompanyHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
@@ -106,12 +111,15 @@ const PageView = () => {
   };
 
   const renderScene = ({ route }) => {
+    const scrollProps = { onScroll, headerStyle };
+
     switch (route.key) {
       case 'all':
         return <AllPosts
           videoRefs={tabVideoRefs.current.all}
           isTabActive={index === 0}
           key="all"
+          {...scrollProps}
 
         />;
       case 'latest':
@@ -119,6 +127,7 @@ const PageView = () => {
           videoRefs={tabVideoRefs.current.latest}
           isTabActive={index === 1}
           key="latest"
+          {...scrollProps}
 
         />;
       case 'trending':
@@ -126,6 +135,7 @@ const PageView = () => {
           videoRefs={tabVideoRefs.current.trending}
           isTabActive={index === 2}
           key="trending"
+          {...scrollProps}
 
         />;
       // case 'post':
@@ -153,7 +163,8 @@ const PageView = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -193,35 +204,22 @@ const PageView = () => {
 
         lazy
       />
-      <View style={styles.bottomNavContainer}>
-        {tabConfig.map((tab, index) => {
-          const isFocused = currentRouteName === tab.name;
 
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => navigation.navigate(tab.name)}
-              style={styles.navItem}
-              activeOpacity={0.8}
-            >
-              <tab.iconComponent
-                name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                size={22}
-                color={isFocused ? '#075cab' : 'black'}
-              />
-              <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                {tab.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </SafeAreaView>
+      <Animated.View style={[AppStyles.bottom, bottomStyle]}>
+
+        <BottomNavigationBar
+          tabs={tabConfig}
+          currentRouteName={currentRouteName}
+          navigation={navigation}
+        />
+      </Animated.View>
+
+    </View>
   );
 };
 
 // All Posts Component
-const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
+const AllPosts = ({ scrollRef, videoRefs, isTabActive, onScroll, headerStyle }) => {
 
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
@@ -345,26 +343,26 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         missedEventsRef.current.created.push(newPost);
         return;
       }
-    
+
       try {
         const enrichedPost = await enrichForumPost(newPost, myId);
         setLocalPosts((prev) => [enrichedPost, ...prev]);
       } catch (error) {
         setLocalPosts((prev) => [newPost, ...prev]);
       }
-    
+
       setTimeout(() => {
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
       }, 1000);
     });
-    
+
 
     const deleteListener = EventRegister.addEventListener('onForumPostDeleted', ({ forum_id }) => {
       if (!isFocused) {
         missedEventsRef.current.deleted.push(forum_id);
         return;
       }
-      
+
 
       setLocalPosts((prev) => prev.filter((post) => post.forum_id !== forum_id));
     });
@@ -374,7 +372,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         missedEventsRef.current.updated.push(updatedPost);
         return;
       }
-    
+
       try {
         const enrichedPost = await enrichForumPost(updatedPost, myId);
         setLocalPosts((prev) =>
@@ -390,7 +388,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         );
       }
     });
-    
+
 
     // 🔻 Listener to DECREASE comment count on deletion
     const commentDeletedListener = EventRegister.addEventListener('onCommentDeleted', ({ forum_id }) => {
@@ -446,7 +444,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
             setLocalPosts((prev) => [newPost, ...prev]);
           }
         }
-        
+
         for (const updatedPost of missedEventsRef.current.updated) {
           try {
             const enrichedPost = await enrichForumPost(updatedPost, myId);
@@ -462,8 +460,8 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               )
             );
           }
-        }        
-  
+        }
+
         // Clear the missed events after handling
         missedEventsRef.current = {
           created: [],
@@ -473,12 +471,12 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
           commentDeleted: [],
         };
       };
-  
+
       processMissedEvents();
     }, [])
   );
-  
-  
+
+
   useEffect(() => {
     if (!hasFetchedPosts) {
       fetchPosts();
@@ -755,188 +753,59 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
     // console.log(`Actual render duration: ${actualDuration}ms`);
   };
 
-  const [showSearchBar, setShowSearchBar] = useState(false);
-  const searchBarRef = useRef(null);
-  const searchBarHeight = useRef(new Animated.Value(0)).current;
-  const searchBarOpacity = useRef(new Animated.Value(0)).current;
-  const searchButtonOpacity = useRef(new Animated.Value(1)).current;
-
-  const toggleSearchBar = () => {
-    if (showSearchBar) {
-      // Animation for hiding search bar
-      Animated.parallel([
-        Animated.timing(searchBarHeight, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(searchBarOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: false,
-        }),
-        Animated.timing(searchButtonOpacity, {
-          toValue: 1,
-          duration: 200,
-          delay: 100,
-          useNativeDriver: false,
-        }),
-      ]).start(() => {
-        setShowSearchBar(false);
-        setSearchQuery('');
-        setSearchTriggered(false);
-        setSearchResults([]);
-        Keyboard.dismiss();
-      });
-    } else {
-      setShowSearchBar(true);
-      // Animation for showing search bar
-      Animated.parallel([
-        Animated.timing(searchBarHeight, {
-          toValue: 60, // Adjust this based on your search bar height
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(searchBarOpacity, {
-          toValue: 1,
-          duration: 200,
-          delay: 100,
-          useNativeDriver: false,
-        }),
-        Animated.timing(searchButtonOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: false,
-        }),
-      ]).start(() => {
-        searchBarRef.current?.focus();
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (showSearchBar) {
-      const timeout = setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 300);
-      return () => clearTimeout(timeout);
-    }
-  }, [showSearchBar]);
 
   return (
     <Profiler id="ForumListCompanylatest" onRender={onRender}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+      <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
 
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 15,
-            right: 15,
-            zIndex: 10,
-            shadowOffset: { width: 0, height: 1 },
-            opacity: searchButtonOpacity,
-            transform: [
-              {
-                scale: searchButtonOpacity.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.8, 1],
-                }),
-              },
-            ],
-          }}
-        >
-          <TouchableOpacity onPress={toggleSearchBar} style={{
-            backgroundColor: 'red',
-            padding: 10,
-            borderRadius: 30,
-            backgroundColor: '#075cab',
-            borderRadius: 30,
-            elevation: 3,
-            shadowColor: '#000',
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-          }}>
-            <Icon name="magnify" size={24} color="#fff" />
-          </TouchableOpacity>
-        </Animated.View>
+        <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
+          <View style={AppStyles.searchContainer}>
+            <View style={AppStyles.inputContainer}>
+              <TextInput
+                ref={searchInputRef}
+                style={AppStyles.searchInput}
+                placeholder="Search"
+                placeholderTextColor="gray"
+                value={searchQuery}
+                onChangeText={handleDebouncedTextChange}
+              />
 
 
-        <Animated.View
-          style={{
-            height: searchBarHeight,
-            opacity: searchBarOpacity,
-            paddingHorizontal: 15,
-            backgroundColor: 'white',
-            // paddingVertical: 8,
-            elevation: 3,
-            shadowColor: '#000',
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-            shadowOffset: { width: 0, height: 1 },
-            flexDirection: 'row',
-            alignItems: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#f5f5f5',
-              borderRadius: 10,
-              paddingHorizontal: 15,
-              paddingVertical: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 2,
-              elevation: 2,
-            }}
-          >
-            <Icon name="magnify" size={20} color="#075cab" style={{ marginRight: 8 }} />
-            <TextInput
-              ref={searchInputRef}
-              style={{ flex: 1, padding: 0, color: 'black' }}
-              placeholder="Search posts..."
-              placeholderTextColor="gray"
-              value={searchQuery}
-              onChangeText={handleDebouncedTextChange}
-              autoFocus={showSearchBar}
-              returnKeyType="search"
-            />
-            {searchQuery ? (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery('');
-                  setSearchTriggered(false);
-                  setSearchResults([]);
-                }}
-              >
-                <Icon name="close-circle" size={20} color="gray" />
-              </TouchableOpacity>
-            ) : null}
+              {searchQuery.trim() !== '' ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchQuery('');
+                    setSearchTriggered(false);
+                    setSearchResults([]);
+
+                  }}
+                  activeOpacity={0.8}
+                  style={AppStyles.iconButton}
+                >
+                  <Icon name="close-circle" size={20} color="gray" />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  activeOpacity={1}
+                  style={AppStyles.searchIconButton}
+                >
+                  <Icon name="magnify" size={20} color="#075cab" />
+                </TouchableOpacity>
+
+              )}
+
+            </View>
           </View>
-          <TouchableOpacity
-            onPress={toggleSearchBar}
-            style={{ padding: 10 }}
-          >
-            <Text style={{ color: '#075cab' }}>Cancel</Text>
-          </TouchableOpacity>
         </Animated.View>
-
 
         {showNewJobAlert && (
           <TouchableOpacity onPress={handleRefresh} style={{ position: 'absolute', top: 10, alignSelf: 'center', backgroundColor: '#075cab', padding: 10, borderRadius: 10, zIndex: 10 }}>
             <Text style={{ color: 'white', fontWeight: '500' }}>{newJobCount} new post{newJobCount > 1 ? 's' : ''} available — Tap to refresh</Text>
           </TouchableOpacity>
         )}
+
         <View style={styles.container}>
-
-
-
-
-          <FlatList
+          <Animated.FlatList
             data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
             renderItem={renderItem}
             ref={listRef}
@@ -946,18 +815,8 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
               Keyboard.dismiss();
               searchInputRef.current?.blur?.();
 
-              if (showSearchBar && !searchTriggered) {
-                toggleSearchBar(); // This will trigger the hide animation
-              }
-
             }}
-            onScroll={(e) => {
-              const currentScrollY = e.nativeEvent.contentOffset.y;
-              if (Math.abs(currentScrollY - scrollY) > 5 && activeReactionForumId) {
-                setActiveReactionForumId(null);
-              }
-              setScrollY(currentScrollY);
-            }}
+            onScroll={onScroll}
             scrollEventThrottle={16}
 
             keyExtractor={(item, index) => `${item.forum_id}-${index}`}
@@ -971,7 +830,7 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: '10%' }}
+            contentContainerStyle={AppStyles.scrollView}
             ListHeaderComponent={
               <>
                 {searchTriggered && searchResults.length > 0 && (
@@ -1004,13 +863,13 @@ const AllPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         </View>
         <ReactionSheet ref={reactionSheetRef} />
 
-      </SafeAreaView>
+      </View>
     </Profiler>
   );
 };
 
 // Latest Posts Component
-const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
+const LatestPosts = ({ scrollRef, videoRefs, isTabActive,onScroll, headerStyle }) => {
 
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
@@ -1260,14 +1119,12 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
   return (
     <Profiler id="ForumListCompanylatest" onRender={onRender}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+      <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
 
         <View style={styles.container}>
 
-
-
           {!loading ? (
-            <FlatList
+            <Animated.FlatList
               data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
               renderItem={renderItem}
               ref={listRef}
@@ -1278,13 +1135,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
                 searchInputRef.current?.blur?.();
 
               }}
-              onScroll={(e) => {
-                const currentScrollY = e.nativeEvent.contentOffset.y;
-                if (Math.abs(currentScrollY - scrollY) > 5 && activeReactionForumId) {
-                  setActiveReactionForumId(null);
-                }
-                setScrollY(currentScrollY);
-              }}
+              onScroll={onScroll}
               scrollEventThrottle={16}
               keyExtractor={(item, index) => `${item.forum_id}-${index}`}
               onViewableItemsChanged={onViewableItemsChanged}
@@ -1295,7 +1146,7 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
               onEndReached={handleEndReached}
               onEndReachedThreshold={0.5}
-              contentContainerStyle={{ flexGrow: 1, paddingBottom: '10%' }}
+              contentContainerStyle={paddingBottom='20%'}
               ListHeaderComponent={
                 <>
                   {searchTriggered && searchResults.length > 0 && (
@@ -1332,13 +1183,13 @@ const LatestPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         </View>
         <ReactionSheet ref={reactionSheetRef} />
 
-      </SafeAreaView>
+      </View>
     </Profiler>
   );
 };
 
 // Trending Posts Component
-const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
+const TrendingPosts = ({ scrollRef, videoRefs, isTabActive,onScroll, headerStyle }) => {
 
   const { myId, myData } = useNetwork();
   const [scrollY, setScrollY] = useState(0);
@@ -1588,12 +1439,12 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
   return (
     <Profiler id="ForumListCompanylatest" onRender={onRender}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+      <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
 
         <View style={styles.container}>
 
           {!loading ? (
-            <FlatList
+            <Animated.FlatList
               data={!searchTriggered || searchQuery.trim() === '' ? localPosts : searchResults}
               renderItem={renderItem}
               showsVerticalScrollIndicator={false}
@@ -1603,13 +1454,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
                 searchInputRef.current?.blur?.();
 
               }}
-              onScroll={(e) => {
-                const currentScrollY = e.nativeEvent.contentOffset.y;
-                if (Math.abs(currentScrollY - scrollY) > 5 && activeReactionForumId) {
-                  setActiveReactionForumId(null);
-                }
-                setScrollY(currentScrollY);
-              }}
+              onScroll={onScroll}
               scrollEventThrottle={16}
               keyExtractor={(item, index) => `${item.forum_id}-${index}`}
               onViewableItemsChanged={onViewableItemsChanged}
@@ -1620,7 +1465,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
 
               onEndReached={handleEndReached}
               onEndReachedThreshold={0.5}
-              contentContainerStyle={{ flexGrow: 1, paddingBottom: '10%' }}
+              contentContainerStyle={paddingBottom='20%'}
               ListHeaderComponent={
                 <>
                   {searchTriggered && searchResults.length > 0 && (
@@ -1657,7 +1502,7 @@ const TrendingPosts = ({ scrollRef, videoRefs, isTabActive }) => {
         </View>
         <ReactionSheet ref={reactionSheetRef} />
 
-      </SafeAreaView>
+      </View>
     </Profiler>
   );
 };

@@ -5,29 +5,15 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, SafeAreaView } fr
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 const AboutUs = () => {
 
-  const scrollViewRef = useRef(null)
   const navigation = useNavigation()
 
-
-
-
-
-  useFocusEffect(
-    useCallback(() => {
-
-      if (scrollViewRef.current) {
-        // Scroll to the top after fetching companies
-        scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: false });
-      }
-    }, [])
-  );
   return (
 
-    <SafeAreaView style={{ backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
-      <ScrollView contentContainerStyle={styles.scrollViewContainer} showsVerticalScrollIndicator={false} ref={scrollViewRef}>
+      <ScrollView contentContainerStyle={styles.scrollViewContainer} showsVerticalScrollIndicator={false} >
 
         <View style={styles.container}>
           <Text style={styles.sectionHeading}>About Us</Text>
@@ -92,28 +78,22 @@ const AboutUs = () => {
           <Text style={styles.paragraph}>We welcome contributions from our community. If you have an article, research paper, case study, or opinion piece you'd like to share, please submit your content through our submission portal. Our editorial team will review your submission and publish it if it meets our quality standards.</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
 
   );
 };
 const styles = StyleSheet.create({
   scrollViewContainer: {
-    flexGrow: 1,
-    padding: 10,
-    backgroundColor: 'white',
-    paddingBottom: '20%'
+    paddingHorizontal: 10,
+    paddingBottom: '20%',
 
   },
 
   backButton: {
     alignSelf: 'flex-start',
+    padding: 10,
 
-    padding:10,
-    
-    backgroundColor: 'white',
-   
-  }
-  ,
+  },
 
   heading: {
     fontSize: 26,
@@ -133,7 +113,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'black',
     marginBottom: 12,
-    lineHeight: 24,
     fontWeight: '300',
     textAlign: 'justify'
   },
@@ -143,19 +122,11 @@ const styles = StyleSheet.create({
 
   },
 
-  listHeading: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: "black",
-    marginTop: 20,
-    textAlign: "justify",
-    marginBottom: 10,
-  },
   listItem: {
     fontSize: 14,
     color: 'black',
-    marginLeft: 20,
-    marginBottom: 8,
+    marginLeft: 10,
+    marginBottom: 4,
     fontWeight: '300',
     textAlign: 'justify'
   },

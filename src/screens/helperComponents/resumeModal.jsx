@@ -14,6 +14,7 @@ import apiClient from '../ApiClient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
+import { useFileOpener } from './fileViewer';
 
 const ResumeModal = ({ visible, onClose, company_id }) => {
     const { myId, myData } = useNetwork();
@@ -87,6 +88,21 @@ const ResumeModal = ({ visible, onClose, company_id }) => {
         }
     }, [visible]);
 
+
+    const { openFile } = useFileOpener();
+    const [loading1, setLoading1] = useState(false);
+
+    const handleOpenResume = async (fileKey) => {
+        if (!fileKey) return;
+        setLoading1(true);
+
+        try {
+            await openFile(fileKey);
+        } finally {
+            setLoading1(false);
+        }
+    };
+
     return (
         <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
             <TouchableWithoutFeedback onPress={onClose}>
@@ -110,9 +126,16 @@ const ResumeModal = ({ visible, onClose, company_id }) => {
                                         </TouchableOpacity>
                                     )} */}
 
-                                    {contactDetails.target_user_resume_key && (
-                                        <TouchableOpacity style={styles.actionButton} onPress={viewResume}>
-                                            <Text style={styles.actionButtonText}>View Resume</Text>
+                                    {contactDetails?.target_user_resume_key && (
+                                        <TouchableOpacity
+                                            style={styles.actionButton}
+                                            onPress={() => handleOpenResume(contactDetails?.target_user_resume_key)}
+                                        >
+                                            {loading1 ? (
+                                                <ActivityIndicator size="small" color={'#075cab'} />
+                                            ) : (
+                                                <Text style={styles.actionButtonText}>View Resume</Text>
+                                            )}
                                         </TouchableOpacity>
                                     )}
 
@@ -157,7 +180,7 @@ const styles = StyleSheet.create({
     contentContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12, 
+        gap: 12,
     },
 
     companyName: {

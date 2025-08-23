@@ -5,35 +5,22 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import maleImage from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
-
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import ResumeModal from '../helperComponents.jsx/resumeModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
+import ResumeModal from '../helperComponents/resumeModal';
 
 
 const CompanyGetJobCandidatesScreen = () => {
   const route = useRoute();
   const { posts, imageUrl } = route.params;
-
   const navigation = useNavigation()
   const scrollViewRef = useRef(null)
   const [modalVisible1, setModalVisible1] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-
-  useFocusEffect(
-    useCallback(() => {
-
-      if (scrollViewRef.current) {
-        // Scroll to the top after fetching companies
-        scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: false });
-      }
-    }, [])
-  );
   return (
 
-
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -41,11 +28,8 @@ const CompanyGetJobCandidatesScreen = () => {
 
       </View>
 
-
-      <ScrollView showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15 }}
+      <ScrollView showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, paddingBottom:'20%' }}
         showsVerticalScrollIndicator={false} ref={scrollViewRef} >
-
-
         <TouchableOpacity
           onPress={() => {
             if (typeof imageUrl === 'string') {
@@ -120,7 +104,15 @@ const CompanyGetJobCandidatesScreen = () => {
             <Text style={styles.label}>Expert in</Text>
             <Text style={styles.colon}>:</Text>
 
-            <Text style={styles.value}>{(posts.expert_in || "").trimStart().trimEnd()}</Text>
+            <View style={{ flexDirection: "column", flex: 2 }}>
+              {posts.expert_in
+                .split(",")
+                .map((language, index) => (
+                  <Text key={index} style={styles.value}>
+                    {language.trim()},
+                  </Text>
+                ))}
+            </View>
           </View>
           <View style={styles.detail}>
             <Text style={styles.label}>City</Text>
@@ -141,17 +133,30 @@ const CompanyGetJobCandidatesScreen = () => {
 
             <Text style={styles.value}>{posts.domain_strength || ""}</Text>
           </View>
-          <View style={styles.detail}>
-            <Text style={styles.label}>Industry type</Text>
-            <Text style={styles.colon}>:</Text>
+          {posts?.industry_type?.trim() && (
+            <View style={styles.detail}>
+              <Text style={styles.label}>Industry type</Text>
+              <Text style={styles.colon}>:</Text>
 
-            <Text style={styles.value}>{posts.industry_type || ""}</Text>
-          </View>
+              <Text style={styles.value}>{posts.industry_type || ""}</Text>
+            </View>
+
+          )}
+
           {posts.languages?.trim() && (
             <View style={styles.detail}>
               <Text style={styles.label}>Languages known</Text>
               <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{posts.languages.trim()}</Text>
+
+              <View style={{ flexDirection: "column", flex: 2 }}>
+                {posts.languages
+                  .split(",")
+                  .map((language, index) => (
+                    <Text key={index} style={styles.value}>
+                      {language.trim()}
+                    </Text>
+                  ))}
+              </View>
             </View>
           )}
 
@@ -159,7 +164,16 @@ const CompanyGetJobCandidatesScreen = () => {
             <View style={styles.detail}>
               <Text style={styles.label}>Preferred cities</Text>
               <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{posts.preferred_cities.trim()}</Text>
+
+              <View style={{ flexDirection: "column", flex: 2 }}>
+                {posts.preferred_cities
+                  .split(",")
+                  .map((city, index) => (
+                    <Text key={index} style={styles.value}>
+                      {city.trim()}
+                    </Text>
+                  ))}
+              </View>
             </View>
           )}
 
@@ -193,7 +207,7 @@ const CompanyGetJobCandidatesScreen = () => {
 
       </ScrollView>
 
-    </SafeAreaView>
+    </View>
   );
 };
 

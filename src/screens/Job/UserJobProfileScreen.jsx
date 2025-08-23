@@ -1,17 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, Text, Alert, Linking, ScrollView, ToastAndroid, SafeAreaView, Button, ActivityIndicator } from 'react-native';
-import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Message from '../../components/Message';
 import { useSelector } from 'react-redux';
 import FastImage from 'react-native-fast-image';
 import { showToast } from '../AppUtils/CustomToast';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 
 
 const UserJobProfilescreen = () => {
@@ -37,8 +35,7 @@ const UserJobProfilescreen = () => {
     } finally {
       setLoading(false);
     }
-  };
-
+  }; 
 
   // Handle delete confirmation
   const handleDelete1 = async () => {
@@ -145,7 +142,7 @@ const UserJobProfilescreen = () => {
             setImageUrl(imgUrlResponse.data);
           } else {
             const initialAvatars = generateAvatarFromName(first_name)
-        
+
             setImageUrl(initialAvatars);
 
           }
@@ -312,11 +309,24 @@ const UserJobProfilescreen = () => {
               </View>
 
               <View style={styles.textContainer}>
-                <Text style={styles.label}>Expert in              </Text>
+                <Text style={styles.label}>Industry type              </Text>
                 <Text style={styles.colon}>:</Text>
 
-                <Text style={styles.value}>{(profile?.expert_in || "").trimStart().trimEnd()}
+                <Text style={styles.value}>{(profile?.industry_type || "").trimStart().trimEnd()}
                 </Text>
+              </View>
+
+              <View style={styles.textContainer}>
+                <Text style={styles.label}>Expert in              </Text>
+                <Text style={styles.colon}>:</Text>
+                <View style={{ flex: 2 }}>
+                  {profile.expert_in.split(",").map((skill, index) => (
+                    <Text key={index} style={styles.value}>
+                      {skill.trim()},
+                    </Text>
+                  ))}
+                </View>
+
               </View>
 
               <View style={styles.textContainer}>
@@ -332,9 +342,15 @@ const UserJobProfilescreen = () => {
                 <Text style={styles.colon}>:</Text>
 
                 <Text style={[styles.value]}>
-                  {(Array.isArray(profile?.preferred_cities)
-                    ? profile?.preferred_cities.map(city => city.label).join(', ')
-                    : profile?.preferred_cities || "").trimStart().trimEnd()}
+                  <View style={{ flexDirection: "column", flex: 1 }}>
+                    {profile.preferred_cities
+                      .split(",")
+                      .map((city, index) => (
+                        <Text key={index} style={styles.value}>
+                          {city.trim()}
+                        </Text>
+                      ))}
+                  </View>
                 </Text>
               </View>
 
@@ -358,9 +374,13 @@ const UserJobProfilescreen = () => {
                 <View style={styles.textContainer}>
                   <Text style={styles.label}>Languages known        </Text>
                   <Text style={styles.colon}>:</Text>
-                  <Text style={[styles.value]}>
-                    {(profile?.languages || "").trimStart().trimEnd()}
-                  </Text>
+                  <View style={{ flex: 2 }}>
+                    {profile.languages.split(",").map((language, index) => (
+                      <Text key={index} style={styles.value}>
+                        {language.trim()}
+                      </Text>
+                    ))}
+                  </View>
                 </View>
               )}
 
@@ -399,6 +419,7 @@ const UserJobProfilescreen = () => {
     </SafeAreaView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -444,8 +465,8 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     overflow: 'hidden',
     backgroundColor: '#ccc',
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   textContainer: {
 

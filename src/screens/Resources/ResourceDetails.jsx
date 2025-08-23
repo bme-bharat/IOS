@@ -6,20 +6,13 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import maleImage from '../../images/homepage/dummy.png';
-import femaleImage from '../../images/homepage/female.jpg';
-import companyImage from '../../images/homepage/buliding.jpg';
-import VideoPlayer from 'react-native-video-controls';
-
-import ParsedText from 'react-native-parsed-text';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { getTimeDisplay } from '../helperComponents.jsx/signedUrls';
+import { getTimeDisplay } from '../helperComponents/signedUrls';
 import { ForumBody } from '../Forum/forumBody';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+
 const ResourcesDetails = () => {
     const route = useRoute();
     const navigation = useNavigation();
@@ -40,8 +33,6 @@ const ResourcesDetails = () => {
         }));
     };
 
-
-
     const [loading, setLoading] = useState(false);
 
     const fetchResourceDetails = async () => {
@@ -58,8 +49,6 @@ const ResourcesDetails = () => {
             if (responseData?.status === 'success') {
                 const post = responseData.response?.[0];
 
-
-
                 if (post) {
                     setPostData(post);
 
@@ -69,7 +58,6 @@ const ResourcesDetails = () => {
                     if (post.author_fileKey) fetchMediaUrl(post.author_fileKey, 'author');
                     if (!post.author_fileKey) {
                         const authorImage = generateAvatarFromName(post?.author)
-                        console.log('authorImage', authorImage)
                         setAuthorImage(authorImage)
                     }
                 } else {
@@ -355,7 +343,7 @@ const ResourcesDetails = () => {
                                 </TouchableOpacity>
                             ) : fileTypeMap[fileExtension] ? (
                                 <TouchableOpacity onPress={() => Linking.openURL(mediaUrl)} style={styles.pdfButton}>
-                                    <Icon name={fileTypeMap[fileExtension].icon} size={30} color={fileTypeMap[fileExtension].color} />
+                                    <Icon name={fileTypeMap[fileExtension].icon} size={50} color={fileTypeMap[fileExtension].color} />
                                     <Text style={styles.pdfText}>View/download</Text>
                                 </TouchableOpacity>
                             ) : (

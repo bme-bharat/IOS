@@ -8,10 +8,11 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import defaultImage from '../../images/homepage/buliding.jpg';
 import FastImage from 'react-native-fast-image';
 import apiClient from '../ApiClient';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { MyPostBody } from '../Forum/forumBody';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import { openLink } from '../AppUtils/openLinks';
 
 
 const defaultImageCompany = Image.resolveAssetSource(defaultImage).uri;
@@ -603,7 +604,13 @@ const CompanyDetailsPage = () => {
             </View>
 
             <Text style={styles.colon}>:</Text>
-            <Text style={styles.value}>{profile?.Website || ""}</Text>
+            <Text style={styles.value}>
+              <TouchableOpacity activeOpacity = {1} onPress={() => openLink(profile.Website)}>
+                <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                  {profile.Website.trim()}
+                </Text>
+              </TouchableOpacity>
+            </Text>
           </View>
         )}
 

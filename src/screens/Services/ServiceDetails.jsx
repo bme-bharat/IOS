@@ -14,13 +14,13 @@ import Video from 'react-native-video';
 import { FlatList } from 'react-native-gesture-handler';
 import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
 import apiClient from '../ApiClient';
 import DisclaimerBox from '../Products/DisclaimerBox';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import AppStyles from '../AppUtils/AppStyles';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
@@ -384,13 +384,7 @@ const ServiceDetails = () => {
     }
   };
 
-  const handleGoBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
-    }
-  };
+  const handleGoBack = () => { navigation.goBack()};
 
   const toggleFullText = () => {
     setShowFullText((prev) => !prev);
@@ -497,7 +491,7 @@ const ServiceDetails = () => {
         </View>
       ) : (
         <>
-          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} bounces={false} >
+          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} >
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product.title}</Text>
               <Text style={styles.category}>{product.category}</Text>

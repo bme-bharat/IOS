@@ -3,12 +3,8 @@ import {
     View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator,
     TextInput, RefreshControl, StyleSheet,
     Keyboard,
-    Switch,
     SafeAreaView,
-    PanResponder,
-    Animated,
     TouchableWithoutFeedback,
-    ScrollView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useNavigationState, useScrollToTop } from '@react-navigation/native';
@@ -19,12 +15,15 @@ import Fuse from 'fuse.js';
 import { EventRegister } from 'react-native-event-listeners';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../AppUtils/AppStyles';
-import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
+import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents/signedUrls';
 import FastImage from 'react-native-fast-image';
+import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
+import scrollAnimations from '../helperComponents/scrollAnimations';
+import Animated from "react-native-reanimated";
 
 
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
-const PageView = React.lazy(() => import('../Forum/PagerViewForum'));
+const AllPosts = React.lazy(() => import('../Forum/Feed'));
 const CompanySettingScreen = React.lazy(() => import('../Profile/CompanySettingScreen'));
 const CompanyHomeScreen = React.lazy(() => import('../CompanyHomeScreen'));
 
@@ -38,7 +37,7 @@ const tabNameMap = {
 const tabConfig = [
     { name: "Home", component: CompanyHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
     { name: "Jobs", component: JobListScreen, focusedIcon: 'briefcase', unfocusedIcon: 'briefcase-outline', iconComponent: Icon },
-    { name: "Feed", component: PageView, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
+    { name: "Feed", component: AllPosts, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
     { name: "Products", component: ProductsList, focusedIcon: 'shopping', unfocusedIcon: 'shopping-outline', iconComponent: Icon },
     { name: "Settings", component: CompanySettingScreen, focusedIcon: 'cog', unfocusedIcon: 'cog-outline', iconComponent: Icon },
 ];
@@ -47,7 +46,7 @@ const ProductsList = () => {
     const searchInputRef = useRef(null);
     const navigation = useNavigation();
     const { isConnected } = useConnection();
-
+    const { onScroll, headerStyle, bottomStyle } = scrollAnimations();
 
     const currentRouteName = useNavigationState((state) => {
         const route = state.routes[state.index];
@@ -68,7 +67,7 @@ const ProductsList = () => {
     const [selectedCategories, setSelectedCategories] = useState({});
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [fetchLimit, setFetchLimit] = useState(20);
-    const filterSlideAnim = useRef(new Animated.Value(500)).current;
+
     const flatListRef = useRef(null);
     const scrollOffsetY = useRef(0);
 
@@ -121,51 +120,6 @@ const ProductsList = () => {
     }, []);
 
 
-
-    const handleScroll = (event) => {
-        const offsetY = event.nativeEvent.contentOffset.y;
-        scrollOffsetY.current = offsetY;
-    };
-
-    useEffect(() => {
-        Animated.timing(filterSlideAnim, {
-            toValue: isFilterOpen ? 0 : 500,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
-    }, [isFilterOpen]);
-
-    const panResponder = useRef(
-        PanResponder.create({
-            onMoveShouldSetPanResponder: (_, gestureState) =>
-                Math.abs(gestureState.dx) > 20,
-
-            onPanResponderMove: (_, gestureState) => {
-                if (gestureState.dx > 0) {
-                    filterSlideAnim.setValue(gestureState.dx);
-                }
-            },
-
-            onPanResponderRelease: (_, gestureState) => {
-                if (gestureState.dx > 100) {
-                    Animated.timing(filterSlideAnim, {
-                        toValue: 500,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }).start(() => {
-                        setIsFilterOpen(false);
-                        filterSlideAnim.setValue(0);
-                    });
-                } else {
-                    Animated.spring(filterSlideAnim, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                    }).start();
-                }
-            },
-        })
-    ).current;
-
     const clearFilters = () => {
         const hadFilters = Object.keys(selectedCategories).length > 0;
 
@@ -184,19 +138,19 @@ const ProductsList = () => {
 
     const applyFilters = () => {
         const selectedCategoryKeys = Object.keys(tempSelectedCategories).filter((key) => tempSelectedCategories[key]);
-    
+
         setIsFilterOpen(false);
-    
+
         // Clear search query when applying filters
         setSearchQuery('');
-    
+
         if (selectedCategoryKeys.length === 0) {
             return;
         }
-    
+
         setSearchResults([]);
         setSearchTriggered(false);
-    
+
         setSelectedCategories(tempSelectedCategories);
         handleSearch('', tempSelectedCategories); // Pass empty string for text query
     };
@@ -328,28 +282,28 @@ const ProductsList = () => {
 
     const handleDebouncedTextChange = useCallback((text) => {
         setSearchQuery(text);
-    
+
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
-    
+
         debounceTimeout.current = setTimeout(() => {
             const trimmedText = text.trim();
-            
+
             // Clear categories if text search is active
             if (trimmedText !== '') {
                 setSelectedCategories({});
                 setTempSelectedCategories({});
             }
-    
+
             const shouldSearch = trimmedText !== '' || Object.values(selectedCategories).some(Boolean);
-    
+
             if (!shouldSearch) {
                 setSearchTriggered(false);
                 setSearchResults([]);
                 return;
             }
-    
+
             handleSearch(trimmedText, trimmedText !== '' ? {} : selectedCategories);
         }, 300);
     }, [handleSearch, selectedCategories]);
@@ -370,26 +324,26 @@ const ProductsList = () => {
             showToast('No internet connection', 'error');
             return;
         }
-    
+
         setSearchQuery(text);
-    
+
         const isTextEmpty = text.trim() === '';
         const selectedCategoryKeys = Object.keys(selectedCategories).filter(
             (key) => selectedCategories[key]
         );
-    
+
         // If both search text and filters are empty, reset search
         if (isTextEmpty && selectedCategoryKeys.length === 0) {
             setSearchTriggered(false);
             setSearchResults([]);
             return;
         }
-    
+
         // Determine which search mode to use (text or categories, but not both)
-        const searchMode = !isTextEmpty ? 'text' : 
-                         selectedCategoryKeys.length > 0 ? 'categories' : 
-                         null;
-    
+        const searchMode = !isTextEmpty ? 'text' :
+            selectedCategoryKeys.length > 0 ? 'categories' :
+                null;
+
         const requestData = {
             command: 'searchProducts',
             // Only include searchQuery if we're in text mode
@@ -397,17 +351,17 @@ const ProductsList = () => {
             // Only include categories if we're in categories mode
             ...(searchMode === 'categories' && { categories: selectedCategoryKeys }),
         };
-    
+
         try {
             const res = await withTimeout(apiClient.post('/searchProducts', requestData), 10000);
             const products = res?.data?.response || [];
-    
+
             flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-            
+
             setSearchResults(products);
             setLastEvaluatedKey(null);
             fetchProductImageUrls(products);
-    
+
         } catch (error) {
             console.error('[handleSearch] Error occurred during product search:', error);
             showToast('Something went wrong. Please try again.', 'error');
@@ -452,12 +406,7 @@ const ProductsList = () => {
 
 
 
-    const handleAddProduct = (product) => {
-        setTimeout(() => {
-            navigation.navigate('ProductDetails', { product_id: product.product_id, company_id: product.company_id });
-
-        }, 100);
-    };
+    const handleAddProduct = (product) => { navigation.navigate('ProductDetails', { product_id: product.product_id, company_id: product.company_id })};
 
     const renderItem = ({ item, index }) => {
         const imageUrl = getUrlFor(item.product_id);
@@ -487,10 +436,10 @@ const ProductsList = () => {
                             {/* <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(job.company_name || '', searchQuery)}</Text> */}
 
                             <View style={styles.priceRow}>
-  <Text numberOfLines={1} style={styles.price}>
-    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
-  </Text>
-</View>
+                                <Text numberOfLines={1} style={styles.price}>
+                                    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
+                                </Text>
+                            </View>
 
 
                         </View>
@@ -510,8 +459,8 @@ const ProductsList = () => {
 
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={AppStyles.headerContainer}>
+        <View style={styles.container} >
+            <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
                 {/* <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Icon name="arrow-left" size={24} color="#075cab" />
                 </TouchableOpacity> */}
@@ -555,11 +504,11 @@ const ProductsList = () => {
                         <Icon name="filter-variant" size={30} color="#075cab" />
                     </TouchableOpacity>
                 )}
-            </View>
+            </Animated.View>
 
 
             {!loading ? (
-                <FlatList
+                <Animated.FlatList
                     data={searchTriggered ? searchResults : products}
                     renderItem={renderItem}
                     onScrollBeginDrag={() => {
@@ -572,14 +521,15 @@ const ProductsList = () => {
                     viewabilityConfig={viewabilityConfig}
                     keyExtractor={(item, index) => `${item.product_id}-${index}`}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.flatListContainer}
+                    contentContainerStyle={AppStyles.scrollView}
                     onEndReached={() => {
                         if (lastEvaluatedKey && !loadingMore && !loading) {
                             fetchProducts(lastEvaluatedKey);
                         }
                     }}
                     ref={flatListRef}
-                    onScroll={handleScroll}
+                    onScroll={onScroll}
+
                     scrollEventThrottle={16}
                     onEndReachedThreshold={0.5}
                     refreshControl={
@@ -637,15 +587,7 @@ const ProductsList = () => {
                         <View style={styles.overlay} />
                     </TouchableWithoutFeedback>
 
-                    <Animated.View
-                        style={[
-                            styles.filterContainer,
-                            {
-                                transform: [{ translateX: filterSlideAnim }],
-                            },
-                        ]}
-                        {...panResponder.panHandlers}
-                    >
+                    <View style={styles.filterContainer}>
                         {/* Filter content */}
                         <View style={styles.buttonWrapper}>
                             <TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
@@ -656,7 +598,7 @@ const ProductsList = () => {
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={{ color: 'gray' }}>Select Category:</Text>
+                        <Text style={{ color: 'gray', paddingHorizontal: 15 }}>Select Category:</Text>
                         <View style={styles.divider} />
 
                         <FlatList
@@ -679,58 +621,30 @@ const ProductsList = () => {
                                     <Text style={styles.checkboxLabel}>{item}</Text>
                                 </TouchableOpacity>
                             )}
-                            contentContainerStyle={{ paddingBottom: '30%' }}
+                            contentContainerStyle={{ paddingBottom: '20%', padding: 15 }}
                             showsVerticalScrollIndicator={false}
                         />
-                    </Animated.View>
+                    </View>
                 </View>
             )}
 
             {!isFilterOpen && (
+                <Animated.View style={[AppStyles.bottom, bottomStyle]}>
 
-                <View style={styles.bottomNavContainer}>
-                    {tabConfig.map((tab, index) => {
-                        const isFocused = tabNameMap[currentRouteName] === tab.name;
-                        return (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={() => {
-                                    const targetTab = tab.name;
+                    <BottomNavigationBar
+                        tabs={tabConfig}
+                        currentRouteName={currentRouteName}
+                        navigation={navigation}
+                        flatListRef={flatListRef}
+                        scrollOffsetY={scrollOffsetY}
+                        handleRefresh={handleRefresh}
+                        tabNameMap={tabNameMap}
+                    />
+                </Animated.View>
 
-                                    if (isFocused) {
-                                        if (scrollOffsetY.current > 0) {
-                                            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-
-                                            setTimeout(() => {
-                                                handleRefresh();
-                                            }, 300);
-                                        } else {
-                                            handleRefresh();
-                                        }
-                                    } else {
-                                        navigation.navigate(targetTab);
-                                    }
-                                }}
-
-                                style={styles.navItem}
-                                activeOpacity={0.8}
-                            >
-                                <tab.iconComponent
-                                    name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                                    size={22}
-                                    color={isFocused ? '#075cab' : 'black'}
-                                />
-                                <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                                    {tab.name}
-                                </Text>
-                            </TouchableOpacity>
-
-                        );
-                    })}
-                </View>
             )}
 
-        </SafeAreaView>
+        </View>
     );
 };
 
@@ -774,10 +688,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'whitesmoke',
     },
 
-    flatListContainer: {
-        paddingBottom: '20%',
 
-    },
     company: {
         fontSize: 12,
         fontWeight: '400',
@@ -795,20 +706,20 @@ const styles = StyleSheet.create({
     },
 
     categorycontact: {
-    
+
 
         fontSize: 15,
-     
+
         color: '#000',
-        fontWeight:'500',
-      
+        fontWeight: '500',
+
     },
 
     category: {
         fontSize: 15,
-     
+
         color: '#777',
-        
+
         marginTop: 2,
     },
 
@@ -903,16 +814,16 @@ const styles = StyleSheet.create({
 
     description: {
         fontSize: 15,
-     
+
         color: '#777',
         marginTop: 4,
     },
 
-    companyName:{
+    companyName: {
         fontSize: 15,
-     
+
         color: '#000',
-        fontWeight:'500'
+        fontWeight: '500'
     },
     priceRow: {
         flexDirection: 'row',
@@ -921,9 +832,9 @@ const styles = StyleSheet.create({
     },
     price: {
         fontSize: 15,
-     
+
         color: '#000',
-        fontWeight:'500'
+        fontWeight: '500'
     },
     separator: {
 
@@ -946,13 +857,12 @@ const styles = StyleSheet.create({
     filterContainer: {
         position: 'absolute',
         right: 0,
-        top: 0,
+        top: 60,
         bottom: 0,
         width: '80%',
         backgroundColor: '#fff',
         zIndex: 100,
         elevation: 10,
-        padding: 16,
         flex: 1,
     },
     overlay: {
@@ -965,7 +875,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 10,
-        marginTop: -5
+        paddingHorizontal: 15,
+        paddingTop: 15
     },
 
     applyButton: {

@@ -17,7 +17,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { MyPostBody } from './forumBody';
-import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
+import { deleteS3KeyIfExists } from '../helperComponents/s3Helpers';
 
 const videoExtensions = [
   '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',

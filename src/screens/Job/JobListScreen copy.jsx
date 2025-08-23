@@ -8,11 +8,11 @@ import FastImage from 'react-native-fast-image';
 import default_image from '../../images/homepage/buliding.jpg'
 import ImageViewer from 'react-native-image-zoom-viewer';
 import apiClient from '../ApiClient';
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
+import { getSignedUrl } from '../helperComponents/signedUrls';
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 const JobDetailScreen = ({ route }) => {

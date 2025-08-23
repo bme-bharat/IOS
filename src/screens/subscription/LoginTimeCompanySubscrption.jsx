@@ -13,6 +13,7 @@ import { getMessaging, getToken, requestPermission, AuthorizationStatus } from '
 import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 import { showToast } from '../AppUtils/CustomToast';
+import LottieView from 'lottie-react-native';
 
 
 const LoginTimeCompanySubscrption = () => {
@@ -603,23 +604,44 @@ const LoginTimeCompanySubscrption = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Icon
-              name={
-                modalType === 'success'
-                  ? 'check-circle'
-                  : modalType === 'failure'
-                    ? 'close-circle'
-                    : 'progress-clock'
-              }
-              size={60}
-              color={
-                modalType === 'success'
-                  ? 'green'
-                  : modalType === 'failure'
-                    ? 'red'
-                    : 'gray'
-              }
-            />
+            <Text style={[
+              styles.modalTitle,
+              { color: modalType === 'success' ? 'green' : modalType === 'failure' ? 'red' : 'gray' }
+            ]}>
+              {modalType === 'failure' ? (
+                <LottieView
+                  source={require('../../assets/lottie/Cross.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120, }}
+                />
+              ) : modalType === 'success' ? (
+                <LottieView
+                  source={require('../../assets/lottie/payment_success.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120 }}
+
+                />
+              ) : (
+                <LottieView
+                  source={require('../../assets/lottie/progress-clock.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120 }}
+                />
+              )}
+
+            </Text>
+
+            {modalType === 'loading' && (
+              <LottieView
+                source={require('../../assets/lottie/progress-clock.json')}
+                autoPlay
+                loop
+                style={{ width: 120, height: 120 }}
+              />
+            )}
 
             <Text style={[
               styles.modalTitle,
@@ -631,10 +653,6 @@ const LoginTimeCompanySubscrption = () => {
                   ? 'Payment Failed'
                   : 'Verifying Payment...'}
             </Text>
-
-            {modalType === 'loading' && (
-              <ActivityIndicator size="large" color="#3399cc" style={{ marginVertical: 20 }} />
-            )}
 
             <Text style={styles.modalMessage}>
               {modalType === 'success'

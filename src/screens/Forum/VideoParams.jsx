@@ -7,7 +7,13 @@ import { createThumbnail } from 'react-native-create-thumbnail';
 import Compressor from 'react-native-compressor';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { showToast } from '../AppUtils/CustomToast';
+import apiClient from '../ApiClient';
 
+async function uriToBlob(uri) {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return blob;
+}
 
 export const moveToPersistentStorage = async (videoUri) => {
   try {
@@ -293,5 +299,75 @@ export const selectVideo = async ({
     setIsCompressing(false);
     console.error('[selectVideo] Outer error:', error);
     showToast("Something went wrong", "error");
+  }
+};
+
+
+  export const saveBase64ToFile = async (dataUri) => {
+    const base64Data = dataUri.replace(/^data:image\/\w+;base64,/, "");
+    const filePath = `${RNFS.CachesDirectoryPath}/overlay-thumb-${Date.now()}.jpg`;
+
+    try {
+      await RNFS.writeFile(filePath, base64Data, "base64");
+      console.log("✅ [saveBase64ToFile] Saved to:", filePath);
+      return `file://${filePath}`;
+    } catch (err) {
+      console.error("❌ [saveBase64ToFile] Failed:", err);
+      throw err;
+    }
+  };
+
+  export const uploadFromBase64 = async (dataUri, fileKey) => {
+    try {
+      const fileUri = await saveBase64ToFile(dataUri);
+      console.log("📤 Uploading file from base64 ->", fileUri);
+      return await handleThumbnailUpload(fileUri, fileKey);
+    } catch (err) {
+      console.error("❌ [uploadFromBase64] Failed:", err);
+      return null;
+    }
+  };
+
+export const handleThumbnailUpload = async (thumbnailUri, fileKey) => {
+  try {
+    // ✅ Step 1: Get thumbnail file size
+    const thumbStat = await RNFS.stat(thumbnailUri);
+    const thumbBlob = await uriToBlob(thumbnailUri);
+
+    // Create thumbnail file key
+    const thumbnailFileKey = `thumbnail-${fileKey}`;
+
+    // ✅ Step 2: Request upload URL for thumbnail
+    const res = await apiClient.post('/uploadFileToS3', {
+      command: 'uploadFileToS3',
+      fileKey: thumbnailFileKey,
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'Content-Length': thumbStat.size,
+      },
+    });
+
+    if (res.data.status !== 'success') {
+      throw new Error('Failed to get upload URL for thumbnail');
+    }
+
+    const uploadUrl = res.data.url;
+
+    // ✅ Step 3: Upload Thumbnail
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: thumbBlob,
+    });
+
+    if (uploadRes.status !== 200) {
+      throw new Error('Failed to upload thumbnail to S3');
+    }
+
+
+    return thumbnailFileKey; // Return the thumbnail file key
+  } catch (error) {
+
+    return null;
   }
 };

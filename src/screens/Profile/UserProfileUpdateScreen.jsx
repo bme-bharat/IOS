@@ -28,8 +28,8 @@ import apiClient from '../ApiClient';
 import AppStyles from '../AppUtils/AppStyles';
 import { launchCamera } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
-import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
-import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
+import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
 
 
 const defautImage = Image.resolveAssetSource(defaultImage).uri;

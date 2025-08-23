@@ -14,7 +14,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
-import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
+import { getSignedUrl } from '../helperComponents/signedUrls';
 
 const YourComapanyPostedJob = () => {
   const navigation = useNavigation();

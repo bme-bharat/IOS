@@ -9,11 +9,11 @@ import Video from 'react-native-video';
 import { FlatList } from 'react-native-gesture-handler';
 import { Dimensions } from 'react-native';
 import apiClient from '../ApiClient';
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
 import DisclaimerBox from './DisclaimerBox';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 import AppStyles from '../AppUtils/AppStyles';
 
 const { width } = Dimensions.get('window');
@@ -221,7 +221,7 @@ const ProductDetails = () => {
         limit: 5,
         ...(lastKey && { lastEvaluatedKey: lastKey }),
       });
-  
+
       if (
         response.data &&
         response.data.status === 'success' &&
@@ -229,14 +229,14 @@ const ProductDetails = () => {
       ) {
         const allProducts = response.data.response;
         const newLastKey = response.data.lastEvaluatedKey || null;
-  
+
         if (!allProducts.length) {
           setLastEvaluatedKey(null); // Stop further pagination
           return;
         }
-  
+
         const updatedProducts = await fetchRelatedProductImages(allProducts);
-  
+
         setRelatedProducts((prev) =>
           lastKey ? [...prev, ...updatedProducts] : updatedProducts
         );
@@ -251,26 +251,26 @@ const ProductDetails = () => {
       );
     }
   };
-  
+
 
 
 
 
   const fetchRelatedProductImages = async (products) => {
     if (!products || products.length === 0) return products;
-  
+
     const updatedProducts = await Promise.all(
       products.map(async (product) => {
         if (!product.images || product.images.length === 0) {
           return { ...product, imageUrl: null };
         }
-  
+
         try {
           const imgRes = await apiClient.post('/getObjectSignedUrl', {
             command: 'getObjectSignedUrl',
             key: product.images[0], // First image
           });
-  
+
           return { ...product, imageUrl: imgRes.data || null };
         } catch (error) {
           console.error('Error fetching image URL for related product:', error);
@@ -278,17 +278,17 @@ const ProductDetails = () => {
         }
       })
     );
-  
+
     return updatedProducts;
   };
-  
+
 
 
 
 
   const fetchImageUrls = async (images) => {
     if (!images || images.length === 0) return;
-  
+
     const urls = await Promise.all(
       images.map(async (imageKey) => {
         try {
@@ -296,7 +296,7 @@ const ProductDetails = () => {
             command: 'getObjectSignedUrl',
             key: imageKey,
           });
-  
+
           return imgRes.data || null;
         } catch (error) {
           console.error('Error fetching image URL:', error);
@@ -304,15 +304,15 @@ const ProductDetails = () => {
         }
       })
     );
-  
+
     setImageUrls(urls.filter(url => url !== null));
     // console.log('Fetched image URLs:', urls);
   };
-  
+
 
   const fetchVideoUrls = async (videos) => {
     if (!videos || videos.length === 0) return;
-  
+
     const urls = await Promise.all(
       videos.map(async (videoKey) => {
         try {
@@ -320,7 +320,7 @@ const ProductDetails = () => {
             command: 'getObjectSignedUrl',
             key: videoKey,
           });
-  
+
           return videoRes.data || null;
         } catch (error) {
           console.error('Error fetching video URL:', error);
@@ -328,15 +328,15 @@ const ProductDetails = () => {
         }
       })
     );
-  
+
     setVideoUrls(urls.filter(url => url !== null));
     // console.log('Fetched video URLs:', urls);
   };
-  
+
 
   const fetchPdfUrls = async (files) => {
     if (!files || files.length === 0) return;
-  
+
     const urls = await Promise.all(
       files.map(async (fileKey) => {
         try {
@@ -344,7 +344,7 @@ const ProductDetails = () => {
             command: 'getObjectSignedUrl',
             key: fileKey,
           });
-  
+
           return fileRes.data || null;
         } catch (error) {
           console.error('Error fetching PDF URL:', error);
@@ -352,10 +352,10 @@ const ProductDetails = () => {
         }
       })
     );
-  
+
     setPdfUrls(urls.filter(url => url !== null));
   };
-  
+
 
 
   const fetchCompanyImage = async (fileKey) => {
@@ -364,7 +364,7 @@ const ProductDetails = () => {
         command: 'getObjectSignedUrl',
         key: fileKey,
       });
-  
+
       if (res.data) {
         // handle response here
       }
@@ -372,15 +372,9 @@ const ProductDetails = () => {
       // handle error here
     }
   };
-  
 
-  const handleGoBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
-    }
-  };
+
+  const handleGoBack = () => { navigation.goBack() };
 
   const toggleFullText = () => {
     setShowFullText((prev) => !prev);
@@ -464,7 +458,7 @@ const ProductDetails = () => {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -483,8 +477,7 @@ const ProductDetails = () => {
       ) :
         <>
           <ScrollView contentContainerStyle={{ backgroundColor: 'white', }}
-            showsVerticalScrollIndicator={false} ref={scrollViewRef}
-            bounces={false} >
+            showsVerticalScrollIndicator={false} ref={scrollViewRef} >
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product?.title}</Text>
               <Text style={styles.category}>{product?.category}</Text>
@@ -709,9 +702,8 @@ const ProductDetails = () => {
         </>
       }
 
-    </SafeAreaView>
+    </View>
   );
-
 
 };
 
@@ -873,7 +865,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000',
     marginTop: 10,
-  
+
     paddingHorizontal: 10
   },
 
@@ -1124,7 +1116,7 @@ const styles = StyleSheet.create({
   contact: {
     fontSize: 15,
     color: '#075cab',
-    fontWeight:'500',
+    fontWeight: '500',
     textDecorationLine: 'underline',
     marginTop: 10,
     textAlign: 'center'

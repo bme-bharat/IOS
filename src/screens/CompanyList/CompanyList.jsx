@@ -13,9 +13,10 @@ import apiClient from '../ApiClient';
 import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
+import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents/signedUrls';
 import AppStyles from '../AppUtils/AppStyles';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 const CompanyListScreen = () => {
@@ -287,7 +288,7 @@ const CompanyListScreen = () => {
      
           </TouchableOpacity>
           <View style={styles.textContainer}>
-            {myId === item.company_id && (
+            {/* {myId === item.company_id && (
               <TouchableOpacity style={styles.createPostButton}>
                 <Icon
                   onPress={() => navigation.navigate('CompanyProfile')}
@@ -296,7 +297,7 @@ const CompanyListScreen = () => {
                   color="#075cab"
                 />
               </TouchableOpacity>
-            )}
+            )} */}
 
             <View style={styles.row}>
               <View style={styles.labelAndIconContainer}>
@@ -360,7 +361,7 @@ const CompanyListScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container1}>
+    <View style={styles.container1}>
       <View style={styles.container} >
         {/* Search and Refresh */}
         <View style={styles.headerContainer}>
@@ -482,7 +483,7 @@ const CompanyListScreen = () => {
 
         </TouchableWithoutFeedback>
       </View>
-    </SafeAreaView>
+    </View>
   )
 
 };

@@ -6,25 +6,25 @@ import { SafeAreaView, ScrollView, Animated, View, Linking, TextInput, StyleShee
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useFocusEffect, useScrollToTop, useNavigationState } from '@react-navigation/native';
 import Video from 'react-native-video';
-import Banner01 from './Banner1';
-import Banner03 from './Banner3';
-import Banner02 from './Banner2';
+
 
 import apiClient from './ApiClient';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateCompanyProfile } from './Redux/MyProfile/CompanyProfile_Actions';
 import { useNetwork } from './AppUtils/IdProvider';
-import useFetchData from './helperComponents.jsx/HomeScreenData';
+import useFetchData from './helperComponents/HomeScreenData';
 import { useConnection } from './AppUtils/ConnectionProvider';
-import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents.jsx/signedUrls';
+import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents/signedUrls';
 import AppStyles, { styles } from './AppUtils/AppStyles';
 import { ForumPostBody } from './Forum/forumBody';
 import FastImage from 'react-native-fast-image';
-import { generateAvatarFromName } from './helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from './helperComponents/useInitialsAvatar';
+import BottomNavigationBar from './AppUtils/BottomNavigationBar';
+import Banner01 from './Banners/homeBanner';
 
 const UserSettingScreen = React.lazy(() => import('./Profile/UserSettingScreen'));
 const ProductsList = React.lazy(() => import('./Products/ProductsList'));
-const PageView = React.lazy(() => import('./Forum/PagerViewForum'));
+const AllPosts = React.lazy(() => import('./Forum/Feed'));
 const JobListScreen = React.lazy(() => import('./Job/JobListScreen'));
 
 const tabNameMap = {
@@ -34,7 +34,7 @@ const tabNameMap = {
 const tabConfig = [
   { name: "Home", component: UserHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
   { name: "Jobs", component: JobListScreen, focusedIcon: 'briefcase', unfocusedIcon: 'briefcase-outline', iconComponent: Icon },
-  { name: "Feed", component: PageView, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
+  { name: "Feed", component: AllPosts, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
   { name: "Products", component: ProductsList, focusedIcon: 'shopping', unfocusedIcon: 'shopping-outline', iconComponent: Icon },
   { name: "Settings", component: UserSettingScreen, focusedIcon: 'cog', unfocusedIcon: 'cog-outline', iconComponent: Icon },
 ];
@@ -61,6 +61,7 @@ const UserHomeScreen = React.memo(() => {
 
   const [isProfileFetched, setIsProfileFetched] = useState(false);
   const scrollOffsetY = useRef(0);
+  const [visibleBanners, setVisibleBanners] = useState({});
 
 
   const handleScroll = (event) => {
@@ -131,6 +132,10 @@ const UserHomeScreen = React.memo(() => {
     refreshData,
 
   } = useFetchData({ shouldFetch: isProfileFetched });
+  // useEffect(() => {
+
+  //   console.log("trendingPosts done ", latestPosts[0]);
+  // }, [trendingPosts]);
 
 
   const renderJobCard = ({ item }) => {
@@ -247,24 +252,14 @@ const UserHomeScreen = React.memo(() => {
 
           </View>
 
-
-
           {item.mediaUrl && (
-            isVideo ? (
-              <Video
-                source={{ uri: item.mediaUrl }}
-                style={styles.articleMedia}
-                resizeMode="cover"
-                muted
-                paused
-              />
-            ) : (
-              <Image
-                source={{ uri: item.mediaUrl }}
-                style={styles.articleMedia}
-                resizeMode="cover"
-              />
-            )
+
+            <Image
+              source={{ uri: item.mediaUrl }}
+              style={styles.articleMedia}
+              resizeMode="cover"
+            />
+
           )}
 
         </View>
@@ -394,6 +389,17 @@ const UserHomeScreen = React.memo(() => {
   const allJobs = () => {
     navigation.navigate('Jobs');
   };
+  const allPosts = () => {
+    navigation.navigate('Feed');
+  };
+
+  const goToTrending = () => {
+    navigation.navigate('Trending');
+  };
+
+  const goToLatest = () => {
+    navigation.navigate('Latest');
+  };
 
   const allProducts = () => {
     navigation.navigate('Products');
@@ -498,19 +504,26 @@ const UserHomeScreen = React.memo(() => {
   };
 
 
-  const [visibleItem, setVisibleItem] = useState(null);
-  const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    const firstVisible = viewableItems?.[0];
-    if (firstVisible?.item?.type) {
-      setVisibleItem(firstVisible.item.type);
-    }
+  const homeViewabilityConfig = { itemVisiblePercentThreshold: 50 };
+  const homeOnViewableItemsChanged = useRef(({ viewableItems }) => {
+
+    const newVisibility = {};
+    viewableItems.forEach((viewable) => {
+      console.log('homeOnViewableItemsChanged is called')
+      if (viewable.item?.type?.startsWith("banner")) {
+        newVisibility[viewable.item.type] = true;
+      }
+    });
+    setVisibleBanners(newVisibility);
   }).current;
 
 
+
+
+
   return (
-    <SafeAreaView style={{ backgroundColor: 'whitesmoke', flex: 1 }}>
+    <View style={{ backgroundColor: 'whitesmoke', flex: 1 }}>
 
       <View style={styles.headerContainer}>
 
@@ -551,8 +564,6 @@ const UserHomeScreen = React.memo(() => {
             </View>
           </TouchableOpacity>
 
-
-
         </View>
 
       </View>
@@ -570,21 +581,21 @@ const UserHomeScreen = React.memo(() => {
           { type: 'jobs', data: jobs },
           { type: 'banner2' },
           { type: 'trendingPosts', data: trendingPosts },
-          { type: 'banner3' },
           { type: 'latestPosts', data: latestPosts },
+          { type: 'banner3' },
           { type: 'products', data: products },
           { type: 'services', data: services },
         ]}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
+
 
         renderItem={({ item }) => {
           switch (item.type) {
 
             case 'banner1':
-              return <Banner01 isVisible={visibleItem === 'banner1'} />;
+              return <Banner01 bannerId="ban01" />;
 
             case 'jobs':
+              // if (!item.data || item.data.length === 0) return null;
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
                   <>
@@ -597,87 +608,94 @@ const UserHomeScreen = React.memo(() => {
                       </TouchableOpacity>
                     </View>
 
-                    {isRefreshing ? (
-                      // Skeleton placeholders when refreshing
-                      [...Array(4)].map((_, index) => (
-                        <View key={index} style={styles.eduCard}>
-                          <View style={styles.eduCardLeft} />
-                          <View style={styles.eduCardRight}>
-                            <Text numberOfLines={1} style={styles.eduTitle}></Text>
-                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
-                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+
+                    <FlatList
+                      data={item.data} // ✅ use item.data
+                      renderItem={({ item }) => renderJobCard({ item })}
+                      keyExtractor={(item) => `job-${item.post_id}`}
+                      ListFooterComponent={
+                        (!item.data || item.data.length === 0) && (
+                          <View>
+                            {[...Array(4)].map((_, index) => (
+                              <View key={index} style={styles.eduCard}>
+                                <View style={styles.eduCardLeft} />
+                                <View style={styles.eduCardRight}>
+                                  <Text numberOfLines={1} style={styles.eduTitle}></Text>
+                                  <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                                  <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                                </View>
+                              </View>
+                            ))}
                           </View>
-                        </View>
-                      ))
-                    ) : (
-                      // Real data after refreshing
-                      <FlatList
-                        data={jobs}
-                        renderItem={({ item }) => renderJobCard({ item })}
-                        keyExtractor={(item) => `job-${item.post_id}`}
-                      />
-                    )}
+                        )
+                      }
+                    />
+
                   </>
                 </TouchableOpacity>
               );
 
             case 'banner2':
-              return <Banner02 />;
+              return <Banner01 bannerId="adban01" />;
 
             case 'trendingPosts':
+              if (!item.data || item.data.length === 0) return null;
               return (
-
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
-                    <Text style={styles.heading}>
-                      Trending posts  <Icon name="flash" size={19} color="#075cab" />
-                    </Text>
+                    <View style={styles.headingContainer}>
+                      <Text style={styles.heading}>
+                        Trending posts  <Icon name="trending-up" size={19} color="#075cab" />
+                      </Text>
+                      <TouchableOpacity onPress={goToTrending}>
+                        <Text style={styles.seeAllText}>See more</Text>
+                      </TouchableOpacity>
+                    </View>
 
                     <FlatList
                       key={'trending-columns'}
-                      data={trendingPosts}
+                      data={item.data}
                       extraData={authorImageUrls}
                       renderItem={({ item }) => renderForumCard({ item })}
                       keyExtractor={(item, index) => item.forum_id?.toString() || item.post_id?.toString() || `fallback-${index}`}
                       showsVerticalScrollIndicator={false}
-
                     />
                   </>
-
-
                 </TouchableOpacity>
               );
 
-            case 'banner3':
-              return <Banner03 />;
-
             case 'latestPosts':
+              if (!item.data || item.data.length === 0) return null;
               return (
-
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
-                    <Text style={styles.heading}>
-                      Latest posts  <Icon name="message" size={19} color="#075cab" />
-                    </Text>
-
+                    <View style={styles.headingContainer}>
+                      <Text style={styles.heading}>
+                        Latest posts  <Icon name="new-box" size={19} color="#075cab" />
+                      </Text>
+                      <TouchableOpacity onPress={goToLatest}>
+                        <Text style={styles.seeAllText}>See more</Text>
+                      </TouchableOpacity>
+                    </View>
                     <FlatList
                       key={'latest-columns'}
-                      data={latestPosts}
+                      data={item.data}
                       extraData={authorImageUrls}
                       renderItem={({ item }) => renderForumCard({ item })}
                       keyExtractor={(item, index) => item.forum_id?.toString() || item.post_id?.toString() || `latest-${index}`}
                       showsVerticalScrollIndicator={false}
                     />
                   </>
-
                 </TouchableOpacity>
               );
+
+            case 'banner3':
+              return <Banner01 bannerId="adban02" />;
+
             case 'products':
+              if (!item.data || item.data.length === 0) return null;
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
                     <View style={styles.headingContainer}>
                       <Text style={styles.heading}>
@@ -689,7 +707,7 @@ const UserHomeScreen = React.memo(() => {
                     </View>
 
                     <FlatList
-                      data={products}
+                      data={item.data}
                       renderItem={({ item }) => renderProductCard({ item })}
                       keyExtractor={(item) => `product-${item.product_id}`}
                       numColumns={2}
@@ -697,14 +715,13 @@ const UserHomeScreen = React.memo(() => {
                       columnWrapperStyle={styles.columnWrapper}
                     />
                   </>
-
                 </TouchableOpacity>
               );
 
             case 'services':
+              if (!item.data || item.data.length === 0) return null;
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
-
                   <>
                     <View style={styles.headingContainer}>
                       <Text style={styles.heading}>
@@ -716,7 +733,7 @@ const UserHomeScreen = React.memo(() => {
                     </View>
 
                     <FlatList
-                      data={services}
+                      data={item.data}
                       renderItem={({ item }) => renderServiceCard({ item })}
                       keyExtractor={(item) => `service-${item.service_id}`}
                       numColumns={2}
@@ -724,7 +741,6 @@ const UserHomeScreen = React.memo(() => {
                       columnWrapperStyle={styles.columnWrapper}
                     />
                   </>
-
                 </TouchableOpacity>
               );
 
@@ -734,53 +750,21 @@ const UserHomeScreen = React.memo(() => {
         }}
 
         keyExtractor={(item, index) => `${item.type || 'unknown'}-${index}`}
+
+      />
+      <BottomNavigationBar
+        tabs={tabConfig}
+        currentRouteName={currentRouteName}
+        navigation={navigation}
+        flatListRef={flatListRef}
+        scrollOffsetY={scrollOffsetY}
+        handleRefresh={handleRefresh}
+        tabNameMap={tabNameMap}
+
       />
 
-      <View style={styles.bottomNavContainer}>
-        {tabConfig.map((tab, index) => {
 
-          const isFocused = tabNameMap[currentRouteName] === tab.name;
-
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                const targetTab = tab.name;
-
-                if (isFocused) {
-                  if (scrollOffsetY.current > 0) {
-                    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-
-                    setTimeout(() => {
-                      handleRefresh();
-                    }, 300);
-                  } else {
-                    handleRefresh();
-                  }
-                } else {
-                  navigation.navigate(targetTab);
-                }
-              }}
-              style={styles.navItem}
-              activeOpacity={0.8}
-
-            >
-              <tab.iconComponent
-                name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                size={22}
-                color={isFocused ? '#075cab' : 'black'}
-
-              />
-              <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                {tab.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-
-    </SafeAreaView>
+    </View>
   );
 
 });

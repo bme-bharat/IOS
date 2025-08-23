@@ -13,17 +13,18 @@ import FastImage from 'react-native-fast-image';
 import Message from '../../components/Message';
 import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../AppUtils/CustomToast';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { updateLastSeen } from '../AppUtils/LastSeen';
 import { OtpInput } from "react-native-otp-entry";
+import { openLink } from '../AppUtils/openLinks';
 
 const CompanyProfileScreen = ({ route }) => {
   const navigation = useNavigation();
   const profile = useSelector(state => state.CompanyProfile.profile);
-  console.log('profile',profile)
+  console.log('profile', profile)
   const { myId } = useNetwork();
   const [isProductDropdownVisible, setProductDropdownVisible] = useState(false);
   const [isServiceDropdownVisible, setServiceDropdownVisible] = useState(false);
@@ -195,12 +196,12 @@ const CompanyProfileScreen = ({ route }) => {
   const handleVerifyOTP = async () => {
     const enteredOTP = otpRef.current;
     console.log('Entered OTP:', enteredOTP);
-  
+
     if (enteredOTP.length !== 6 || !/^\d{6}$/.test(enteredOTP)) {
       showToast("Please enter a valid 6 digit OTP", 'error');
       return;
     }
-  
+
     try {
       const res = await axios.post(
         'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/verifyOtpMsg91',
@@ -215,7 +216,7 @@ const CompanyProfileScreen = ({ route }) => {
           },
         }
       );
-  
+
       if (res.data.type === 'success') {
         await handleDeleteAccount(); // ✅ added `await` in async context
       } else {
@@ -225,7 +226,7 @@ const CompanyProfileScreen = ({ route }) => {
       showToast("Try again later", 'error');
     }
   };
-  
+
 
   const sendOtp = (phoneNumber) => {
     axios
@@ -404,7 +405,7 @@ const CompanyProfileScreen = ({ route }) => {
 
       <ScrollView showsVerticalScrollIndicator={false} >
 
-      <TouchableOpacity activeOpacity={1} onPress={() => openMediaViewer([{ type: 'image', url: profile?.imageUrl }])}
+        <TouchableOpacity activeOpacity={1} onPress={() => openMediaViewer([{ type: 'image', url: profile?.imageUrl }])}
           style={styles.imageContainer}
         >
 
@@ -488,7 +489,13 @@ const CompanyProfileScreen = ({ route }) => {
             <View style={styles.title1}>
               <Text style={styles.label}>Website</Text>
               <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{profile.Website.trimStart().trimEnd()}</Text>
+              <Text style={styles.value}>
+                <TouchableOpacity onPress={() => openLink(profile.Website)}>
+                  <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                    {profile.Website.trim()}
+                  </Text>
+                </TouchableOpacity>
+              </Text>
             </View>
           ) : null}
 
@@ -776,7 +783,7 @@ const CompanyProfileScreen = ({ route }) => {
   );
 };
 
- const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -1107,7 +1114,7 @@ const CompanyProfileScreen = ({ route }) => {
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
-},
+  },
   warningContainer: {
     backgroundColor: 'white',
     padding: 15,
@@ -1135,7 +1142,7 @@ const CompanyProfileScreen = ({ route }) => {
     textAlign: 'justify',
     lineHeight: 23,
     marginBottom: 25,
-    fontWeight:'500'
+    fontWeight: '500'
   },
   deletionText1: {
     fontSize: 16,

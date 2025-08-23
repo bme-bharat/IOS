@@ -12,8 +12,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useBottomSheet } from './SheetProvider';
 import { showToast } from './CustomToast';
 import { useConnection } from './ConnectionProvider';
-import { getTimeDisplay } from '../helperComponents.jsx/signedUrls';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { getTimeDisplay } from '../helperComponents/signedUrls';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 
 const defaultImageUriCompany = Image.resolveAssetSource(companyImage).uri;
 const defaultImageUriFemale = Image.resolveAssetSource(femaleImage).uri;
@@ -21,7 +21,7 @@ const defaultImageUriMale = Image.resolveAssetSource(maleImage).uri;
 
 const CommentsSection = forwardRef(({ forum_id, currentUserId, onEditComment, highlightCommentId }, ref) => {
     const profile = useSelector(state => state.CompanyProfile.profile);
-    console.log('profile', profile)
+
     const navigation = useNavigation();
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);

@@ -20,6 +20,7 @@ import { showToast } from '../AppUtils/CustomToast';
 import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../AppUtils/AppStyles';
 import {products} from '../../assets/Constants';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 10;
 
@@ -30,7 +31,6 @@ const CreateService = () => {
 
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedVideos, setSelectedVideos] = useState([]);
-  const [isCompressing, setIsCompressing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subCategories, setSubCategories] = useState([]);
   const [selectedPDF, setSelectedPDF] = useState(null);
@@ -60,108 +60,40 @@ const CreateService = () => {
     if (type === 'document') setSelectedPDF(null); // No index needed for a single PDF
   };
 
-
-
-  const selectImage = async () => {
-    if (selectedImages.length >= 4) {
-      // Show an alert if 4 images are already selected
-      Alert.alert("You can only upload up to 4 images.", [{ text: "OK" }]);
-
-      return; // Prevent further image selection
-    }
-
-    launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        return showToast(response.errorMessage, 'error');
-
+  const {
+    showMediaOptions,
+    pickImage,
+    pickVideo,
+    isCompressing,
+    overlayRef,
+  } = useMediaPicker({
+    onMediaSelected: (file, meta, previewThumbnail) => {
+      if (!file || !file.type) return;
+  
+      // Route based on file type
+      if (file.type.startsWith('image/')) {
+        setSelectedImages((prev) => {
+          if (prev.length >= 4) return prev;
+          return [...prev, file];
+        });
+      } else if (file.type.startsWith('video/')) {
+        setSelectedVideos((prev) => {
+          if (prev.length >= 1) return prev;
+          return [...prev, file];
+        });
+      } else if (file.type === 'application/pdf') {
+        setSelectedPDF(file);
       }
 
-      const asset = response.assets[0];
-      const originalPath = asset.uri.replace('file://', '');
-      const originalStats = await RNFS.stat(originalPath);
+    },
+    includeDocuments: true, // Allow PDF upload now
+    includeCamera: false,
+    mediaType: 'mixed',
+    maxImageSizeMB: 5,
+    maxVideoSizeMB: 10,
+  });
+  
 
-      try {
-        const compressedImage = await ImageResizer.createResizedImage(asset.uri, 1080, 1080, 'JPEG', 70);
-        const compressedStats = await RNFS.stat(compressedImage.uri.replace('file://', ''));
-        const compressedSizeMB = (compressedStats.size / (1024 * 1024)).toFixed(2);
-
-        if (compressedStats.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-          return showToast("Image size shouldn't exceed 5MB", 'error');
-
-        }
-
-        setSelectedImages((prev) => [...prev, { uri: compressedImage.uri, size: compressedSizeMB }]);
-
-      } catch (error) {
-
-        showToast("Upload Failed", 'error');
-      }
-    });
-  };
-
-  const selectVideo = async () => {
-    if (selectedVideos.length >= 1) {
-
-      Alert.alert("You can only upload 1 video.", [{ text: "OK" }]);
-      return;
-    }
-    if (isCompressing) return Alert.alert('Info', 'Upload in progress. Please wait.');
-
-    launchImageLibrary({ mediaType: 'video', quality: 1 }, async (response) => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        showToast("response.errorMessage", 'eror');
-
-        return
-      }
-
-      const asset = response.assets[0];
-
-      const rawDuration = asset.duration || 0;
-      const totalSeconds = Math.floor(rawDuration);
-
-
-      if (totalSeconds > 1800) {
-
-        showToast("Please select a video of 30 minutes or shorter", 'eror');
-
-        return;
-      }
-
-      const originalPath = asset.uri.replace('file://', '');
-      const originalStats = await RNFS.stat(originalPath);
-
-      setIsCompressing(true);
-
-      showToast("uploading Video...", 'info');
-
-      try {
-        const compressedUri = await Compressor.Video.compress(
-          asset.uri,
-          { compressionMethod: 'auto', progressDivider: 5 },
-          (progress) => console.log(`Compression Progress: ${progress}%`)
-        );
-
-        const compressedStats = await RNFS.stat(compressedUri.replace('file://', ''));
-        const compressedSizeMB = (compressedStats.size / (1024 * 1024)).toFixed(2);
-
-        if (compressedStats.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
-          showToast("Video size shouldn't exceed 10MB", 'error');
-          return;
-        }
-
-        setSelectedVideos((prev) => [...prev, { uri: compressedUri, size: compressedSizeMB }]);
-
-      } catch (error) {
-        showToast("Upload failed", 'error');
-
-      } finally {
-        setIsCompressing(false);
-
-      }
-    });
-  };
 
   const selectPDF = async () => {
     if (selectedPDF) {
@@ -488,7 +420,7 @@ const CreateService = () => {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Service description <Text style={{ color: 'red' }}>*</Text></Text>
           <TextInput
-            style={styles.input2}
+            style={styles.input}
             multiline
             placeholderTextColor="gray"
             value={productData.description}
@@ -510,7 +442,7 @@ const CreateService = () => {
 
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label1}>Category <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={styles.label}>Category <Text style={{ color: 'red' }}>*</Text></Text>
           <CustomDropdown
             data={Object.keys(products)}
             onSelect={handleCategorySelect}
@@ -524,7 +456,7 @@ const CreateService = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label1}>Sub category <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={styles.label}>Sub category <Text style={{ color: 'red' }}>*</Text></Text>
           <CustomDropdown
             data={subCategories}
             onSelect={(subCategory) =>
@@ -542,7 +474,6 @@ const CreateService = () => {
           />
 
         </View>
-
 
 
         <View style={styles.inputContainer}>
@@ -570,7 +501,7 @@ const CreateService = () => {
 
         </View>
 
-        <TouchableOpacity onPress={selectImage} style={styles.addMediaButton}>
+        <TouchableOpacity style={styles.addMediaButton}>
           <Text style={styles.addMediaText}>Upload service image <Text style={{ color: 'red' }}>*</Text></Text>
         </TouchableOpacity>
 
@@ -587,7 +518,7 @@ const CreateService = () => {
 
           {/* Show a single "Upload Image" placeholder with remaining count */}
           {selectedImages.length < 4 && (
-            <TouchableOpacity style={styles.placeholder} onPress={selectImage}>
+            <TouchableOpacity style={styles.placeholder} onPress={pickImage}>
               <Text style={styles.placeholderText} >
                 Upload image ({4 - selectedImages.length} remaining)
               </Text>
@@ -595,7 +526,7 @@ const CreateService = () => {
           )}
         </View>
 
-        <TouchableOpacity onPress={selectVideo} style={styles.addMediaButton}>
+        <TouchableOpacity style={styles.addMediaButton}>
           <Text style={styles.addMediaText}>Upload service video</Text>
         </TouchableOpacity>
         {/* <Button title="Select Video" onPress={selectVideo} /> */}
@@ -611,7 +542,7 @@ const CreateService = () => {
           ))}
           {/* Show a single "Upload Image" placeholder with remaining count */}
           {selectedVideos.length < 1 && (
-            <TouchableOpacity style={styles.placeholder} onPress={selectVideo}>
+            <TouchableOpacity style={styles.placeholder} onPress={pickVideo}>
               <Text style={styles.placeholderText} >
                 Upload video
               </Text>
@@ -717,14 +648,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#000',
   },
-  label1: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
-  },
 
   input: {
-    height: 50,
+    minHeight: 50,
+    maxHeight:250,
     backgroundColor: '#fff',
     paddingHorizontal: 15,
     borderRadius: 8,
@@ -735,21 +662,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
-  },
-  input1: {
-    height: 40,
-    backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#222',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    marginTop: 10,
-
   },
 
   input2: {

@@ -7,27 +7,36 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from '../../assets/Constants';
 import FastImage from 'react-native-fast-image';
 import apiClient from '../ApiClient';
-import { setJobImageUrls, updateOrAddJobPosts } from '../Redux/Job_Actions';
+
 import { useSelector } from 'react-redux';
 import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../AppUtils/AppStyles';
-import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents.jsx/signedUrls';
+import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents/signedUrls';
 import buliding from '../../images/homepage/buliding.jpg';
 import { EventRegister } from 'react-native-event-listeners';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
+import Animated from "react-native-reanimated";
+import scrollAnimations from '../helperComponents/scrollAnimations';
+
 const Company = Image.resolveAssetSource(buliding).uri;
 
 
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
 const CompanySettingScreen = React.lazy(() => import('../Profile/CompanySettingScreen'));
 const CompanyHomeScreen = React.lazy(() => import('../CompanyHomeScreen'));
-const PageView = React.lazy(() => import('../Forum/PagerViewForum'));
+const AllPosts = React.lazy(() => import('../Forum/Feed'));
 
+
+const headerHeight = 60;
+const bottomHeight = 60;
 const JobListScreen = () => {
   const navigation = useNavigation();
+  const { onScroll, headerStyle, bottomStyle } = scrollAnimations();
+
 
   const tabNameMap = {
     CompanyJobList: "Jobs",
@@ -39,7 +48,7 @@ const JobListScreen = () => {
   const tabConfig = [
     { name: "Home", component: CompanyHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
     { name: "Jobs", component: JobListScreen, focusedIcon: 'briefcase', unfocusedIcon: 'briefcase-outline', iconComponent: Icon },
-    { name: "Feed", component: PageView, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
+    { name: "Feed", component: AllPosts, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
     { name: "Products", component: ProductsList, focusedIcon: 'shopping', unfocusedIcon: 'shopping-outline', iconComponent: Icon },
     { name: "Settings", component: CompanySettingScreen, focusedIcon: 'cog', unfocusedIcon: 'cog-outline', iconComponent: Icon },
   ];
@@ -60,13 +69,6 @@ const JobListScreen = () => {
 
   const flatListRef = useRef(null);
   const scrollOffsetY = useRef(0);
-
-
-  const handleScroll = (event) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    scrollOffsetY.current = offsetY;
-  };
-
   const [localJobs, setLocalJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
@@ -163,7 +165,7 @@ const JobListScreen = () => {
       );
 
       if (response.data.status === 'error') {
-        console.log('response.data.status', response.data)
+
         setProfileCreated(false);
 
       } else if (response.data.status === 'success') {
@@ -357,8 +359,6 @@ const JobListScreen = () => {
     idField: 'post_id',
     fileKeyField: 'fileKey',
   });
-
-
 
 
   const searchInputRef = useRef(null);
@@ -558,9 +558,8 @@ const JobListScreen = () => {
               </View>
               <Text style={styles.colon}>:</Text>
 
-              <TouchableOpacity onPress={() => handleNavigate(job.company_id)} style={styles.value} activeOpacity={0.8}>
-                <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(job.company_name || '', searchQuery)}</Text>
-              </TouchableOpacity>
+              <Text numberOfLines={1} style={styles.value}>{highlightMatch(job.company_name || '', searchQuery)}</Text>
+
 
             </View>
 
@@ -603,14 +602,13 @@ const JobListScreen = () => {
       </TouchableOpacity>
     );
   };
-
-
+  
 
   return (
-    <SafeAreaView style={styles.container1}>
+    <View style={styles.container1}>
 
       <View style={styles.container}>
-        <View style={AppStyles.headerContainer}>
+        <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
           <View style={AppStyles.searchContainer}>
             <View style={AppStyles.inputContainer}>
               <TextInput
@@ -621,7 +619,6 @@ const JobListScreen = () => {
                 value={searchQuery}
                 onChangeText={handleDebouncedTextChange}
               />
-
 
               {searchQuery.trim() !== '' ? (
                 <TouchableOpacity
@@ -674,7 +671,7 @@ const JobListScreen = () => {
           )}
 
 
-        </View>
+        </Animated.View>
 
         {showNewJobAlert && (
           <TouchableOpacity onPress={handleRefresh} style={{ position: 'absolute', top: 60, alignSelf: 'center', backgroundColor: '#075cab', padding: 10, borderRadius: 10, zIndex: 10 }}>
@@ -684,27 +681,23 @@ const JobListScreen = () => {
 
 
         {!loading ? (
-          <FlatList
+          <Animated.FlatList
             data={!searchTriggered ? localJobs : searchResults}
             renderItem={({ item }) => renderJob({ item })}
             ref={flatListRef}
-            onScroll={event => {
-              handleScroll(event);
-              Keyboard.dismiss();
-              searchInputRef.current?.blur?.();
-            }}
+            onScroll={onScroll}
             scrollEventThrottle={16}
             onScrollBeginDrag={() => {
               Keyboard.dismiss();
               searchInputRef.current?.blur?.();
             }}
+            contentContainerStyle={AppStyles.scrollView}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={viewabilityConfig}
             keyboardShouldPersistTaps="handled"
             keyExtractor={(item, index) => `${item.post_id}-${index}`}
-            contentContainerStyle={styles.scrollView}
             onEndReached={() => !searchQuery && hasMoreJobs && fetchJobs(lastEvaluatedKey)}
-            onEndReachedThreshold={0.5}
+            onEndReachedThreshold={0.3}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               (searchTriggered && searchResults.length === 0) ? (
@@ -752,49 +745,19 @@ const JobListScreen = () => {
       </View>
 
 
-      <View style={styles.bottomNavContainer}>
-        {tabConfig.map((tab, index) => {
-          const isFocused = currentRouteName === tab.name;
+      <Animated.View style={[AppStyles.bottom,{flex:1}, bottomStyle]}>
 
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                const targetTab = tab.name;
+        <BottomNavigationBar
+          tabs={tabConfig}
+          currentRouteName={currentRouteName}
+          navigation={navigation}
+          flatListRef={flatListRef}
+          scrollOffsetY={scrollOffsetY}
+          handleRefresh={handleRefresh}
 
-                if (isFocused) {
-                  if (scrollOffsetY.current > 0) {
-                    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-
-                    setTimeout(() => {
-                      handleRefresh();
-                    }, 300);
-                  } else {
-                    handleRefresh();
-                  }
-                } else {
-                  navigation.navigate(targetTab);
-                }
-              }}
-
-              style={styles.navItem}
-              activeOpacity={0.8}
-
-            >
-              <tab.iconComponent
-                name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                size={22}
-                color={isFocused ? '#075cab' : 'black'}
-              />
-              <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                {tab.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-    </SafeAreaView>
+        />
+      </Animated.View>
+    </View>
   );
 };
 
@@ -849,14 +812,15 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: 'black',
     padding: 5,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
   },
 
 
   scrollView: {
-    paddingBottom: '10%',
-  },
+    paddingTop: headerHeight,
+    paddingBottom: bottomHeight,
 
+  },
 
   shareButton: {
     marginTop: 10,
@@ -875,7 +839,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  
+
   textContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,

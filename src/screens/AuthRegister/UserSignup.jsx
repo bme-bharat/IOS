@@ -730,7 +730,7 @@ const UserSignupScreen = () => {
         setShowAlert(true);
       } else {
         console.log("Signup Failed Response:", response.data);
-        const message = response.data.message || 'Something went wrong';
+        const message = response.data.errorMessage || 'Something went wrong';
         showToast(message, 'error');
 
       }

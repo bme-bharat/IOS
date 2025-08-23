@@ -95,7 +95,7 @@ const CompanyJobPostScreen = () => {
         jobFormData.working_location !== initialJobFormData.working_location ||
         jobFormData.speicializations_required !== initialJobFormData.speicializations_required ||
         jobFormData.Package !== initialJobFormData.Package ||
-        jobFormData.required_expertise !== initialJobFormData.required_expertise;
+        jobFormData.required_expertise !== initialJobFormData.required_expertise ||
       jobFormData.required_qualifications !== initialJobFormData.required_qualifications;
 
       setHasChanges(hasAnyChanges);

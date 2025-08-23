@@ -27,11 +27,11 @@ import DeepLinkHandler from './src/screens/DeepLinkHandler';
 import { ConnectionProvider } from './src/screens/AppUtils/ConnectionProvider';
 import { BottomSheetProvider } from './src/screens/AppUtils/SheetProvider';
 import { NetworkProvider } from './src/screens/AppUtils/IdProvider';
-import MediaViewer from './src/screens/helperComponents.jsx/mediaViewer';
-import useLastActivityTracker from './src/screens/AppUtils/LastSeenProvider';
+import MediaViewer from './src/screens/helperComponents/mediaViewer';
 import InAppReview from 'react-native-in-app-review';
 import useReviewPrompt from './src/screens/AppUtils/appReview';
 import { cleanupQuickActions, handleNavigationReady, onNavigationContainerReady, setupQuickActions, setupQuickActionsInternal } from './src/screens/quickActions';
+import useLastActivityTracker from './src/screens/AppUtils/LastSeenProvider';
 
 
 
@@ -59,9 +59,10 @@ const App = () => {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [fcmToken, setFcmToken] = useState('');
   const userCheckIntervalRef = useRef(null);
-  // useLastActivityTracker();
+ 
   // useReviewPrompt();
 
+  useLastActivityTracker();
 
   useEffect(() => {
     const getData = async () => {
@@ -194,7 +195,7 @@ const App = () => {
 
   useEffect(() => {
     sessionCheckIntervalRef.current = setInterval(() => {
-      // checkUserSession();
+      checkUserSession();
     }, 5000);
 
     return () => {
@@ -309,15 +310,12 @@ const App = () => {
       setIsLoggedIn(false);
       setUserType(null);
       setUserId(null);
-      setIsLoading(true);
-
 
       setTimeout(() => restartApp(), 1000);
     } catch (error) {
 
     }
   };
-
 
 
   const fetchProfile1 = async () => {
@@ -524,7 +522,7 @@ const App = () => {
 
 
   const checkAuthStatus = async () => {
-    setIsLoading(true);
+
     try {
       const normalUserData = await AsyncStorage.getItem('normalUserData');
       const companyUserData = await AsyncStorage.getItem('CompanyUserData');
@@ -558,26 +556,14 @@ const App = () => {
   // }, []);
 
   useEffect(() => {
-    const initializeApp = async () => {
-      await checkAuthStatus();
-      setSplashVisible(false);
-    };
-
-    initializeApp();
-
-    // Set a timeout to ensure the splash screen is visible for at least 5 seconds
-    const timeout = setTimeout(() => {
-      setSplashVisible(false);
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, [isLoggedIn]);
+    checkAuthStatus();
+  }, []);
 
 
-  if (isLoading || splashVisible) {
+
+  if (isLoading) {
     return <SplashScreen />;
   }
-
 
 
 

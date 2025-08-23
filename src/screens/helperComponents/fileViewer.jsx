@@ -12,7 +12,7 @@ export const useFileOpener = () => {
         }
 
         try {
-            console.log('[useFileOpener] Fetching signed URL...');
+
             const response = await apiClient.post('/getObjectSignedUrl', {
                 command: 'getObjectSignedUrl',
                 key,
@@ -56,8 +56,6 @@ export const useFileOpener = () => {
                 fromUrl: url,
                 toFile: localFile,
             }).promise;
-
-            console.log('[useFileOpener] Download result:', downloadResult);
 
             try {
                 await FileViewer.open(localFile, {

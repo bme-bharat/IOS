@@ -19,7 +19,7 @@ import femaleImage from '../../images/homepage/female.jpg';
 import companyImage from '../../images/homepage/buliding.jpg'
 import { useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 const defaultImageUriCompany = Image.resolveAssetSource(companyImage).uri;
 const defaultImageUriFemale = Image.resolveAssetSource(femaleImage).uri;
 const defaultImageUriMale = Image.resolveAssetSource(maleImage).uri;
@@ -45,31 +45,31 @@ const CommentInputBar = ({
 
   useEffect(() => {
     const editListener = EventRegister.addEventListener('onEditComment', (comment) => {
-        setSelectedComment(comment);
-        setText(comment.text || '');
-        inputRef.current?.focus();
+      setSelectedComment(comment);
+      setText(comment.text || '');
+      inputRef.current?.focus();
     });
-    
+
     // Add listener for when a comment is deleted
     const deleteListener = EventRegister.addEventListener('onCommentDeleted', ({ comment_id }) => {
-        if (selectedComment && selectedComment.comment_id === comment_id) {
-            setSelectedComment(null);
-            setText('');
-        }
-    });
-    
-    // Add listener for explicit edit cancellation
-    const cancelEditListener = EventRegister.addEventListener('onEditCommentCancelled', () => {
+      if (selectedComment && selectedComment.comment_id === comment_id) {
         setSelectedComment(null);
         setText('');
+      }
+    });
+
+    // Add listener for explicit edit cancellation
+    const cancelEditListener = EventRegister.addEventListener('onEditCommentCancelled', () => {
+      setSelectedComment(null);
+      setText('');
     });
 
     return () => {
-        EventRegister.removeEventListener(editListener);
-        EventRegister.removeEventListener(deleteListener);
-        EventRegister.removeEventListener(cancelEditListener);
+      EventRegister.removeEventListener(editListener);
+      EventRegister.removeEventListener(deleteListener);
+      EventRegister.removeEventListener(cancelEditListener);
     };
-}, [selectedComment]);
+  }, [selectedComment]);
 
 
 
@@ -83,29 +83,29 @@ const CommentInputBar = ({
     const trimmedText = text.trim();
     if (!trimmedText) return;
     setLoading(true);
-  
+
     try {
       if (selectedComment) {
         console.log('Updating comment...');
-  
+
         const updatePayload = {
           command: 'updateComment',
           user_id: storedUserId,
           comment_id: selectedComment.comment_id,
           text: trimmedText,
         };
-  
+
         console.log('Update payload:', updatePayload);
         const response = await apiClient.post('/updateComment', updatePayload);
         console.log('Update response:', response?.data);
-  
+
         if (response?.data?.status === 'SUCCESS') {
           const updatedCommentWithUrl = await getSignedUrlForComment({
             comment_id: selectedComment.comment_id,
             text: trimmedText,
             fileKey: selectedComment.fileKey,
           });
-  
+
           console.log('Updated comment with signed URL:', updatedCommentWithUrl);
           showToast('Comment updated', 'success');
           onEditComplete?.(updatedCommentWithUrl);
@@ -117,22 +117,22 @@ const CommentInputBar = ({
         }
       } else {
         console.log('Adding new comment...');
-  
+
         const payload = {
           command: 'addComments',
           user_id: storedUserId,
           forum_id,
           text: trimmedText,
         };
-  
+
         console.log('Add comment payload:', payload);
         const response = await apiClient.post('/addComments', payload);
         console.log('Add comment response:', response?.data);
-  
+
         if (response?.data?.status === 'success') {
           const newCommentWithUrl = await getSignedUrlForComment(response.data.comment_details);
           console.log('New comment with signed URL:', newCommentWithUrl);
-  
+
           onCommentAdded?.(newCommentWithUrl);
           setText('');
           showToast('Comment posted successfully', 'success');
@@ -152,7 +152,7 @@ const CommentInputBar = ({
       setLoading(false);
     }
   };
-  
+
 
 
 
@@ -160,26 +160,26 @@ const CommentInputBar = ({
     if (!comment.fileKey) {
       const name = comment.author || 'Unknown';
       const avatarProps = generateAvatarFromName(name);
-  
+
       return {
         ...comment,
         avatarProps, // fallback to initials-based avatar
       };
     }
-  
+
     try {
       const res = await apiClient.post('/getObjectSignedUrl', {
         command: 'getObjectSignedUrl',
         key: comment.fileKey,
       });
-  
+
       if (typeof res.data === 'string' && res.data.startsWith('http')) {
         return {
           ...comment,
           signedUrl: res.data,
         };
       }
-  
+
       if (res?.data?.status === 'success' && res.data.response?.signedUrl) {
         return {
           ...comment,
@@ -189,10 +189,10 @@ const CommentInputBar = ({
     } catch (e) {
       // Optional: add logging if needed
     }
-  
+
     return comment;
   };
-  
+
 
   const handleNavigate = () => {
     closeSheet();
@@ -210,35 +210,35 @@ const CommentInputBar = ({
 
     <View style={styles.container}>
       <View style={styles.inputWrapper}>
-      <TouchableOpacity onPress={() => handleNavigate()}>
-  {profile?.fileKey ? (
-    <Image
-      source={{ uri: profile?.imageUrl }}
-      style={{
-        width: 35,
-        height: 35,
-        borderRadius: 20,
-        marginRight: 10,
-      }}
-    />
-  ) : (
-    <View
-      style={{
-        width: 35,
-        height: 35,
-        borderRadius: 20,
-        marginRight: 10,
-        backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <Text style={{ color: profile?.companyAvatar?.textColor || '#000',fontWeight:'bold' }}>
-        {profile?.companyAvatar?.initials || '?'}
-      </Text>
-    </View>
-  )}
-</TouchableOpacity>
+        <TouchableOpacity onPress={() => handleNavigate()}>
+          {profile?.fileKey ? (
+            <Image
+              source={{ uri: profile?.imageUrl }}
+              style={{
+                width: 35,
+                height: 35,
+                borderRadius: 20,
+                marginRight: 10,
+              }}
+            />
+          ) : (
+            <View
+              style={{
+                width: 35,
+                height: 35,
+                borderRadius: 20,
+                marginRight: 10,
+                backgroundColor: profile?.companyAvatar?.backgroundColor || '#ccc',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: profile?.companyAvatar?.textColor || '#000', fontWeight: 'bold' }}>
+                {profile?.companyAvatar?.initials || '?'}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <TextInput
           ref={inputRef}
@@ -246,11 +246,11 @@ const CommentInputBar = ({
           onChangeText={setText}
           value={text}
           placeholder={
-            item?.author 
-              ? `Add a comment for ${item.author.slice(0, 15)}${item.author.length > 10 ? "..." : ""}` 
+            item?.author
+              ? `Add a comment for ${item.author.slice(0, 15)}${item.author.length > 10 ? "..." : ""}`
               : "Add a comment..."
           }
-        
+
           placeholderTextColor={COLOR_PLACEHOLDER}
           multiline
           accessibilityLabel="Message input"

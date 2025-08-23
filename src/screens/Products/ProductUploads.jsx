@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Alert, ScrollView, StyleSheet, Image, TouchableOpacity, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, Button, Alert, ScrollView, StyleSheet, Image, TouchableOpacity, Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback, ActivityIndicator, SafeAreaView, Platform, Linking } from 'react-native';
 import Video from 'react-native-video';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import CustomDropDownMenu from '../../components/DropDownMenu';
 import { after_sales_service, applications, availability, certifications, installation_support, operation_mode, power_supply, product_category, products, types } from '../../assets/Constants';
 import CustomDropdown from '../../components/CustomDropDown';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 import DocumentPicker from 'react-native-document-picker';
 import Message3 from '../../components/Message3';
@@ -24,6 +25,7 @@ import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../AppUtils/AppStyles';
 import Message1 from '../../components/Message1';
 import apiClient from '../ApiClient';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
 
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_VIDEO_SIZE_MB = 10;
@@ -35,10 +37,9 @@ const CreateProduct = () => {
 
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedVideos, setSelectedVideos] = useState([]);
-  const [isCompressing, setIsCompressing] = useState(false);
+  const [selectedPDF, setSelectedPDF] = useState(null);
   const [loading, setLoading] = useState(false);
   const [subCategories, setSubCategories] = useState([]);
-  const [selectedPDF, setSelectedPDF] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +49,8 @@ const CreateProduct = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertIconType, setAlertIconType] = useState('');
   const [hasNavigated, setHasNavigated] = useState(false);
+
+
 
   useEffect(() => {
     const getUserData = async () => {
@@ -86,6 +89,7 @@ const CreateProduct = () => {
 
 
     getUserData();
+
   }, []);
 
   const route = useRoute();
@@ -109,107 +113,43 @@ const CreateProduct = () => {
     if (type === 'document') setSelectedPDF(null);
   };
 
-  const selectImage = async () => {
-    if (selectedImages.length >= 4) {
-
-      showToast("You can only upload up to 4 images", 'error');
-      return;
-    }
-
-    launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        return showToast(response.errorMessage, 'error');
-
+  const {
+    showMediaOptions,
+    pickImage,
+    pickVideo,
+    isCompressing,
+    overlayRef,
+  } = useMediaPicker({
+    onMediaSelected: (file, meta, previewThumbnail) => {
+      if (!file || !file.type) return;
+  
+      // Route based on file type
+      if (file.type.startsWith('image/')) {
+        setSelectedImages((prev) => {
+          if (prev.length >= 4) return prev;
+          return [...prev, file];
+        });
+      } else if (file.type.startsWith('video/')) {
+        setSelectedVideos((prev) => {
+          if (prev.length >= 1) return prev;
+          return [...prev, file];
+        });
+      } else if (file.type === 'application/pdf') {
+        setSelectedPDF(file);
       }
 
-      const asset = response.assets[0];
-      const originalPath = asset.uri.replace('file://', '');
-      const originalStats = await RNFS.stat(originalPath);
-
-      try {
-        const compressedImage = await ImageResizer.createResizedImage(asset.uri, 1080, 1080, 'JPEG', 70);
-        const compressedStats = await RNFS.stat(compressedImage.uri.replace('file://', ''));
-        const compressedSizeMB = (compressedStats.size / (1024 * 1024)).toFixed(2);
-
-        if (compressedStats.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-          return showToast("Image size shouldn't exceed 5MB", 'error');
+    },
+    includeDocuments: true, // Allow PDF upload now
+    includeCamera: false,
+    mediaType: 'mixed',
+    maxImageSizeMB: 5,
+    maxVideoSizeMB: 10,
+  });
+  
 
 
-        }
-
-        setSelectedImages((prev) => [...prev, { uri: compressedImage.uri, size: compressedSizeMB }]);
-      } catch (error) {
-
-        showToast("Upload failed", 'error');
-      }
-    });
-  };
-
-  const selectVideo = async () => {
-    if (selectedVideos.length >= 1) {
-      showToast("You can only upload 1 video", 'info');
-
-      return;
-    }
-    if (isCompressing) return showToast("Upload in progress. Please wait", 'info');
-
-    launchImageLibrary({ mediaType: 'video', quality: 1 }, async (response) => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-
-        return showToast(response.errorMessage, 'error');
-
-      }
-
-      const asset = response.assets[0];
-
-      const rawDuration = asset.duration || 0;
-      const totalSeconds = Math.floor(rawDuration);
 
 
-      if (totalSeconds > 1800) {
-
-        showToast("Please select a video of 30 minutes or shorter", 'error');
-
-        return;
-      }
-
-      const originalPath = asset.uri.replace('file://', '');
-      const originalStats = await RNFS.stat(originalPath);
-
-      setIsCompressing(true);
-
-      showToast("uploading video...", 'info');
-
-      try {
-        const compressedUri = await Compressor.Video.compress(
-          asset.uri,
-          { compressionMethod: 'auto', progressDivider: 5 },
-          (progress) => console.log(`Compression Progress: ${progress}%`)
-        );
-
-        const compressedStats = await RNFS.stat(compressedUri.replace('file://', ''));
-        const compressedSizeMB = (compressedStats.size / (1024 * 1024)).toFixed(2);
-
-        if (compressedStats.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
-
-          showToast("Video size shouldn't exceed 10MB", 'error');
-
-          return;
-        }
-
-        setSelectedVideos((prev) => [...prev, { uri: compressedUri, size: compressedSizeMB }]);
-
-      } catch (error) {
-        showToast("Upload failed", 'error');
-
-      } finally {
-        setIsCompressing(false);
-
-      }
-    });
-  };
 
   const selectPDF = async () => {
     if (selectedPDF) {
@@ -355,7 +295,6 @@ const CreateProduct = () => {
         : { [key]: sanitizedValue })
     }));
   };
-
 
 
 
@@ -650,8 +589,8 @@ const CreateProduct = () => {
           </View>
 
 
-          <View style={[styles.inputContainer, { marginBottom: 0 }]}>
-            <Text style={styles.label1}>Category <Text style={{ color: 'red' }}>*</Text></Text>
+          <View style={[styles.inputContainer]}>
+            <Text style={styles.label}>Category <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropdown
               data={Object.keys(products)}
               onSelect={handleCategorySelect}
@@ -664,8 +603,8 @@ const CreateProduct = () => {
 
           </View>
 
-          <View style={[styles.inputContainer, { marginBottom: 0 }]}>
-            <Text style={styles.label1}>Sub category <Text style={{ color: 'red' }}>*</Text></Text>
+          <View style={[styles.inputContainer]}>
+            <Text style={styles.label}>Sub category <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropdown
               data={subCategories}
               onSelect={(subCategory) =>
@@ -844,7 +783,6 @@ const CreateProduct = () => {
             )}
           </View>
 
-
           <View style={styles.inputContainer}>
             <Text style={styles.label}>
               Power supply{isOtherSelected.power_supply && <Text style={{ color: 'red' }}> *</Text>}
@@ -926,7 +864,7 @@ const CreateProduct = () => {
 
           </View>
 
-          <TouchableOpacity onPress={selectImage} style={styles.addMediaButton}>
+          <TouchableOpacity onPress={pickImage} style={styles.addMediaButton}>
             <Text style={styles.addMediaText}>Upload product image <Text style={{ color: 'red' }}>*</Text></Text>
           </TouchableOpacity>
 
@@ -943,7 +881,7 @@ const CreateProduct = () => {
 
             {/* Show a single "Upload Image" placeholder with remaining count */}
             {selectedImages.length < 4 && (
-              <TouchableOpacity style={styles.placeholder} onPress={selectImage}>
+              <TouchableOpacity style={styles.placeholder} onPress={pickImage}>
                 <Text style={styles.placeholderText} >
                   Upload image ({4 - selectedImages.length} remaining)
                 </Text>
@@ -951,7 +889,7 @@ const CreateProduct = () => {
             )}
           </View>
 
-          <TouchableOpacity onPress={selectVideo} style={styles.addMediaButton}>
+          <TouchableOpacity onPress={pickVideo} style={styles.addMediaButton}>
             <Text style={styles.addMediaText}>Upload product video</Text>
           </TouchableOpacity>
           {/* <Button title="Select Video" onPress={selectVideo} /> */}
@@ -967,7 +905,7 @@ const CreateProduct = () => {
             ))}
             {/* Show a single "Upload Image" placeholder with remaining count */}
             {selectedVideos.length < 1 && (
-              <TouchableOpacity style={styles.placeholder} onPress={selectVideo}>
+              <TouchableOpacity style={styles.placeholder} onPress={pickVideo}>
                 <Text style={styles.placeholderText} >
                   Upload video
                 </Text>
@@ -1104,11 +1042,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     marginBottom: 10,
-    color: '#444',
-  },
-  label1: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#444',
   },
 

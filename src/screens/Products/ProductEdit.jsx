@@ -19,6 +19,7 @@ import { showToast } from "../AppUtils/CustomToast";
 import { EventRegister } from "react-native-event-listeners";
 import AppStyles from "../AppUtils/AppStyles";
 import apiClient from "../ApiClient";
+import { useMediaPicker } from "../helperComponents/MediaPicker";
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';
@@ -28,7 +29,6 @@ const EditProduct = () => {
     const route = useRoute();
     const { product } = route.params;
 
-    const [isCompressing, setIsCompressing] = useState(false);
     const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
     const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB in bytes
     const [loading, setLoading] = useState(false);
@@ -36,12 +36,10 @@ const EditProduct = () => {
     const [newProducts, setNewProducts] = useState([]);
     const [selectedState, setSelectedState] = useState(product?.category || "");
     const [selectedCity, setSelectedCity] = useState(product?.subcategory || "");
-    const [files, setFiles] = useState(product.files || []);
-    const [newFiles, setNewFiles] = useState([]);
     const [removedFiles, setRemovedFiles] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [showModal, setShowModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const state = Object.keys(products);
     const cities = selectedState && products[selectedState] ? products[selectedState] : [];
@@ -235,19 +233,47 @@ const EditProduct = () => {
     };
 
 
-
-
-
-
-
-
-
     const [images, setImages] = useState(product.images || []);
     const [videos, setVideos] = useState(product.videos || []);
+    const [files, setFiles] = useState(product.files || []);
+    const [newFiles, setNewFiles] = useState([]);
     const [newImages, setNewImages] = useState([]);
     const [newVideos, setNewVideos] = useState([]);
     const [removedMedia, setRemovedMedia] = useState([]);
     const [signedUrls, setSignedUrls] = useState({});
+
+    const {
+        showMediaOptions,
+        pickImage,
+        pickVideo,
+        isCompressing,
+        overlayRef,
+    } = useMediaPicker({
+        onMediaSelected: (file, meta, previewThumbnail) => {
+            if (!file || !file.type) return;
+
+            // Route based on file type
+            if (file.type.startsWith('image/')) {
+                setNewImages((prev) => {
+                    if (prev.length >= 4) return prev;
+                    return [...prev, file];
+                });
+            } else if (file.type.startsWith('video/')) {
+                setNewVideos((prev) => {
+                    if (prev.length >= 1) return prev;
+                    return [...prev, file];
+                });
+            } else if (file.type === 'application/pdf') {
+                setNewFiles(file);
+            }
+
+        },
+        includeDocuments: true, // Allow PDF upload now
+        includeCamera: false,
+        mediaType: 'mixed',
+        maxImageSizeMB: 5,
+        maxVideoSizeMB: 10,
+    });
 
     useEffect(() => {
         const fetchSignedUrls = async () => {
@@ -335,87 +361,6 @@ const EditProduct = () => {
     });
 
 
-    const selectImage = async () => {
-        if (filteredImages.length >= 4) {
-            showToast("You can only upload up to 4 images", 'info');
-
-            return;
-        }
-        launchImageLibrary({ mediaType: "photo", quality: 1 }, async (response) => {
-            if (response.didCancel) return;
-            if (response.errorCode) {
-                return
-            }
-
-            const asset = response.assets[0];
-
-            if (!asset || !asset.uri) {
-
-                return showToast("Selection Failed", 'error');
-            }
-
-            setNewImages((prev) => [...prev, { uri: asset.uri, name: asset.fileName, size: asset.fileSize }]);
-        });
-    };
-
-
-    const selectVideo = async () => {
-        if (filteredVideos.length >= 1) {
-            showToast("You can only upload 1 video", 'info');
-
-            return;
-        }
-        if (isCompressing) {
-
-        }
-
-        launchImageLibrary({ mediaType: "video", quality: 1 }, async (response) => {
-            if (response.didCancel) return;
-            if (response.errorCode) {
-                return
-            }
-
-            const asset = response.assets?.[0];
-
-            const rawDuration = asset.duration || 0;
-            const totalSeconds = Math.floor(rawDuration);
-
-
-            if (totalSeconds > 1800) {
-
-                showToast("Please select a video of 30 minutes or shorter", 'error');
-                return;
-            }
-
-            if (!asset?.uri) {
-
-                return
-
-            }
-
-            const originalPath = asset.uri.replace("file://", "");
-
-            let originalStats;
-            try {
-                originalStats = await RNFS.stat(originalPath);
-            } catch (error) {
-
-                return
-            }
-            const originalSizeMB = (originalStats.size / (1024 * 1024)).toFixed(2);
-
-            if (originalStats.size > MAX_VIDEO_SIZE * 1024 * 1024) {
-                return showToast("Video size shouldn't exceed 10MB", 'error');
-            }
-
-            const compressedVideo = await compressVideo(asset.uri);
-
-            if (compressedVideo?.uri) {
-                setNewVideos((prev) => [...prev, compressedVideo]);
-
-            }
-        });
-    };
 
     const selectPDF = async () => {
         try {
@@ -479,7 +424,7 @@ const EditProduct = () => {
 
             return { uri: videoUri, size: 0, sizeMB: "N/A" };
         } finally {
-            setIsCompressing(false);
+      
             Toast.hide();
         }
     };
@@ -617,87 +562,85 @@ const EditProduct = () => {
                 { key: "category", label: "Category" },
                 { key: "subcategory", label: "Subcategory" },
                 { key: "specifications.model_name", label: "Model Name" },
-                { key: "specifications.country_of_origin", label: "country_of_origin" },
+                { key: "specifications.country_of_origin", label: "Country of Origin" },
                 { key: "tags", label: "Tags" },
                 { key: "specifications.brand", label: "Brand" },
             ];
-
+    
             for (let field of requiredFields) {
                 const keys = field.key.split(".");
                 let value = productData;
-
+    
                 for (let key of keys) {
                     value = value[key] ?? "";
                 }
-
+    
                 value = typeof value === "string" ? value.trim() : value;
-
+    
                 if (!value) {
-
                     showToast(`${field.label} is mandatory`, 'info');
                     setSubmitting(false);
                     return;
                 }
             }
-
+    
             // Validate "Others" fields
             for (const field in formData) {
                 if (formData[field]?.toLowerCase() === "others") {
                     const customValue = customInputs[field]?.trim();
                     if (!customValue) {
-
                         showToast(`Please enter a value for "${field.replace(/_/g, " ")}"`, 'info');
                         setSubmitting(false);
                         return;
                     }
                 }
             }
-
-            // ✅ Ensure at least one image
+    
+            // Ensure at least one image
             const existingImages = (product.images || []).filter((img) => !removedMedia.includes(img));
             if (existingImages.length + newImages.length === 0) {
-
                 showToast("Please upload at least one image for the product", 'info');
                 setSubmitting(false);
                 return;
             }
-
+    
+            // Delete removed media
             if (removedMedia.length > 0) {
-
-                await Promise.all(removedMedia.map((fileKey) => handleDeleteOldImage(product.product_id, fileKey)));
+                await Promise.all(removedMedia.map((fileKey) =>
+                    handleDeleteOldImage(product.product_id, fileKey)
+                ));
                 setRemovedMedia([]);
             }
-
-            const compressedImages = await Promise.all(newImages.map(compressImage));
-            const compressedVideos = await Promise.all(newVideos.map((vid) => compressVideo(vid.uri)));
-
+    
+            // Upload new files directly (no compression)
             const uploadedImages = await Promise.all(
-                compressedImages.map((img) => uploadFileToS3(img.uri, "image/jpeg"))
+                newImages.map((img) => uploadFileToS3(img.uri, "image/jpeg"))
             );
+    
             const uploadedVideos = await Promise.all(
-                compressedVideos.filter(Boolean).map((vid) => uploadFileToS3(vid.uri, "video/mp4"))
+                newVideos.map((vid) => uploadFileToS3(vid.uri, "video/mp4"))
             );
-
+    
             const uploadedFiles = await Promise.all(
-                newFiles.map(file => uploadFileToS3(file.uri, "application/pdf"))
+                newFiles.map((file) => uploadFileToS3(file.uri, "application/pdf"))
             );
-
+    
             const finalFiles = [
-                ...(product.files || []).filter(file => !removedFiles.includes(file)),
+                ...(product.files || []).filter((file) => !removedFiles.includes(file)),
                 ...uploadedFiles.filter(Boolean)
             ];
-
+    
             const finalImages = [
                 ...(product.images || []).filter((img) => !removedMedia.includes(img)),
                 ...uploadedImages.filter(Boolean)
             ];
-
+    
             const finalVideos = [
                 ...(product.videos || []).filter((vid) => !removedMedia.includes(vid)),
                 ...uploadedVideos.filter(Boolean)
             ];
-
-
+    
+            // Trim all strings
             const trimStrings = (obj) => {
                 if (typeof obj === "string") return obj.trim();
                 if (Array.isArray(obj)) return obj.map(trimStrings);
@@ -708,8 +651,9 @@ const EditProduct = () => {
                 }
                 return obj;
             };
+    
             setLoading(true);
-
+    
             const requestBody = {
                 command: "updateProduct",
                 product_id: product.product_id,
@@ -719,21 +663,11 @@ const EditProduct = () => {
                 videos: finalVideos,
                 files: finalFiles,
             };
-
-            const response = await axios.post(
-                "https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/updateProduct",
-                requestBody,
-                {
-                    headers: {
-                        "x-api-key": API_KEY,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-
+    
+            const response = await apiClient.post("/updateProduct", requestBody);
+    
             if (response.data.status === "success") {
                 setHasChanges(false);
-
                 showToast("Product updated successfully", 'success');
                 setNewImages([]);
                 setNewVideos([]);
@@ -743,20 +677,19 @@ const EditProduct = () => {
                         ...requestBody,
                     },
                 });
-                navigation.goBack()
+                navigation.goBack();
             } else {
                 throw new Error(response.data.errorMessage || "Failed to update product");
             }
         } catch (error) {
-
             showToast("Update failed", 'error');
-
         } finally {
             setLoading(false);
             setHasChanges(false);
             setSubmitting(false);
         }
     };
+    
 
 
 
@@ -810,7 +743,7 @@ const EditProduct = () => {
 
 
 
-                        <Text style={styles.title}>Edit a product</Text>
+                <Text style={styles.title}>Edit a product</Text>
                 <TouchableOpacity activeOpacity={1}>
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Product name <Text style={{ color: 'red' }}>*</Text></Text>
@@ -849,7 +782,7 @@ const EditProduct = () => {
                         />
                     </View>
 
-                    <View style={[styles.inputContainer, { marginBottom: 0 }]}>
+                    <View style={[styles.inputContainer]}>
                         <Text style={styles.label}>Category <Text style={{ color: 'red' }}>*</Text></Text>
                         <CustomDropdown
 
@@ -862,7 +795,7 @@ const EditProduct = () => {
                         />
                     </View>
 
-                    <View style={[styles.inputContainer, { marginBottom: 0 }]}>
+                    <View style={[styles.inputContainer]}>
                         <Text style={styles.label}>Sub category <Text style={{ color: 'red' }}>*</Text></Text>
                         <CustomDropdown
                             data={cities}
@@ -1044,7 +977,7 @@ const EditProduct = () => {
                     {/* <Text style={styles.sectionTitle}>Media</Text> */}
                     <View>
 
-                        <TouchableOpacity onPress={selectImage} style={styles.addMediaButton}>
+                        <TouchableOpacity onPress={pickImage} style={styles.addMediaButton}>
                             <Text style={styles.addMediaText}>
                                 Upload product image <Text style={{ color: 'red' }}>*</Text>
                             </Text>
@@ -1071,7 +1004,7 @@ const EditProduct = () => {
 
                             {/* Show a single "Upload Image" placeholder if there's space left */}
                             {filteredImages.length < 4 && (
-                                <TouchableOpacity style={styles.placeholder} onPress={selectImage}>
+                                <TouchableOpacity style={styles.placeholder} onPress={pickImage}>
                                     <Text style={styles.placeholderText}>
                                         Upload Image ({4 - filteredImages.length} remaining)
                                     </Text>
@@ -1082,7 +1015,7 @@ const EditProduct = () => {
 
                         <View>
 
-                            <TouchableOpacity onPress={selectVideo} style={styles.addMediaButton}>
+                            <TouchableOpacity onPress={pickVideo} style={styles.addMediaButton}>
                                 <Text style={styles.addMediaText}>Upload product video</Text>
                             </TouchableOpacity>
 
@@ -1112,7 +1045,7 @@ const EditProduct = () => {
                                         );
                                     })
                                 ) : (
-                                    <TouchableOpacity style={styles.placeholder} onPress={selectVideo}>
+                                    <TouchableOpacity style={styles.placeholder} onPress={pickVideo}>
                                         <Text style={styles.placeholderText}>Upload Video</Text>
                                     </TouchableOpacity>
                                 )}
@@ -1131,11 +1064,11 @@ const EditProduct = () => {
                                 {[...files, ...newFiles].length > 0 ? (
                                     [...files, ...newFiles].map((file, index) => (
                                         <View key={index} style={[styles.mediaWrapper, { padding: 20 }]}>
-                                        <Icon name="file-document-outline" size={50} color="black" />
+                                            <Icon name="file-document-outline" size={50} color="black" />
 
                                             <Text style={[styles.fileName, { marginTop: 5 }]}>{file?.name || "Selected File"}</Text>
 
-                                      
+
                                             <TouchableOpacity onPress={() => handleRemoveFile(index)} style={styles.closeIcon}>
                                                 <Icon name="close" size={24} color="gray" />
                                             </TouchableOpacity>
@@ -1143,7 +1076,7 @@ const EditProduct = () => {
                                     ))
                                 ) : (
                                     <TouchableOpacity style={styles.placeholder} onPress={selectPDF}>
-                                    
+
                                         <Text style={styles.placeholderText}>Upload PDF</Text>
                                     </TouchableOpacity>
                                 )}
@@ -1241,7 +1174,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 15,
         fontWeight: '500',
-        marginBottom: 5,
+        marginBottom: 10,
         color: '#000',
     },
 
@@ -1252,7 +1185,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#075cab',
         top: 10,
-      },
+    },
     input: {
         minHeight: 50,
         maxHeight: 150,

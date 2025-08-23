@@ -10,7 +10,7 @@ import {
 import Video from 'react-native-video';
 import FastImage from 'react-native-fast-image';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import apiClient from './ApiClient';
+import apiClient from '../ApiClient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width } = Dimensions.get('window');

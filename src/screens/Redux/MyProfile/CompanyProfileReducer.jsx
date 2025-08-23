@@ -1,4 +1,4 @@
-import { generateAvatarFromName } from "../../helperComponents.jsx/useInitialsAvatar";
+import { generateAvatarFromName } from "../../helperComponents/useInitialsAvatar";
 
 const initialState = {
   profile: null,

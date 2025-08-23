@@ -1,8 +1,25 @@
 import { Platform, StyleSheet } from 'react-native';
 
+const headerHeight = 60;
+const bottomHeight = 60;
 
 export default AppStyle = StyleSheet.create({
+  
+  scrollView: {
+    paddingTop: headerHeight,
+    paddingBottom: bottomHeight,
 
+  },
+  bottom: {
+    height: 60,
+    backgroundColor: "#075cab",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
   buttonContainer: {
     backgroundColor: '#075cab',
     paddingVertical: 5,
@@ -53,7 +70,7 @@ export default AppStyle = StyleSheet.create({
     borderWidth: 1,
     marginTop: 20,
   },
-  
+
   PostbtnSkip: {
     alignSelf: 'center',
     width: 60,
@@ -64,7 +81,7 @@ export default AppStyle = StyleSheet.create({
     borderColor: '#075cab',
     borderWidth: 1,
     marginVertical: 5,
-    marginHorizontal:10,
+    marginHorizontal: 10,
     backgroundColor: '#ffffff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -82,6 +99,12 @@ export default AppStyle = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'whitesmoke',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+
   },
   headerContainerForum: {
     flexDirection: 'row',
@@ -193,7 +216,6 @@ export default AppStyle = StyleSheet.create({
     color: '#075cab',
     fontSize: 15,
     fontWeight: '500',
-    paddingHorizontal: 4,
 
   },
   dotsContainer: {

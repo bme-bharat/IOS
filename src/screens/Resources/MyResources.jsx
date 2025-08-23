@@ -19,7 +19,8 @@ import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { MyPostBody } from '../Forum/forumBody';
-import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
+import { deleteS3KeyIfExists } from '../helperComponents/s3Helpers';
+import { getSignedUrl } from '../helperComponents/signedUrls';
 
 const defaultLogo = Image.resolveAssetSource(defaultImage).uri;
 
@@ -31,7 +32,6 @@ const YourResourcesList = ({ navigation, route }) => {
   const [imageUrls, setImageUrls] = useState({});
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastEvaluatedKey, setLastEvaluatedKey] = useState(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const scrollViewRef = useRef(null)
@@ -46,7 +46,6 @@ const YourResourcesList = ({ navigation, route }) => {
     };
 
     const handleResourceUpdated = async ({ updatedPost }) => {
-      console.log('✏️ Resource post updated:', updatedPost);
       const enrichedPost = await fetchSignedUrlForPost(updatedPost, setImageUrls);
       setAllForumPost(prev =>
         (Array.isArray(prev) ? prev : []).map(post =>
@@ -56,7 +55,6 @@ const YourResourcesList = ({ navigation, route }) => {
     };
 
     const handleResourceDeleted = ({ deletedPostId }) => {
-      console.log('🗑️ Resource post deleted:', deletedPostId);
       setAllForumPost(prev =>
         (Array.isArray(prev) ? prev : []).filter(post => post.resource_id !== deletedPostId)
       );
@@ -81,47 +79,22 @@ const YourResourcesList = ({ navigation, route }) => {
 
 
   const fetchSignedUrlForPost = async (post, setImageUrls) => {
-    if (!post) return post;
-
-    if (!post.fileKey) {
-      // No fileKey, fallback to default logo
-      return {
-        ...post,
-        signedUrl: defaultLogo,
-      };
-    }
-
     try {
-      const signedUrlRes = await apiClient.post("/getObjectSignedUrl", {
-        command: "getObjectSignedUrl",
-        key: post.fileKey,
-      });
+      const isVideo = post?.extraData?.type?.startsWith("video");
+      const fileKeyToUse = isVideo ? post.thumbnail_fileKey : post.fileKey;
 
-      const signedUrl = signedUrlRes?.data || defaultLogo;
+      if (!fileKeyToUse) return { ...post, signedUrl: defaultLogo };
 
-      // Update imageUrls state here:
+      const signedUrl = await getSignedUrl(post.resource_id, fileKeyToUse);
+
       setImageUrls(prev => ({
         ...prev,
-        [post.resource_id]: signedUrl,
+        [post.resource_id]: signedUrl || defaultLogo,
       }));
 
-      return {
-        ...post,
-        signedUrl,
-      };
-    } catch (err) {
-      console.error('❌ Failed to fetch signed URL, using fallback:', err);
-
-      // Also update state with fallback
-      setImageUrls(prev => ({
-        ...prev,
-        [post.resource_id]: defaultLogo,
-      }));
-
-      return {
-        ...post,
-        signedUrl: defaultLogo,
-      };
+      return { ...post, signedUrl: signedUrl || defaultLogo };
+    } catch (e) {
+      return { ...post, signedUrl: defaultLogo };
     }
   };
 
@@ -160,25 +133,25 @@ const YourResourcesList = ({ navigation, route }) => {
         setLastEvaluatedKey(response.data.lastEvaluatedKey);
 
         const urlsObject = {};
+
         await Promise.all(
           posts.map(async (post) => {
-            if (post.fileKey) {
-              try {
-                const signedUrlRes = await apiClient.post("/getObjectSignedUrl", {
-                  command: "getObjectSignedUrl",
-                  key: post.fileKey,
-                });
-                const signedUrl = signedUrlRes?.data;
-                if (signedUrl) {
-                  urlsObject[post.resource_id] = signedUrl;
-                } else {
-                  urlsObject[post.resource_id] = defaultLogo;
-                }
-              } catch (error) {
+            try {
+              const mimeType = post?.extraData?.type || "";
+              const isVideo = mimeType.startsWith("video");
+              const isImage = mimeType.startsWith("image");
 
+              let fileKeyToUse = null;
+              if (isVideo) fileKeyToUse = post.thumbnail_fileKey;
+              else if (isImage) fileKeyToUse = post.fileKey;
+
+              if (fileKeyToUse) {
+                const signedUrl = await getSignedUrl(post.resource_id, fileKeyToUse);
+                urlsObject[post.resource_id] = signedUrl || defaultLogo;
+              } else {
                 urlsObject[post.resource_id] = defaultLogo;
               }
-            } else {
+            } catch (error) {
               urlsObject[post.resource_id] = defaultLogo;
             }
           })
@@ -188,16 +161,12 @@ const YourResourcesList = ({ navigation, route }) => {
       } else {
         setAllForumPost({ removed_by_author: true });
       }
-
     } catch (error) {
-
       setAllForumPost({ removed_by_author: true });
       setLoading(false);
-
     } finally {
       setIsLoadingMore(false);
       setLoading(false);
-
     }
   };
 
@@ -223,11 +192,6 @@ const YourResourcesList = ({ navigation, route }) => {
     }, [])
   );
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await fetchResources();
-    setIsRefreshing(false);
-  }, [fetchResources]);
 
   const handleEditPress = (post, imageUrl) => {
     navigation.navigate("ResourcesEdit", { post, imageUrl });
@@ -245,39 +209,39 @@ const YourResourcesList = ({ navigation, route }) => {
 
   const confirmDelete = async () => {
     setShowDeleteConfirmation(false);
-  
+
     if (fileKeyToDelete?.length > 0) {
       try {
         for (const key of fileKeyToDelete) {
           if (key) {
-            console.log(`🗑️ Deleting file: ${key}`);
+
             await deleteS3KeyIfExists(key); // ✅ use utility function
           }
         }
       } catch (error) {
-        console.error('❌ Error deleting files:', error);
+
         return;
       }
     }
-  
+
     try {
       const response = await apiClient.post('/deleteResourcePost', {
         command: "deleteResourcePost",
         user_id: myId,
         resource_id: postToDelete,
       });
-  
+
       if (response.data.status === 'success') {
-        console.log('✅ Post deleted:', response.data);
+
         EventRegister.emit('onResourcePostDeleted', {
           deletedPostId: postToDelete,
         });
-  
+
         dispatch(deleteResourcePost(postToDelete));
         setAllForumPost(prevPosts =>
           prevPosts.filter(post => post.resource_id !== postToDelete)
         );
-  
+
         showToast("Resource post deleted", 'success');
       } else {
         throw new Error("Failed to delete post.");
@@ -286,7 +250,7 @@ const YourResourcesList = ({ navigation, route }) => {
       console.error("❌ Error deleting post:", error);
     }
   };
-  
+
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
@@ -296,106 +260,58 @@ const YourResourcesList = ({ navigation, route }) => {
 
 
   const RenderPostItem = ({ item }) => {
-    const hasFileKey = item.fileKey && item.fileKey.trim() !== '';
-    const fileUrl = hasFileKey ? (imageUrls[item.resource_id] || item.fileUrl || item.imageUrl || defaultLogo) : defaultLogo;
+    const mimeType = item?.extraData?.type || "";
+    const isVideo = mimeType.startsWith("video");
+    const isImage = mimeType.startsWith("image");
+    const isDocument = mimeType.startsWith("application");
+
+    const rawFileUrl = imageUrls[item.resource_id];
+    const fileUrl = typeof rawFileUrl === "object"
+      ? Object.values(rawFileUrl)[0]   // take first value
+      : rawFileUrl || item.fileUrl || item.imageUrl || defaultLogo;
+
 
     const formattedDate = new Date(item.posted_on * 1000)
-      .toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       })
-      .replace(/\//g, '-');
-
-    const extensionMap = {
-      'vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-      'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-      'vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-      'application/pdf': 'pdf',
-      'document': 'docx',
-      'application/msword': 'doc',
-      'application/vnd.ms-excel': 'xls',
-      'application/vnd.ms-powerpoint': 'ppt',
-      'text/plain': 'txt',
-      'image/webp': 'webp',
-      'sheet': 'xlsx',
-      'presentation': 'pptx',
-      'msword': 'doc',
-      'ms-excel': 'xls',
-      'plain': 'txt',
-      'docx': 'docx',
-      'xlsx': 'xlsx',
-      'pptx': 'pptx',
-      'pdf': 'pdf',
-      'doc': 'doc',
-      'xls': 'xls',
-      'ppt': 'ppt',
-      'txt': 'txt',
-      'webp': 'webp',
-
-    };
-    const videoExtensions = [
-      'mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'webm',
-      'm4v', '3gp', '3g2', 'f4v', 'f4p', 'f4a', 'f4b', 'qt', 'quicktime'
-    ];
-
-    const getFileExtension = (fileKey) => {
-      if (!fileKey) return null;
-      const ext = fileKey.split('.').pop(); // Extract file extension
-      return ext ? ext.toLowerCase() : null;
-    };
-
-    const fileExtension = getFileExtension(item.fileKey);
-    const isVideo = videoExtensions.includes(fileExtension);
-    const isDocument = extensionMap[fileExtension] !== undefined;
-
-    const rawHtml = (item.resource_body || '').trim();
-    const rawTitle = (item.title || '').trim();
-
-    const hasTitleTags = /<\/?[a-z][\s\S]*>/i.test(rawTitle);
-    const forumTitleHtml = hasTitleTags ? rawTitle : `<p>${rawTitle}</p>`;
-
-    const hasBodyTags = /<\/?[a-z][\s\S]*>/i.test(rawHtml);
-    const forumBodyHtml = hasBodyTags ? rawHtml : `<p>${rawHtml}</p>`;
-
+      .replace(/\//g, "-");
 
     return (
       <TouchableOpacity
         activeOpacity={1}
-        onPress={() => navigation.navigate('ResourceDetails', { resourceID: item.resource_id })}
-
+        onPress={() =>
+          navigation.navigate("ResourceDetails", { resourceID: item.resource_id })
+        }
       >
         <View style={styles.postContainer}>
           <View style={styles.imageContainer}>
-            {isVideo ? (
-              <View style={styles.videoContainer}>
-                <Video
-                  source={{ uri: fileUrl }}
-                  controls={false}
-                  resizeMode="contain"
-                  volume={1.0}
-                  paused
-                  muted={true}
-                  playInBackground={false}
-                  ignoreSilentSwitch="ignore"
-                  style={styles.video}
-                />
-              </View>
-            ) : isDocument ? (
+            {isDocument ? (
               <View style={styles.documentContainer}>
                 <Icon name="file-document" size={50} color="#075cab" />
-                <Text style={styles.docText}>{extensionMap[fileExtension]?.toUpperCase()}</Text>
+                <Text style={styles.docText}>
+                  {item.extraData?.fileName
+                    ?.split(".")
+                    ?.pop()
+                    ?.toUpperCase() || "DOC"}
+                </Text>
               </View>
             ) : (
-              <FastImage source={{ uri: fileUrl }} style={styles.image} resizeMode="contain" />
-
+              <Image
+                source={{ uri: fileUrl }}
+                style={styles.image}
+                resizeMode="contain"
+              />
             )}
           </View>
 
           <View style={styles.textContainer}>
             <View style={styles.productDetails}>
-
-              <Text numberOfLines={1} style={styles.value}>{(item.title || "")}</Text>
+              <Text numberOfLines={1} style={styles.value}>
+                {item.title || ""}
+              </Text>
 
               <MyPostBody
                 html={item.resource_body}
@@ -404,16 +320,23 @@ const YourResourcesList = ({ navigation, route }) => {
               />
             </View>
 
-
             <Text style={styles.value}>{formattedDate || ""}</Text>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.editButton} onPress={() => handleEditPress(item, fileUrl)}>
-                <Icon name="pencil" size={20} style={{ color: '#075cab' }} />
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => handleEditPress(item, fileUrl)}
+              >
+                <Icon name="pencil" size={20} style={{ color: "#075cab" }} />
                 <Text style={styles.editButtonText}>Edit</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.resource_id, item.fileKey, item.thumbnail_fileKey)}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() =>
+                  handleDelete(item.resource_id, item.fileKey, item.thumbnail_fileKey)
+                }
+              >
                 <Icon name="delete" size={20} color="#FF0000" />
                 <Text style={styles.deleteButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -423,6 +346,7 @@ const YourResourcesList = ({ navigation, route }) => {
       </TouchableOpacity>
     );
   };
+
 
   const keyExtractor = (item) => {
     return item.forum_id ? item.forum_id.toString() : `${item.forum_id}_${item.posted_on}`;

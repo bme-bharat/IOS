@@ -12,11 +12,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FastImage from 'react-native-fast-image';
 import apiClient from '../ApiClient';
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { useFileOpener } from '../helperComponents/fileViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import { openLink } from '../AppUtils/openLinks';
 
 
 const CompanyDetailsScreen = ({ route }) => {
@@ -175,30 +176,30 @@ const CompanyDetailsScreen = ({ route }) => {
 
   const fetchProfile = async () => {
     setLoading(true);
-  
+
     try {
       const response = await apiClient.post('/getCompanyDetails', {
         command: 'getCompanyDetails',
         company_id: userId,
       });
-  
+
       if (
         response.data.status === 'success' &&
         response.data.status_message &&
         typeof response.data.status_message === 'object'
       ) {
         const profileData = response.data.status_message;
-  
+
         let companyAvatar = null;
         let finalImageUrl = null;
-  
+
         if (profileData.fileKey?.trim()) {
           try {
             const res = await apiClient.post('/getObjectSignedUrl', {
               command: 'getObjectSignedUrl',
               key: profileData.fileKey,
             });
-  
+
             if (res?.data && typeof res.data === 'string' && res.data.trim() !== '') {
               finalImageUrl = res.data;
             } else {
@@ -210,12 +211,12 @@ const CompanyDetailsScreen = ({ route }) => {
         } else {
           companyAvatar = generateAvatarFromName(profileData.company_name);
         }
-  
+
         // Attach avatar to profileData
         profileData.companyAvatar = companyAvatar;
         setProfile(profileData);
         setImageUrl(finalImageUrl); // null if avatar should be used
-  
+
         await fetchCompanypdf(profileData.brochureKey);
       } else {
         setProfile({ removed_by_author: true });
@@ -225,12 +226,12 @@ const CompanyDetailsScreen = ({ route }) => {
       setProfile({ removed_by_author: true });
       setImageUrl(null);
     }
-  
+
     setLoading(false);
   };
-  
-  
-  
+
+
+
 
 
   useEffect(() => {
@@ -346,48 +347,48 @@ const CompanyDetailsScreen = ({ route }) => {
       </View>
 
 
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView showsVerticalScrollIndicator={false} >
         <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 15, }}>
 
-        <TouchableOpacity
-    onPress={() => {
-      if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
-        openMediaViewer([{ type: 'image', url: imageUrl }]);
-      }
-    }}
-    activeOpacity={1}
-    style={styles.imageContainer}
-  >
-    {profile.fileKey && typeof imageUrl === 'string' && imageUrl.trim() !== '' ? (
-      <Image
-        source={{ uri: imageUrl }}
-        style={styles.detailImage}
-        resizeMode={imageUrl.includes('buliding.jpg') ? 'cover' : 'contain'}
-        onError={() => setImageUrl(null)}
-      />
-    ) : (
-      <View
-        style={[
-          styles.detailImage,
-          {
-            backgroundColor:
-              profile?.companyAvatar?.backgroundColor || '#ccc',
-            justifyContent: 'center',
-            alignItems: 'center',
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.avatarText,
-            { color: profile?.companyAvatar?.textColor || '#000' },
-          ]}
-        >
-          {profile?.companyAvatar?.initials || 'Bme'}
-        </Text>
-      </View>
-    )}
-  </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
+                openMediaViewer([{ type: 'image', url: imageUrl }]);
+              }
+            }}
+            activeOpacity={1}
+            style={styles.imageContainer}
+          >
+            {profile.fileKey && typeof imageUrl === 'string' && imageUrl.trim() !== '' ? (
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.detailImage}
+                resizeMode={imageUrl.includes('buliding.jpg') ? 'cover' : 'contain'}
+                onError={() => setImageUrl(null)}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.detailImage,
+                  {
+                    backgroundColor:
+                      profile?.companyAvatar?.backgroundColor || '#ccc',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.avatarText,
+                    { color: profile?.companyAvatar?.textColor || '#000' },
+                  ]}
+                >
+                  {profile?.companyAvatar?.initials || ''}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
 
 
@@ -428,7 +429,13 @@ const CompanyDetailsScreen = ({ route }) => {
               <View style={styles.title1}>
                 <Text style={styles.label}>Website</Text>
                 <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{profile.Website.trim()}</Text>
+                <Text style={styles.value}>
+                  <TouchableOpacity onPress={() => openLink(profile.Website)}>
+                    <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                      {profile.Website.trim()}
+                    </Text>
+                  </TouchableOpacity>
+                </Text>
               </View>
             ) : null}
 
@@ -837,8 +844,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 80,
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center'
 
   },
   avatarText: {

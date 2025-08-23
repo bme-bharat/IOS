@@ -17,21 +17,12 @@ import {
   ActivityIndicator,
   InputAccessoryView,
   Dimensions,
-  FlatList,
-  Button,
-  Pressable,
   TouchableWithoutFeedback
 } from 'react-native';
-import { scale } from 'react-native-size-matters';
-import { useFocusEffect, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import ParsedText from 'react-native-parsed-text';
-
 import Video from 'react-native-video';
 import FastImage from 'react-native-fast-image';
-import maleImage from '../../images/homepage/dummy.png';
-import femaleImage from '../../images/homepage/female.jpg';
-import companyImage from '../../images/homepage/buliding.jpg'
 import { BackHandler } from 'react-native';
 import apiClient from '../ApiClient';
 import { showToast } from '../AppUtils/CustomToast';
@@ -41,11 +32,11 @@ import CommentsSection from '../AppUtils/Comments';
 import CommentInputBar from '../AppUtils/InputBar';
 import { EventRegister } from 'react-native-event-listeners';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from '../helperComponents.jsx/signedUrls';
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
-import ReactionSheet, { ReactionUserSheet } from '../helperComponents.jsx/ReactionUserSheet';
+import { getSignedUrl, getTimeDisplay, getTimeDisplayForum } from '../helperComponents/signedUrls';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
+import ReactionSheet from '../helperComponents/ReactionUserSheet';
 import { ForumBody, normalizeHtml } from './forumBody';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import useForumReactions, { fetchForumReactionsRaw } from './useForumReactions';
 
 
@@ -54,18 +45,15 @@ const { width } = Dimensions.get('window');
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
 const CommentScreen = ({ route }) => {
-  const { highlightId, highlightReactId, forum_id } = route.params;
-
+  const { highlightId, highlightReactId, forum_id ,url} = route.params;
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
 
   const { openSheet, closeSheet } = useBottomSheet();
 
   const [post, setPost] = useState(null);
-
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaUrl1, setMediaUrl1] = useState('');
-
   const [isModalVisible, setModalVisible] = useState(false);
 
   const navigation = useNavigation();
@@ -210,6 +198,7 @@ const CommentScreen = ({ route }) => {
         ? getSignedUrl('mediaUrl', postData.fileKey)
         : Promise.resolve({ mediaUrl: '' });
 
+
       const mediaUrl1Promise = postData.author_fileKey
         ? getSignedUrl('mediaUrl1', postData.author_fileKey)
         : Promise.resolve({ mediaUrl1: '' });
@@ -239,6 +228,7 @@ const CommentScreen = ({ route }) => {
       }
 
       setMediaUrl('');
+ 
       setMediaUrl1('');
       seLoading(false);
     }
@@ -531,6 +521,8 @@ const CommentScreen = ({ route }) => {
                     repeat={true}
                     // paused={!isVideoPlaying}
                     resizeMode="cover"
+                    poster={{uri: url}}
+                    posterResizeMode='cover'
                   />
 
                 </View>
@@ -539,15 +531,15 @@ const CommentScreen = ({ route }) => {
 
                   <Image
                     source={{ uri: mediaUrl }}
-                    style={styles.image}
-                    resizeMode="contain"
+                    style={[styles.image, { width: '100%', height: height, }]}
+                    resizeMode="cover"
                   />
                 </TouchableOpacity>
               )}
             </TouchableOpacity>
           ) : null}
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',  height: 40,  }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 40, }}>
             <View>
               <TouchableOpacity
                 onPress={async () => {
@@ -588,11 +580,11 @@ const CommentScreen = ({ route }) => {
 
                 activeOpacity={0.7}
                 style={{
-                  paddingHorizontal:10,
-                  padding:4,
+                  paddingHorizontal: 10,
+                  padding: 4,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  
+
                 }}
               >
                 {selectedReaction ? (
@@ -697,7 +689,7 @@ const CommentScreen = ({ route }) => {
           </View>
 
 
-          <View style={styles.divider} />
+          {/* <View style={styles.divider} /> */}
 
           <View style={styles.iconContainer}>
 
@@ -861,27 +853,12 @@ const styles = StyleSheet.create({
     // borderRadius: 10,
 
   },
-  video: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'white'
-  },
-  playButton: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -30 }, { translateY: -30 }],
-    zIndex: 1,
-    padding: 10,
-  },
-
 
   iconContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between', // Space out the icons
     paddingVertical: 10,
     marginHorizontal: 10,
-
 
   },
 
@@ -1121,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   reactionContainer: {
     position: 'absolute',
-   
+
     left: 0,
     borderRadius: 40,
     flexDirection: 'row',

@@ -12,6 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import apiClient from '../ApiClient';
+import LottieView from 'lottie-react-native';
 
 const UserSubscriptionScreen = () => {
   const { myId, myData } = useNetwork();
@@ -296,7 +297,7 @@ const UserSubscriptionScreen = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
@@ -388,23 +389,46 @@ const UserSubscriptionScreen = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Icon
-              name={
-                modalType === 'success'
-                  ? 'check-circle'
-                  : modalType === 'failure'
-                    ? 'close-circle'
-                    : 'progress-clock'
-              }
-              size={60}
-              color={
-                modalType === 'success'
-                  ? 'green'
-                  : modalType === 'failure'
-                    ? 'red'
-                    : 'gray'
-              }
-            />
+
+
+            <Text style={[
+              styles.modalTitle,
+              { color: modalType === 'success' ? 'green' : modalType === 'failure' ? 'red' : 'gray' }
+            ]}>
+              {modalType === 'failure' ? (
+                <LottieView
+                  source={require('../../assets/lottie/Cross.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120, }}
+                />
+              ) : modalType === 'success' ? (
+                <LottieView
+                  source={require('../../assets/lottie/payment_success.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120 }}
+
+                />
+              ) : (
+                <LottieView
+                  source={require('../../assets/lottie/progress-clock.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 120, height: 120 }}
+                />
+              )}
+
+            </Text>
+
+            {modalType === 'loading' && (
+              <LottieView
+                source={require('../../assets/lottie/progress-clock.json')}
+                autoPlay
+                loop
+                style={{ width: 120, height: 120 }}
+              />
+            )}
 
             <Text style={[
               styles.modalTitle,
@@ -417,9 +441,6 @@ const UserSubscriptionScreen = () => {
                   : 'Verifying Payment...'}
             </Text>
 
-            {modalType === 'loading' && (
-              <ActivityIndicator size="large" color="#3399cc" style={{ marginVertical: 20 }} />
-            )}
 
             <Text style={styles.modalMessage}>
               {modalType === 'success'
@@ -588,7 +609,7 @@ const UserSubscriptionScreen = () => {
       </Modal>
 
 
-    </SafeAreaView>
+    </View>
 
   );
 };

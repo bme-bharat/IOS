@@ -732,45 +732,6 @@ const CompanyUserSignupScreen = () => {
   };
 
 
-
-  const handleUploadFile = async (uri, type) => {
-    try {
-      const base64 = await RNFetchBlob.fs.readFile(uri, 'base64');
-
-      const apiEndpoint = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/uploadFile';
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          command: 'uploadFile',
-          headers: {
-            'Content-Type': type,
-            'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk',
-          },
-          fileBuffer: base64,
-        }),
-      });
-
-      const uploadResult = await response.json();
-      if (uploadResult.statusCode === 200) {
-        const body = JSON.parse(uploadResult.body);
-        if (body.fileKey) {
-          setBrochureKey(body.fileKey);
-
-          return body.fileKey;
-        } else {
-
-        }
-      } else {
-        return null;
-      }
-    } catch (error) {
-
-    }
-  };
-
   const deleteFileFromS3 = async (key) => {
     try {
       const response = await axios.post(
@@ -837,12 +798,6 @@ const CompanyUserSignupScreen = () => {
 
       }
 
-      let documentFileKey = null;
-      if (docUri) {
-
-        documentFileKey = await handleUploadFile(docUri, pdfFileType);
-
-      }
       const uploadedPDFKey = selectedPDF ? await uploadFileToS3(selectedPDF.uri, 'application/pdf') : null;
 
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
@@ -907,13 +862,13 @@ const CompanyUserSignupScreen = () => {
         showToast(response.data.errorMessage, 'error');
       }
     } catch (err) {
+      console.log('err',err)
       showToast("Something went wrong. Check your internet connection", 'error');
     } finally {
       setLoading(false);
 
     }
   };
-
 
 
 

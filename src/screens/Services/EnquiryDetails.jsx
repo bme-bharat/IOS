@@ -15,7 +15,7 @@ import VideoPlayer from 'react-native-video-controls';
 import ParsedText from 'react-native-parsed-text';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
-import { getTimeDisplay } from '../helperComponents.jsx/signedUrls';
+import { getTimeDisplay } from '../helperComponents/signedUrls';
 
 const EnquiryDetails = () => {
     const route = useRoute();

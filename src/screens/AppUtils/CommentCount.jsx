@@ -2,7 +2,7 @@
 
 import { Image } from 'react-native';
 import apiClient from '../ApiClient';
-import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
+import { getSignedUrl } from '../helperComponents/signedUrls';
 import maleImage from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
 import companyImage from '../../images/homepage/buliding.jpg';

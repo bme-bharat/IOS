@@ -11,15 +11,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearResourcePosts, updateOrAddResourcePosts } from "../Redux/Resource_Actions";
 import Fuse from "fuse.js";
 
-import { useFileOpener } from "../helperComponents.jsx/fileViewer";
+import { useFileOpener } from "../helperComponents/fileViewer";
 
 import { useConnection } from "../AppUtils/ConnectionProvider";
 import AppStyles from "../AppUtils/AppStyles";
-import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, highlightMatch } from "../helperComponents.jsx/signedUrls";
-import { openMediaViewer } from "../helperComponents.jsx/mediaViewer";
+import { getSignedUrl, getTimeDisplay, getTimeDisplayForum, highlightMatch } from "../helperComponents/signedUrls";
+import { openMediaViewer } from "../helperComponents/mediaViewer";
 import { ForumBody, normalizeHtml, } from "../Forum/forumBody";
 import { EventRegister } from "react-native-event-listeners";
-import { generateAvatarFromName } from "../helperComponents.jsx/useInitialsAvatar";
+import { generateAvatarFromName } from "../helperComponents/useInitialsAvatar";
 
 const videoExtensions = [
     '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
@@ -34,13 +34,10 @@ const ResourcesList = ({ navigation, route }) => {
 
     const dispatch = useDispatch();
     const profile = useSelector(state => state.CompanyProfile.profile);
-    console.log('profile', profile)
+
     const { isConnected } = useConnection();
     const videoRefs = useRef({});
     const [localPosts, setLocalPosts] = useState([]);
-    console.log('localPosts0', localPosts[0]);
-    console.log('localPosts1', localPosts[1])
-
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const listRef = useRef(null);
@@ -68,7 +65,6 @@ const ResourcesList = ({ navigation, route }) => {
 
     useEffect(() => {
         const listener = EventRegister.addEventListener('onResourcePostCreated', async ({ newPost }) => {
-            console.log('[onResourcePostCreated] New post received:', newPost);
 
             try {
                 const name = profile?.company_name
@@ -93,15 +89,13 @@ const ResourcesList = ({ navigation, route }) => {
                     authorSignedUrl,
                 };
 
-                console.log('[onResourcePostCreated] Post with media:', postWithMedia);
-
                 setLocalPosts((prevPosts) => {
                     const alreadyExists = prevPosts.some(p => p.resource_id === postWithMedia.resource_id);
                     if (alreadyExists) {
-                        console.log('[onResourcePostCreated] Post already exists, skipping.');
+                       
                         return prevPosts;
                     }
-                    console.log('[onResourcePostCreated] Adding new post to localPosts');
+                 
                     return [postWithMedia, ...prevPosts];
                 });
 
@@ -112,7 +106,7 @@ const ResourcesList = ({ navigation, route }) => {
 
         return () => {
             EventRegister.removeEventListener(listener);
-            console.log('[onResourcePostCreated] Listener removed');
+           
         };
     }, []);
 
@@ -494,7 +488,7 @@ const ResourcesList = ({ navigation, route }) => {
         }
 
         return (
-            <TouchableOpacity activeOpacity={1}>
+
                 <View style={styles.comments}>
                     <View style={styles.dpContainer}>
                         <TouchableOpacity style={styles.dpContainer1} onPress={() => handleNavigate(item)} activeOpacity={1}>
@@ -565,7 +559,7 @@ const ResourcesList = ({ navigation, route }) => {
                         <Text style={styles.iconTextUnderlined}>Share</Text>
                     </TouchableOpacity>
                 </View>
-            </TouchableOpacity>
+   
         );
     }, [activeVideo, expandedTexts]);
 
@@ -779,8 +773,8 @@ const ResourcesList = ({ navigation, route }) => {
                                 }
                             }}
                             onEndReachedThreshold={0.5}
-                            contentContainerStyle={{ paddingBottom: '20%' }}
-                            style={styles.scrollView}
+                            contentContainerStyle={{ paddingBottom: '20%',}}
+                         
                         />
                     ) : (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -826,7 +820,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         backgroundColor: 'white',
         minHeight: 120,
-        marginBottom: 10,
+        marginBottom: 5,
     },
 
     image1: {

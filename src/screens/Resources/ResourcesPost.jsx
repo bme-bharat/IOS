@@ -22,8 +22,9 @@ import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from '../Forum/forumBody';
-import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
-import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
+import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
+import { uploadFromBase64 } from '../Forum/VideoParams';
 
 
 async function uriToBlob(uri) {
@@ -32,10 +33,6 @@ async function uriToBlob(uri) {
   return blob;
 }
 
-const videoExtensions = [
-  '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
-  '.m4v', '.3gp', '.3g2', '.f4v', '.f4p', '.f4a', '.f4b', '.qt', '.quicktime'
-];
 
 const ResourcesPost = () => {
   const navigation = useNavigation();
@@ -56,6 +53,7 @@ const ResourcesPost = () => {
   const [fileType, setFileType] = useState('');
   const [loading, setLoading] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState(null);
+    const [overlayUri, setOverlayUri] = useState(null);  
   const [mediaMeta, setMediaMeta] = useState(null);
 
 
@@ -285,10 +283,10 @@ const ResourcesPost = () => {
 
       let thumbnailFileKey = null;
 
-      if (file.type.startsWith("video/") && thumbnailUri) {
-        console.log('🖼 Uploading thumbnail:', thumbnailUri);
-        thumbnailFileKey = await handleThumbnailUpload(thumbnailUri, fileKey);
-        console.log('🖼 Uploaded thumbnailFileKey:', thumbnailFileKey);
+      if (file.type.startsWith("video/")) {
+  
+        thumbnailFileKey = await uploadFromBase64(overlayUri, fileKey);
+ 
       }
 
       return { fileKey, thumbnailFileKey };
@@ -652,12 +650,18 @@ const ResourcesPost = () => {
         />
 
       </KeyboardAwareScrollView>
-      <PlayOverlayThumbnail
-        ref={overlayRef}
-        thumbnailUri={thumbnailUri}
-        playIcon={playIcon}
 
-      />
+      <PlayOverlayThumbnail
+          thumbnailUri={thumbnailUri} // input
+          onCaptured={(dataUri) => {
+            if (dataUri && dataUri.trim() !== "") {
+              setOverlayUri(dataUri);   // ✅ captured overlay thumbnail
+            } else {
+              setOverlayUri(thumbnailUri); // 🔄 fallback to original
+            }
+          }}
+        />
+
     </SafeAreaView>
 
   );

@@ -218,25 +218,6 @@ const MyProducts = () => {
     };
 
 
-    // useFocusEffect(
-    //     useCallback(() => {
-    //         const timeout = setTimeout(() => {
-    //             fetchProducts();
-    //         }, 500);
-
-    //         return () => clearTimeout(timeout);
-    //     }, [myId])
-    // );
-//   useFocusEffect(
-//     useCallback(() => {
-//         fetchProducts();
-
-//       return () => {
-        
-//       };
-//     }, [])
-//   );
-
       useEffect(() => {
           fetchProducts();
   
@@ -311,7 +292,7 @@ const MyProducts = () => {
 
                             <Text numberOfLines={1} style={styles.value1}>{item.description || "N/A"}</Text>
 
-                            <Text style={styles.value}>{item.price || 'N/A'}</Text>
+                            <Text style={styles.value}>₹ {item.price || 'N/A'}</Text>
 
                         </View>
                         <View style={styles.buttonContainer}>
@@ -646,7 +627,6 @@ const styles = StyleSheet.create({
         flex: 2, // Take the remaining space
         flexShrink: 1,
         color: '#777',
-      
         fontSize: 15,
         textAlign: 'left', // Align text to the left
         alignSelf: 'flex-start',

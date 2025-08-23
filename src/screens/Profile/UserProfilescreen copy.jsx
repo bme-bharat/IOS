@@ -19,7 +19,7 @@ import { useNetwork } from '../AppUtils/IdProvider';
 import useLastActivityTracker from '../AppUtils/LastSeenProvider';
 import { updateLastSeen } from '../AppUtils/LastSeen';
 import { OtpInput } from "react-native-otp-entry";
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 import GamificationSection from './GamificationSection';
 
 const UserProfileScreen = () => {

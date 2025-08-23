@@ -17,10 +17,6 @@ const CompanyGetallEnquiries = ({ navigation }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const scrollViewRef = useRef(null)
   const { myId, myData } = useNetwork();
-
-
-
-
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(false);

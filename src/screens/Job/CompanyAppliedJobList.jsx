@@ -11,7 +11,6 @@ import { useNetwork } from '../AppUtils/IdProvider';
 
 const CompanyAppliedJobScreen = () => {
   const { myId, myData } = useNetwork();
-  const [companyId, setCompanyId] = useState('');
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

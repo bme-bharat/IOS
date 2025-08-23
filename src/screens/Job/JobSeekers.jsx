@@ -1,30 +1,22 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, Modal, Linking, Platform, SafeAreaView, TextInput, Keyboard, FlatList, RefreshControl, ActivityIndicator, TouchableWithoutFeedback } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
+import { StyleSheet, Text, View,  Image, TouchableOpacity, TextInput, Keyboard, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import maleImage from '../../images/homepage/dummy.png';
-import femaleImage from '../../images/homepage/female.jpg';
 import apiClient from '../ApiClient';
-import Fuse from 'fuse.js';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../AppUtils/AppStyles';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import { highlightMatch } from '../helperComponents/signedUrls';
 
-
-const resolvedMaleImage = Image.resolveAssetSource(maleImage).uri;
-const resolvedFemaleImage = Image.resolveAssetSource(femaleImage).uri;
 
 const CompanyListJobCandidates = () => {
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
-
   const [posts, setPosts] = useState([]);
   const [imageUrls, setImageUrls] = useState({});
-
   const scrollViewRef = useRef(null)
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -271,19 +263,19 @@ const CompanyListJobCandidates = () => {
 
         <View style={styles.labelValueContainer}>
           <Text numberOfLines={1} style={styles.name}>
-            {(`${item.first_name || ""} ${item.last_name || ""}`)}
+            {highlightMatch(`${item.first_name || ""} ${item.last_name || ""}`, searchQuery)}
           </Text>
           <View style={styles.detailContainer}>
             <Text numberOfLines={1} style={styles.label}>Expert In</Text>
-            <Text numberOfLines={1} style={styles.value}>: {(item.expert_in || "")}</Text>
+            <Text numberOfLines={1} style={styles.value}>: {highlightMatch(item.expert_in || "", searchQuery)}</Text>
           </View>
           <View style={styles.detailContainer}>
             <Text style={styles.label}>Experience</Text>
-            <Text style={styles.value}>: {item.work_experience || ""}</Text>
+            <Text style={styles.value}>: {highlightMatch(item.work_experience || "", searchQuery)}</Text>
           </View>
           <View style={styles.detailContainer}>
             <Text style={styles.label}>Preferred cities</Text>
-            <Text numberOfLines={1} style={styles.value}>: {(item.city || "")}</Text>
+            <Text numberOfLines={1} style={styles.value}>: {highlightMatch(item.city || "", searchQuery)}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -293,7 +285,7 @@ const CompanyListJobCandidates = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={AppStyles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -341,11 +333,11 @@ const CompanyListJobCandidates = () => {
         <FlatList
           data={!searchTriggered || searchQuery.trim() === '' ? posts : searchResults}
           onScrollBeginDrag={() => Keyboard.dismiss()}
-          style={styles.scrollView}
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={handlerefresh} />
           }
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={[AppStyles.scrollView,{paddingHorizontal:10, }]}
           renderItem={renderJob} // Use renderJob here
           keyExtractor={(item, index) => `${item.user_id}-${index}`} // Ensure unique keys by combining user_id and index
           onEndReached={() => hasMoreJobs && fetchJobs(lastEvaluatedKey)}
@@ -381,15 +373,15 @@ const CompanyListJobCandidates = () => {
         </View>
       )}
 
-    </SafeAreaView>
+    </View>
   );
 
 }
+
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    padding: 10,
     backgroundColor: 'whitesmoke',
   },
   nofound: {
@@ -406,11 +398,7 @@ const styles = StyleSheet.create({
     // textAlign: 'justify',
     alignSelf: "flex-start"
   },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 10,
 
-  },
   name: {
     fontSize: 15,
     fontWeight: '700',
@@ -455,8 +443,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   avatarText: {
     fontSize: 40,
@@ -519,9 +507,9 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     padding: 15,
   },
-  
 
-  
+
+
 });
 
 

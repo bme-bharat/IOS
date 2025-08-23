@@ -3,7 +3,6 @@ import { StyleSheet, View, Animated, Dimensions, Text } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 
-const { width, height } = Dimensions.get('window'); // Get screen width and height
 
 const SplashScreen = ({ navigation }) => {
 

@@ -8,7 +8,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import FastImage from 'react-native-fast-image';
 import defaultImage from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import apiClient from '../ApiClient';
 
 const CompanyGetAppliedJobsScreen = () => {

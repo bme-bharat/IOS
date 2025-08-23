@@ -15,7 +15,7 @@ import Fuse from 'fuse.js';
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../AppUtils/AppStyles';
-import { highlightMatch } from '../helperComponents.jsx/signedUrls';
+import { highlightMatch } from '../helperComponents/signedUrls';
 
 const ServicesList = () => {
     const { isConnected } = useConnection();
@@ -261,11 +261,11 @@ const ServicesList = () => {
 
                         {/* <Text numberOfLines={1} style={styles.description}>{item.description || ' '}</Text>
                         <Text numberOfLines={1} style={styles.company}>{item.company_name || ' '}</Text> */}
-<View style={styles.priceRow}>
-  <Text numberOfLines={1} style={styles.price}>
-    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
-  </Text>
-</View>
+                        <View style={styles.priceRow}>
+                            <Text numberOfLines={1} style={styles.price}>
+                                ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
+                            </Text>
+                        </View>
 
                     </View>
 
@@ -282,7 +282,7 @@ const ServicesList = () => {
     const renderFooter = () => loadingMore ? <ActivityIndicator size="large" color="#075cab" style={{ marginVertical: 10 }} /> : null;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <View style={AppStyles.headerContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Icon name="arrow-left" size={24} color="#075cab" />
@@ -338,7 +338,7 @@ const ServicesList = () => {
                     keyboardShouldPersistTaps="handled"
                     keyExtractor={(item, index) => `${item.service_id}-${index}`}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.flatListContainer}
+                    contentContainerStyle={[AppStyles.scrollView, { paddingHorizontal: 10, }]}
                     onEndReached={() => lastEvaluatedKey && fetchservices(lastEvaluatedKey)}
                     onEndReachedThreshold={0.5}
                     ListEmptyComponent={
@@ -368,7 +368,7 @@ const ServicesList = () => {
             )}
 
 
-        </SafeAreaView>
+        </View>
     );
 };
 
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
         paddingBottom: '20%',
 
     },
-company: {
+    company: {
         fontSize: 15,
         fontWeight: '500',
         color: '#000',
@@ -432,7 +432,7 @@ company: {
 
     category: {
         fontSize: 15,
-        fontWeight:'500',
+        fontWeight: '500',
         color: '#000',
         marginTop: 2,
     },
@@ -489,7 +489,6 @@ company: {
         marginBottom: 5,
         borderWidth: 1,
         borderColor: '#ddd',
-        marginHorizontal: 10,
     },
 
     productImageContainer: {
@@ -528,7 +527,7 @@ company: {
 
     description: {
         fontSize: 15,
-       
+
         color: '#777',
         marginTop: 4,
     },

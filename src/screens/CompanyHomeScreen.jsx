@@ -5,26 +5,25 @@ import { SafeAreaView, View, FlatList, Image, TouchableOpacity, Text, RefreshCon
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useNavigationState } from '@react-navigation/native';
 import Video from 'react-native-video';
-import Banner01 from './Banner1';
-import Banner03 from './Banner3';
-import Banner02 from './Banner2';
+import Banner01 from './Banners/homeBanner';
 
 import { updateCompanyProfile } from './Redux/MyProfile/CompanyProfile_Actions';
 import { useDispatch, useSelector } from 'react-redux';
 import apiClient from './ApiClient';
 
-import useFetchData from './helperComponents.jsx/HomeScreenData';
+import useFetchData from './helperComponents/HomeScreenData';
 import { useNetwork } from './AppUtils/IdProvider';
 import { useConnection } from './AppUtils/ConnectionProvider';
-import { getSignedUrl, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents.jsx/signedUrls';
+import { getSignedUrl, getTimeDisplayForum, getTimeDisplayHome } from './helperComponents/signedUrls';
 import AppStyles, { styles } from './AppUtils/AppStyles';
 import { ForumPostBody } from './Forum/forumBody';
 import FastImage from 'react-native-fast-image';
+import BottomNavigationBar from './AppUtils/BottomNavigationBar';
 
 const CompanySettingScreen = React.lazy(() => import('./Profile/CompanySettingScreen'));
 const ProductsList = React.lazy(() => import('./Products/ProductsList'));
-const PageView = React.lazy(() => import('./Forum/PagerViewForum'));
 const JobListScreen = React.lazy(() => import('./Job/JobListScreen'));
+const AllPosts = React.lazy(() => import('./Forum/Feed'));
 
 
 const tabNameMap = {
@@ -34,7 +33,7 @@ const tabNameMap = {
 const tabConfig = [
   { name: "Home", component: CompanyHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
   { name: "Jobs", component: JobListScreen, focusedIcon: 'briefcase', unfocusedIcon: 'briefcase-outline', iconComponent: Icon },
-  { name: "Feed", component: PageView, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
+  { name: "Feed", component: AllPosts, focusedIcon: 'rss', unfocusedIcon: 'rss-box', iconComponent: Icon },
   { name: "Products", component: ProductsList, focusedIcon: 'shopping', unfocusedIcon: 'shopping-outline', iconComponent: Icon },
   { name: "Settings", component: CompanySettingScreen, focusedIcon: 'cog', unfocusedIcon: 'cog-outline', iconComponent: Icon },
 ];
@@ -57,6 +56,7 @@ const CompanyHomeScreen = React.memo(() => {
   const flatListRef = useRef(null);
   const scrollOffsetY = useRef(0);
   const [isProfileFetched, setIsProfileFetched] = useState(false);
+  const [visibleBanners, setVisibleBanners] = useState({});
 
 
 
@@ -190,7 +190,7 @@ const CompanyHomeScreen = React.memo(() => {
       <TouchableOpacity
         activeOpacity={0.9}
         style={styles.articleCard}
-        onPress={() => navigation.navigate("Comment", { forum_id: item.forum_id })}
+        onPress={() => navigation.navigate("Comment", { forum_id: item.forum_id, url: item.mediaUrl })}
       >
         <View style={styles.articleCardHeader}>
           {/* Vertical stack for badge, image, name */}
@@ -240,21 +240,13 @@ const CompanyHomeScreen = React.memo(() => {
 
 
           {item.mediaUrl && (
-            isVideo ? (
-              <Video
-                source={{ uri: item.mediaUrl }}
-                style={styles.articleMedia}
-                resizeMode="cover"
-                muted
-                paused
-              />
-            ) : (
-              <Image
-                source={{ uri: item.mediaUrl }}
-                style={styles.articleMedia}
-                resizeMode="cover"
-              />
-            )
+
+            <Image
+              source={{ uri: item.mediaUrl }}
+              style={styles.articleMedia}
+              resizeMode="cover"
+            />
+
           )}
 
         </View>
@@ -387,6 +379,14 @@ const CompanyHomeScreen = React.memo(() => {
     navigation.navigate('Jobs');
   };
 
+  const goToTrending = () => {
+    navigation.navigate('Trending');
+  };
+
+  const goToLatest = () => {
+    navigation.navigate('Latest');
+  };
+
   const allProducts = () => {
     navigation.navigate('Products');
   };
@@ -480,15 +480,18 @@ const CompanyHomeScreen = React.memo(() => {
     }
   };
 
-  const [visibleItem, setVisibleItem] = useState(null);
-  const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    const firstVisible = viewableItems?.[0];
-    if (firstVisible?.item?.type) {
-      setVisibleItem(firstVisible.item.type);
-    }
+    const newVisibility = {};
+    viewableItems.forEach((viewable) => {
+      if (viewable.item?.type?.startsWith("banner")) {
+        newVisibility[viewable.item.type] = true;
+      }
+    });
+    setVisibleBanners(newVisibility);
   }).current;
+
+  const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
 
 
 
@@ -552,20 +555,17 @@ const CompanyHomeScreen = React.memo(() => {
           { type: 'jobs', data: jobs },
           { type: 'banner2' },
           { type: 'trendingPosts', data: trendingPosts },
-          { type: 'banner3' },
           { type: 'latestPosts', data: latestPosts },
+          { type: 'banner3' },
           { type: 'products', data: products },
           { type: 'services', data: services },
         ]}
-
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
 
         renderItem={({ item }) => {
           switch (item.type) {
 
             case 'banner1':
-              return <Banner01 isVisible={visibleItem === 'banner1'} />;
+              return <Banner01 bannerId="ban01" />;
 
 
             case 'jobs':
@@ -581,32 +581,35 @@ const CompanyHomeScreen = React.memo(() => {
                       </TouchableOpacity>
                     </View>
 
-                    {isRefreshing ? (
-                      // Skeleton placeholders when refreshing
-                      [...Array(4)].map((_, index) => (
-                        <View key={index} style={styles.eduCard}>
-                          <View style={styles.eduCardLeft} />
-                          <View style={styles.eduCardRight}>
-                            <Text numberOfLines={1} style={styles.eduTitle}></Text>
-                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
-                            <Text numberOfLines={1} style={styles.eduSubText}></Text>
+
+                    <FlatList
+                      data={jobs}
+                      renderItem={({ item }) => renderJobCard({ item })}
+                      keyExtractor={(item) => `job-${item.post_id}`}
+                      ListFooterComponent={
+                        (!item.data || item.data.length === 0) && (
+                          <View>
+                            {[...Array(4)].map((_, index) => (
+                              <View key={index} style={styles.eduCard}>
+                                <View style={styles.eduCardLeft} />
+                                <View style={styles.eduCardRight}>
+                                  <Text numberOfLines={1} style={styles.eduTitle}></Text>
+                                  <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                                  <Text numberOfLines={1} style={styles.eduSubText}></Text>
+                                </View>
+                              </View>
+                            ))}
                           </View>
-                        </View>
-                      ))
-                    ) : (
-                      // Real data after refreshing
-                      <FlatList
-                        data={jobs}
-                        renderItem={({ item }) => renderJobCard({ item })}
-                        keyExtractor={(item) => `job-${item.post_id}`}
-                      />
-                    )}
+                        )
+                      }
+                    />
+
                   </>
                 </TouchableOpacity>
               );
 
             case 'banner2':
-              return <Banner02 isVisible={visibleItem === 'banner2'}/>;
+              return <Banner01 bannerId="adban01" />;
 
             case 'trendingPosts':
               return (
@@ -614,10 +617,14 @@ const CompanyHomeScreen = React.memo(() => {
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
 
                   <>
-                    <Text style={styles.heading}>
-                      Trending posts  <Icon name="flash" size={19} color="#075cab" />
-                    </Text>
-
+                    <View style={styles.headingContainer}>
+                      <Text style={styles.heading}>
+                        Trending posts  <Icon name="trending-up" size={19} color="#075cab" />
+                      </Text>
+                      <TouchableOpacity onPress={goToTrending}>
+                        <Text style={styles.seeAllText}>See more</Text>
+                      </TouchableOpacity>
+                    </View>
                     <FlatList
                       key={'trending-columns'}
                       data={trendingPosts}
@@ -632,8 +639,6 @@ const CompanyHomeScreen = React.memo(() => {
                 </TouchableOpacity>
               );
 
-            case 'banner3':
-              return <Banner03 />;
 
             case 'latestPosts':
               return (
@@ -641,10 +646,15 @@ const CompanyHomeScreen = React.memo(() => {
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
 
                   <>
-                    <Text style={styles.heading}>
-                      Latest posts  <Icon name="message" size={19} color="#075cab" />
-                    </Text>
 
+                    <View style={styles.headingContainer}>
+                      <Text style={styles.heading}>
+                        Latest posts  <Icon name="new-box" size={19} color="#075cab" />
+                      </Text>
+                      <TouchableOpacity onPress={goToLatest}>
+                        <Text style={styles.seeAllText}>See more</Text>
+                      </TouchableOpacity>
+                    </View>
                     <FlatList
                       key={'latest-columns'}
                       data={latestPosts}
@@ -656,6 +666,10 @@ const CompanyHomeScreen = React.memo(() => {
 
                 </TouchableOpacity>
               );
+
+            case 'banner3':
+              return <Banner01 bannerId="adban01" />;
+
             case 'products':
               return (
                 <TouchableOpacity activeOpacity={1} style={styles.cards}>
@@ -718,48 +732,16 @@ const CompanyHomeScreen = React.memo(() => {
         keyExtractor={(item, index) => `${item.type || 'unknown'}-${index}`}
       />
 
-      <View style={styles.bottomNavContainer}>
-        {tabConfig.map((tab, index) => {
+      <BottomNavigationBar
+        tabs={tabConfig}
+        currentRouteName={currentRouteName}
+        navigation={navigation}
+        flatListRef={flatListRef}
+        scrollOffsetY={scrollOffsetY}
+        handleRefresh={handleRefresh}
+        tabNameMap={tabNameMap}
 
-          const isFocused = tabNameMap[currentRouteName] === tab.name;
-
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                const targetTab = tab.name;
-
-                if (isFocused) {
-                  if (scrollOffsetY.current > 0) {
-                    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-
-                    setTimeout(() => {
-                      handleRefresh();
-                    }, 300);
-                  } else {
-                    handleRefresh();
-                  }
-                } else {
-                  navigation.navigate(targetTab);
-                }
-              }}
-              style={styles.navItem}
-              activeOpacity={0.8}
-
-            >
-              <tab.iconComponent
-                name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                size={22}
-                color={isFocused ? '#075cab' : 'black'}
-
-              />
-              <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                {tab.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      />
 
 
     </SafeAreaView>

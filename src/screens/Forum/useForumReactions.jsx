@@ -1,8 +1,8 @@
 import { EventRegister } from 'react-native-event-listeners';
 import apiClient from '../ApiClient';
 import { useState, useCallback } from 'react';
-import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { getSignedUrl } from '../helperComponents/signedUrls';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 
 
 export const useForumReactionUsers = (forumId) => {
@@ -64,7 +64,6 @@ export const useForumReactionUsers = (forumId) => {
           forum_id: forumId,
           limit: 10,
           reaction_type: reactionType || 'All',
-
 
         };
 
@@ -147,13 +146,6 @@ export default function useForumReactions(myId) {
 
     try {
       const res = await apiClient.post('/addOrUpdateForumReaction', payload);
-
-      EventRegister.emit('onForumReactionUpdated', {
-        forum_id: forumId,
-        user_id: myId,
-        reaction_type: reactionType,
-        previous_reaction: item?.userReaction ?? null,
-      });
 
     } catch (err) {
       return {

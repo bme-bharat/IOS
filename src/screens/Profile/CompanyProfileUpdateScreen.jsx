@@ -10,7 +10,10 @@ import {
   SafeAreaView,
   Modal, Image,
   ActivityIndicator,
-  ActionSheetIOS
+  ActionSheetIOS,
+  Alert,
+  Platform,
+  Linking
 } from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon from 'react-native-vector-icons/MaterialIcons'
@@ -86,20 +89,20 @@ const CompanyUserSignupScreen = () => {
   const [selectedProfile, setSelectedProfile] = useState(profile?.select_your_profile || "");
   const [selectedCategory, setSelectedCategory] = useState(profile?.category || "");
 
+useEffect(() => {
+  if (!selectedProfile) return;
 
-  useEffect(() => {
-    if (selectedProfile) {
-      const categories = [
-        ...(ProfileSelect.normalProfiles[selectedProfile] || []),
-        ...(ProfileSelect.companyProfiles[selectedProfile] || [])
-      ];
+  const categories = [
+    ...(ProfileSelect.normalProfiles[selectedProfile] || []),
+    ...(ProfileSelect.companyProfiles[selectedProfile] || []),
+  ];
 
-      // Reset category if it's not in the new profile's categories
-      if (selectedCategory && !categories.includes(selectedCategory)) {
-        setSelectedCategory("");
-      }
-    }
-  }, [selectedProfile]);
+  // Reset category if it's not valid for the current profile
+  if (selectedCategory && !categories.includes(selectedCategory)) {
+    setSelectedCategory("");
+  }
+}, [selectedProfile, selectedCategory, ProfileSelect]);
+
 
 
   const inputRefs = useRef([]);
@@ -331,6 +334,14 @@ const CompanyUserSignupScreen = () => {
   };
 
 
+
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState(() => {
+    return profile?.is_email_verified && postData?.company_email_id ? postData.company_email_id : '';
+  });
+
+
   const [postData, setPostData] = useState({
 
     company_name: profile.company_name || "",
@@ -349,14 +360,16 @@ const CompanyUserSignupScreen = () => {
 
   });
 
+  useEffect(() => {
+    setPostData((prev) => ({
+      ...prev,
+      select_your_profile: selectedProfile || prev.select_your_profile,
+      category: selectedCategory || prev.category,
+    }));
+  }, [selectedProfile, selectedCategory]);
+  
 
-  const [hasChanges, setHasChanges] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [verifiedEmail, setVerifiedEmail] = useState(() => {
-    return profile?.is_email_verified && postData?.company_email_id ? postData.company_email_id : '';
-  });
-
-
+  
   useEffect(() => {
     const initialPostData = {
       company_name: profile.company_name || "",
@@ -365,31 +378,46 @@ const CompanyUserSignupScreen = () => {
       company_email_id: profile.company_email_id || "",
       company_located_city: profile.company_located_city || "",
       company_located_state: profile.company_located_state || "",
-      Website: profile.Website || '',
+      Website: profile.Website || "",
       company_address: profile.company_address || "",
       company_description: profile.company_description || "",
       fileKey: profile.fileKey || null,
       brochureKey: profile.brochureKey || "",
-      select_your_profile: selectedProfile,
-      category: selectedCategory,
+      select_your_profile: profile.select_your_profile || "",
+      category: profile.category || "",
     };
+  
 
     const hasAnyChanges =
       Object.keys(initialPostData).some((key) => {
         const initialValue = initialPostData[key];
         const currentValue = postData[key];
-
+  
+        let isDifferent;
+  
         if (Array.isArray(initialValue) && Array.isArray(currentValue)) {
-          return JSON.stringify(initialValue) !== JSON.stringify(currentValue);
+          isDifferent =
+            JSON.stringify(initialValue) !== JSON.stringify(currentValue);
+        } else {
+          isDifferent = initialValue !== currentValue;
         }
-
-        return initialValue !== currentValue;
+  
+        if (isDifferent) {
+          console.log(
+            `⚠️ Difference found in "${key}" → Initial:`,
+            initialValue,
+            "| Current:",
+            currentValue
+          );
+        }
+  
+        return isDifferent;
       }) || isImageChanged;
-
+  
     setHasChanges(hasAnyChanges);
-  }, [postData, profile, isImageChanged, selectedCategory]);
+  }, [postData, isImageChanged, profile]);
+  
 
-  console.log('hasAnyChanges', hasChanges)
   const hasUnsavedChanges = Boolean(hasChanges);
   const [pendingAction, setPendingAction] = React.useState(null);
 
@@ -772,17 +800,31 @@ const CompanyUserSignupScreen = () => {
             setFileUri(uri);
           });
       })
-      .catch((error) => {
-        console.error('Image Picker Error:', error);
-
-        if (error.message?.includes('User did not grant library permission')) {
-          showToast("Permission denied. Go to settings and enable photo access.", 'error');
-        } else if (error.code === 'E_PICKER_CANCELLED') {
-          // User canceled, do nothing
-        } else {
-          showToast(`Media Picker failed: ${error.message || 'Unknown error'}`, 'error');
-        }
-      });
+       .catch((error) => {
+            if (error.message?.includes('User did not grant library permission')) {
+              if (Platform.OS === 'ios') {
+                Alert.alert(
+                  'Permission Required',
+                  'Photo access is needed to select an image. Please enable it in Settings.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Turn On',
+                      onPress: () => {
+                        Linking.openSettings();
+                      },
+                    },
+                  ]
+                );
+              } else {
+                showToast("Permission denied. Go to settings and enable photo access.", 'error');
+              }
+            } else if (error.code === 'E_PICKER_CANCELLED') {
+              // User canceled, do nothing
+            } else {
+              showToast(`Media Picker failed: ${error.message || 'Unknown error'}`, 'error');
+            }
+          });
 
   };
 
@@ -998,31 +1040,31 @@ const CompanyUserSignupScreen = () => {
     setIsLoading(true); // Start loading
 
     if (!postData.company_name) {
-
       showToast("Please provide a company name", 'info');
       setIsLoading(false);
       return;
     }
 
-    if (!postData.business_registration_number) {
+    if(selectedProfile && !selectedCategory) {
+      showToast("Please select category too", 'info');
+      setIsLoading(false);
+      return;
+    } 
 
+    if (!postData.business_registration_number) {
       showToast("Please provide a Business registration number", 'info');
       setIsLoading(false);
       return;
     }
 
     if (isStateChanged && !isCityChanged) {
-
       showToast("Select a city", 'info');
-
       setIsLoading(false);
       return;
     }
 
     if (!postData.company_located_state.trim()) {
-
       showToast("Select a state", 'info');
-
       setIsLoading(false);
       return;
     }
@@ -1342,45 +1384,43 @@ const CompanyUserSignupScreen = () => {
                   <Text style={styles.label}>Profile type</Text>
 
                   <CustomDropdown
-                    label="Profile Type"
-                    data={Object.keys({
-                      ...ProfileSelect.companyProfiles
-                    })}
-                    onSelect={(item) => {
-                      setSelectedProfile(item);
-                      setSelectedCategory(""); // Reset category when profile changes
-                    }}
-                    selectedItem={selectedProfile}
-                    setSelectedItem={setSelectedProfile}
-                    placeholder={selectedProfile || "Select profile type"}
-                    buttonStyle={styles.dropdownButton}
-                    buttonTextStyle={styles.dropdownButtonText}
-                    placeholderTextColor="gray"
-                  />
+  label="Profile Type"
+  data={Object.keys(ProfileSelect.companyProfiles)}
+  onSelect={(item) => {
+    setSelectedProfile(item);
+    if (item !== selectedProfile) {
+      setSelectedCategory(""); // reset only when profile changes
+    }
+  }}
+  selectedItem={selectedProfile}   // 👈 this comes from profile initially
+  setSelectedItem={setSelectedProfile}
+  placeholder="Select profile type"   // 👈 keep it generic
+  buttonStyle={styles.dropdownButton}
+  buttonTextStyle={styles.dropdownButtonText}
+  placeholderTextColor="gray"
+/>
 
+{selectedProfile && (
+  <>
+    <Text style={styles.label}>
+      Category <Text style={{ color: 'red' }}>*</Text>
+    </Text>
 
+    <CustomDropdown
+      label="Category"
+      data={ProfileSelect.companyProfiles[selectedProfile] || []}
+      onSelect={setSelectedCategory}
+      selectedItem={selectedCategory}   // 👈 initialized from profile
+      setSelectedItem={setSelectedCategory}
+      placeholder="Select category"     // 👈 keep generic, won’t override selected
+      buttonStyle={styles.dropdownButton}
+      buttonTextStyle={styles.dropdownButtonText}
+      placeholderTextColor="gray"
+      disabled={!selectedProfile}
+    />
+  </>
+)}
 
-                  {selectedProfile && (
-                    <>
-                      <Text style={[styles.label]}>Category <Text style={{ color: 'red' }}>*</Text></Text>
-
-                      <CustomDropdown
-                        label="Category"
-                        data={[
-                          ...(ProfileSelect.companyProfiles[selectedProfile] || [])
-                        ]}
-                        onSelect={setSelectedCategory}
-                        selectedItem={selectedCategory}
-                        setSelectedItem={setSelectedCategory}
-
-                        buttonStyle={styles.dropdownButton}
-                        buttonTextStyle={styles.dropdownButtonText}
-                        placeholderTextColor="gray"
-                        disabled={!selectedProfile}
-                      />
-
-                    </>
-                  )}
                   <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
 
                   <View style={styles.inputContainer}>

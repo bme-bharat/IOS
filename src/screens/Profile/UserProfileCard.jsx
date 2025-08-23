@@ -3,9 +3,12 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FastImage from 'react-native-fast-image';
+import { settingStyles as styles } from '../Styles/settingStyles';
 
 
-const UserProfileCard = ({ profile, onEdit, onNavigate, styles }) => {
+const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
+  const isCompany = profile?.user_type === 'company';
+
   return (
     <TouchableOpacity activeOpacity={1} onPress={onNavigate} style={styles.profileContainer}>
       <TouchableOpacity style={styles.editProfileButton} onPress={onEdit}>
@@ -19,7 +22,7 @@ const UserProfileCard = ({ profile, onEdit, onNavigate, styles }) => {
             cache="immutable"
             style={styles.detailImage}
             resizeMode="contain"
-            onError={() => {}}
+            onError={() => { }}
           />
         ) : (
           <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
@@ -31,27 +34,65 @@ const UserProfileCard = ({ profile, onEdit, onNavigate, styles }) => {
       </TouchableOpacity>
 
       <View style={styles.profileDetails}>
-        <View style={styles.title1}>
-          <Icon1 name="person" size={20} color="#075cab" />
-          <Text style={styles.colon}>|</Text>
-          <Text style={styles.value}>{profile?.first_name?.trim()} {profile?.last_name}</Text>
-        </View>
-        <View style={styles.title1}>
-          <Icon1 name="phone" size={20} color="#075cab" />
-          <Text style={styles.colon}>|</Text>
-          <Text style={styles.value}>{profile?.user_phone_number?.trim()}</Text>
-        </View>
-        <View style={styles.title1}>
-          <Icon1 name="email" size={20} color="#075cab" />
-          <Text style={styles.colon}>|</Text>
-          <Text style={styles.value}>{profile?.user_email_id}</Text>
-        </View>
-        {profile?.college?.trim() && (
-          <View style={styles.title1}>
-            <Icon1 name="school" size={20} color="#075cab" />
-            <Text style={styles.colon}>|</Text>
-            <Text style={styles.value}>{profile.college.trim()}</Text>
-          </View>
+        {isCompany ? (
+          <>
+            <View style={styles.title1}>
+              <Icon1 name="business" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>{profile?.company_name?.trim()}</Text>
+            </View>
+
+            <View style={styles.title1}>
+              <Icon1 name="phone" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>{(profile?.company_contact_number || '').trim()}</Text>
+            </View>
+
+            <View style={styles.title1}>
+              <Icon1 name="email" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>{profile?.company_email_id || ''}</Text>
+            </View>
+
+            <View style={styles.title1}>
+              <Icon1 name="badge" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>
+                {(profile?.business_registration_number || '').trim()}
+              </Text>
+            </View>
+
+          </>
+        ) : (
+          <>
+            <View style={styles.title1}>
+              <Icon1 name="person" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>
+                {(profile?.first_name || '').trim()} {(profile?.last_name || '').trim()}
+              </Text>
+            </View>
+
+            <View style={styles.title1}>
+              <Icon1 name="phone" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>{(profile?.user_phone_number || '').trim()}</Text>
+            </View>
+
+            <View style={styles.title1}>
+              <Icon1 name="email" size={20} color="#075cab" />
+              <Text style={styles.colon}>|</Text>
+              <Text style={styles.value}>{profile?.user_email_id || ''}</Text>
+            </View>
+
+            {!!profile?.college?.trim() && (
+              <View style={styles.title1}>
+                <Icon1 name="school" size={20} color="#075cab" />
+                <Text style={styles.colon}>|</Text>
+                <Text style={styles.value}>{profile.college.trim()}</Text>
+              </View>
+            )}
+          </>
         )}
       </View>
 

@@ -9,9 +9,9 @@ import { useSelector } from 'react-redux';
 import maleImage from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
 import default_image1 from '../../images/homepage/image.jpg'
-import { openMediaViewer } from '../helperComponents.jsx/mediaViewer';
+import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { MyPostBody } from '../Forum/forumBody';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 
 
 

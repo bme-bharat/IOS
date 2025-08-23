@@ -16,10 +16,11 @@ import { EventRegister } from 'react-native-event-listeners';
 import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from './forumBody';
-import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
-import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
-import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
 import { useSelector } from 'react-redux';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
+import { MediaPreview } from '../helperComponents/MediaPreview';
+import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
+import { handleThumbnailUpload, saveBase64ToFile, uploadFromBase64 } from './VideoParams';
 
 async function uriToBlob(uri) {
   const response = await fetch(uri);
@@ -45,6 +46,8 @@ const ForumPostScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const scrollViewRef = useRef(null);
   const [thumbnailUri, setThumbnailUri] = useState(null);
+  const [overlayUri, setOverlayUri] = useState(null);       // auto-captured overlay
+
   const [loading, setLoading] = useState(false);
   const richText = useRef();
 
@@ -118,50 +121,6 @@ const ForumPostScreen = () => {
   });
 
 
-
-  const handleThumbnailUpload = async (thumbnailUri, fileKey) => {
-    try {
-      // ✅ Step 1: Get thumbnail file size
-      const thumbStat = await RNFS.stat(thumbnailUri);
-      const thumbBlob = await uriToBlob(thumbnailUri);
-
-      // Create thumbnail file key
-      const thumbnailFileKey = `thumbnail-${fileKey}`;
-
-      // ✅ Step 2: Request upload URL for thumbnail
-      const res = await apiClient.post('/uploadFileToS3', {
-        command: 'uploadFileToS3',
-        fileKey: thumbnailFileKey,
-        headers: {
-          'Content-Type': 'image/jpeg',
-          'Content-Length': thumbStat.size,
-        },
-      });
-
-      if (res.data.status !== 'success') {
-        throw new Error('Failed to get upload URL for thumbnail');
-      }
-
-      const uploadUrl = res.data.url;
-
-      // ✅ Step 3: Upload Thumbnail
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'image/jpeg' },
-        body: thumbBlob,
-      });
-
-      if (uploadRes.status !== 200) {
-        throw new Error('Failed to upload thumbnail to S3');
-      }
-
-
-      return thumbnailFileKey; // Return the thumbnail file key
-    } catch (error) {
-
-      return null;
-    }
-  };
 
   const handleRemoveMedia = () => {
     setFile(null);
@@ -240,11 +199,9 @@ const ForumPostScreen = () => {
       let thumbnailFileKey = null;
 
       if (fileType.startsWith("video/")) {
-        const thumbnailToUpload = thumbnailUri;
 
-        if (thumbnailToUpload) {
-          thumbnailFileKey = await handleThumbnailUpload(thumbnailToUpload, fileKey);
-        }
+          thumbnailFileKey = await uploadFromBase64(overlayUri, fileKey);
+     
       }
 
       return { fileKey, thumbnailFileKey };
@@ -294,7 +251,6 @@ const ForumPostScreen = () => {
         showToast("Description is mandatory", "info");
         return;
       }
-
 
       const uploadedFiles = await handleUploadFile();
       if (!uploadedFiles) throw new Error("File upload failed.");
@@ -483,12 +439,17 @@ const ForumPostScreen = () => {
 
         />
 
-
         <PlayOverlayThumbnail
-          ref={overlayRef}
-          thumbnailUri={thumbnailUri}
-
+          thumbnailUri={thumbnailUri} // input
+          onCaptured={(dataUri) => {
+            if (dataUri && dataUri.trim() !== "") {
+              setOverlayUri(dataUri);   // ✅ captured overlay thumbnail
+            } else {
+              setOverlayUri(thumbnailUri); // 🔄 fallback to original
+            }
+          }}
         />
+
 
         <MediaPreview
           uri={file?.uri}
@@ -597,7 +558,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
   },
 
-  
+
 });
 
 export default ForumPostScreen;

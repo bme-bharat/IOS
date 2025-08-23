@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, TouchableWithoutFeedback, Share, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback, Share, Dimensions, StyleSheet, ActivityIndicator } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ForumBody, normalizeHtml } from './forumBody';
 import useForumReactions, { fetchForumReactionsRaw, reactionConfig } from './useForumReactions';
-import { getTimeDisplayForum } from '../helperComponents.jsx/signedUrls';
+import { getTimeDisplayForum } from '../helperComponents/signedUrls';
 import { useNavigation } from '@react-navigation/native';
 import { useNetwork } from '../AppUtils/IdProvider';
 import Video from 'react-native-video';
+import LinearGradient from 'react-native-linear-gradient';
+import { enrichForumPost } from './useForumFetcher';
+import Markdown from 'react-native-markdown-display';
 
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const maxAllowedHeight = Math.round(deviceHeight * 0.6);
@@ -18,7 +21,6 @@ export default function useRenderForumItem({
   forumIds,
   searchResults,        // Add this
   setSearchResults,
-  isTabActive,
   activeVideo,
   videoEndStates,
   setVideoEndStates,
@@ -28,12 +30,28 @@ export default function useRenderForumItem({
   setActiveReactionForumId,
   openCommentSheet,
   searchQuery,
-  getMediaForItem,
-  getAuthorImage,
   openMediaViewer,
   reactionSheetRef,
-
+  context = "latest"   
 }) {
+  const [interactions, setInteractions] = useState({});
+
+  useEffect(() => {
+    if (forumIds.length > 0) {
+      enrichForumPost(localPosts, myId).then(enriched => {
+        const interactionsMap = enriched.reduce((acc, post) => {
+          acc[post.forum_id] = {
+            commentCount: post.commentCount || 0,
+            reactionsCount: post.reactionsCount || {},
+            totalReactions: post.totalReactions || 0,
+            userReaction: post.userReaction || null,
+          };
+          return acc;
+        }, {});
+        setInteractions(interactionsMap);
+      });
+    }
+  }, [forumIds, localPosts, myId]);
 
   const navigation = useNavigation();
   const [expandedTexts, setExpandedTexts] = useState({});
@@ -41,31 +59,31 @@ export default function useRenderForumItem({
   const { handleReactionUpdate } = useForumReactions(myId);
 
 
-const [reactions, setReactions] = useState([])
+  const [reactions, setReactions] = useState([])
 
-// useEffect(() => {
-//   if (!forumIds.length || !myId) return;
+  // useEffect(() => {
+  //   if (!forumIds.length || !myId) return;
 
-//   const fetchAllReactions = async () => {
-//     try {
-//       const results = await Promise.all(
-//         forumIds.map((id) => fetchForumReactionsRaw(id, myId))
-//       );
+  //   const fetchAllReactions = async () => {
+  //     try {
+  //       const results = await Promise.all(
+  //         forumIds.map((id) => fetchForumReactionsRaw(id, myId))
+  //       );
 
-//       const combined = forumIds.map((forumId, index) => ({
-//         forumId,
-//         ...results[index],
-//       }));
+  //       const combined = forumIds.map((forumId, index) => ({
+  //         forumId,
+  //         ...results[index],
+  //       }));
 
-//       setReactions(combined);
-//     } catch (e) {
-//       console.error('Failed to fetch forum reactions', e);
-//       setReactions([]);
-//     }
-//   };
+  //       setReactions(combined);
+  //     } catch (e) {
+  //       console.error('Failed to fetch forum reactions', e);
+  //       setReactions([]);
+  //     }
+  //   };
 
-//   fetchAllReactions();
-// }, [forumIds, myId]);
+  //   fetchAllReactions();
+  // }, [forumIds, myId]);
 
   const handleNavigate = (item) => {
     setTimeout(() => {
@@ -109,18 +127,42 @@ const [reactions, setReactions] = useState([])
 
   const updatePostReaction = (forumId, selectedType, currentReaction) => {
     // Update localPosts if this post exists there
-    setLocalPosts(prev => prev.map(p => {
-      if (p.forum_id !== forumId) return p;
-      let newTotal = Number(p.totalReactions || 0);
-      const hadReaction = currentReaction && currentReaction !== 'None';
+    setInteractions(prev => {
+      const existing = prev[forumId] || {
+        commentCount: 0,
+        reactionsCount: {},
+        totalReactions: 0,
+        userReaction: 'None'
+      };
+
+      let newTotal = Number(existing.totalReactions || 0);
+      const hadReaction = existing.userReaction && existing.userReaction !== 'None';
+
       if (selectedType === 'None' && hadReaction) newTotal -= 1;
       else if (!hadReaction) newTotal += 1;
+
+      const reactionsCount = { ...existing.reactionsCount };
+
+      if (hadReaction) {
+        reactionsCount[existing.userReaction] =
+          Math.max((reactionsCount[existing.userReaction] || 1) - 1, 0);
+      }
+
+      if (selectedType !== 'None') {
+        reactionsCount[selectedType] = (reactionsCount[selectedType] || 0) + 1;
+      }
+
       return {
-        ...p,
-        userReaction: selectedType === 'None' ? null : selectedType,
-        totalReactions: newTotal,
+        ...prev,
+        [forumId]: {
+          ...existing,
+          userReaction: selectedType === 'None' ? 'None' : selectedType,
+          totalReactions: newTotal,
+          reactionsCount
+        }
       };
-    }));
+    });
+
 
     // Also update searchResults if this post exists there
     if (searchResults) {
@@ -139,7 +181,15 @@ const [reactions, setReactions] = useState([])
     }
   };
 
+
   const renderItem = useCallback(({ item }) => {
+
+    const interactionData = interactions[item.forum_id] || {
+      commentCount: 0,
+      reactionsCount: {},
+      totalReactions: 0,
+      userReaction: 'None',
+    };
 
     let height;
     if (item.extraData?.aspectRatio) {
@@ -168,7 +218,7 @@ const [reactions, setReactions] = useState([])
             ) : (
               <View style={[styles.dpContainer1, { backgroundColor: item?.authorImageUri?.backgroundColor }]}>
                 <Text style={{ color: item?.authorImageUri?.textColor, fontWeight: 'bold' }}>
-                  {item?.authorImageUri?.initials || '?'}
+                  {item?.authorImageUri?.initials}
                 </Text>
               </View>
             )}
@@ -176,12 +226,26 @@ const [reactions, setReactions] = useState([])
 
           <View style={styles.textContainer}>
             <View style={styles.title3}>
-              <TouchableOpacity onPress={() => handleNavigate(item)}>
+              <TouchableOpacity onPress={() => handleNavigate(item)} style={{ flexDirection: 'row', alignItems: 'center' }} activeOpacity={1}>
                 <Text style={{ flex: 1, alignSelf: 'flex-start', color: 'black', fontSize: 15, fontWeight: '500' }}>
                   {(item.author || '').trim()}
                 </Text>
+
+                {item.isTrending === 'yes' && context !== "trending" && (
+                  <LinearGradient
+                    colors={['#ff9966', '#ff5e62']} // smooth orange-red gradient
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.trendingBadge}
+                  >
+                   
+                    <Icon name="fire" size={14} color="#fff" />
+                  </LinearGradient>
+                )}
+
               </TouchableOpacity>
             </View>
+
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <Text style={styles.title}>{item.author_category || ''}</Text>
               <Text style={styles.date1}>{getTimeDisplayForum(item.posted_on)}</Text>
@@ -199,11 +263,14 @@ const [reactions, setReactions] = useState([])
           />
         </View>
 
+        {/* <Markdown style={{ body: { fontSize: 15, lineHeight: 20 } }}>
+          {item?.forum_body}
+        </Markdown> */}
+
         {/* Media content */}
         {item.fileKey && (
           <TouchableOpacity style={{
             width: '100%', height: height,
-            borderRadius: 6,
             overflow: 'hidden',
             backgroundColor: '#fff'
 
@@ -227,7 +294,7 @@ const [reactions, setReactions] = useState([])
                     backgroundColor: '#fff'
                   }}
                   controls
-                  paused={!isTabActive || activeVideo !== item.forum_id || !isFocused}
+                  paused={activeVideo !== item.forum_id || !isFocused}
                   resizeMode="cover"
                   poster={item?.thumbnailSignedUrl}
                   posterResizeMode='cover'
@@ -301,7 +368,7 @@ const [reactions, setReactions] = useState([])
               activeOpacity={0.7}
               style={{ flexDirection: 'row', alignItems: 'center' }}
               onPress={async () => {
-                const currentReaction = item.userReaction || 'None';
+                const currentReaction = interactionData.userReaction || 'None';
                 const selectedType = currentReaction !== 'None' ? 'None' : 'Like';
 
                 updatePostReaction(item.forum_id, selectedType, currentReaction);
@@ -309,13 +376,13 @@ const [reactions, setReactions] = useState([])
                 await handleReactionUpdate(item.forum_id, selectedType, item);
               }}
             >
-              {item.userReaction && item.userReaction !== 'None' ? (
+              {interactionData.userReaction && interactionData.userReaction !== 'None' ? (
                 <>
                   <Text style={{ fontSize: 15 }}>
-                    {reactionConfig.find(r => r.type === item.userReaction)?.emoji || '👍'}
+                    {reactionConfig.find(r => r.type === interactionData.userReaction)?.emoji || '👍'}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>
-                    {reactionConfig.find(r => r.type === item.userReaction)?.label || 'Like'}
+                    {reactionConfig.find(r => r.type === interactionData.userReaction)?.label || 'Like'}
                   </Text>
                 </>
               ) : (
@@ -328,8 +395,8 @@ const [reactions, setReactions] = useState([])
                 onPress={() => reactionSheetRef.current?.open(item.forum_id, 'All')}
                 style={{ padding: 5, paddingHorizontal: 10 }}
               >
-                {item.totalReactions > 0 && (
-                  <Text style={{ color: "#666" }}>({item.totalReactions})</Text>
+                {interactionData.totalReactions > 0 && (
+                  <Text style={{ color: "#666" }}>({interactionData.totalReactions})</Text>
                 )}
               </TouchableOpacity>
             </TouchableOpacity>
@@ -341,13 +408,17 @@ const [reactions, setReactions] = useState([])
                 </TouchableWithoutFeedback>
                 <View style={styles.reactionContainer}>
                   {reactionConfig.map(({ type, emoji }) => {
-                    const isSelected = item.userReaction === type;
+                    const isSelected = interactionData.userReaction === type;
                     return (
                       <TouchableOpacity
                         key={type}
                         onPress={async () => {
                           const selectedType = isSelected ? 'None' : type;
+                          const currentReaction = interactionData.userReaction || 'None';
+
+                          updatePostReaction(item.forum_id, selectedType, currentReaction);
                           await handleReactionUpdate(item.forum_id, selectedType, item);
+
                           setActiveReactionForumId(null);
                         }}
                         style={[
@@ -374,7 +445,7 @@ const [reactions, setReactions] = useState([])
             >
               <Icon name="comment-outline" size={17} color="#075cab" />
               <Text style={styles.iconTextUnderlined}>
-                Comments{item.commentCount > 0 ? ` ${item.commentCount}` : ''}
+                Comments{interactionData.commentCount > 0 ? ` ${interactionData.commentCount}` : ''}
               </Text>
             </TouchableOpacity>
           </View>
@@ -394,12 +465,12 @@ const [reactions, setReactions] = useState([])
       </View>
     );
   }, [
-    localPosts, activeVideo, isFocused, expandedTexts, activeReactionForumId, isTabActive,
-    getMediaForItem, getAuthorImage, handleNavigate, openMediaViewer, reactionSheetRef, deviceWidth
+    localPosts, activeVideo, isFocused, expandedTexts, activeReactionForumId, handleNavigate, openMediaViewer, reactionSheetRef, deviceWidth
   ]);
 
   return renderItem;
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -418,6 +489,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
 
   },
+  trendingHighlight: {
+    borderWidth: 2,
+    borderColor: '#FFD700', // gold border
+    backgroundColor: '#fffbea', // subtle yellow background
+    borderRadius: 8,
+  },
 
   image1: {
     width: '100%',
@@ -426,6 +503,23 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: '#eee'
   },
+  trendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginLeft: 6
+  },
+  trendingBadgeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#fff'
+  },
+  trendingIcon: {
+    marginLeft: 4
+  },
+
 
   title: {
     fontSize: 13,

@@ -34,7 +34,7 @@ import CompanyHomeScreen from '../../screens/CompanyHomeScreen';
 
 import UserDetailsPage from '../../screens/Profile/UserDetailPage';
 import CompanyDetailsPage from '../../screens/Profile/CompanyDetailsPage';
-import ImageViewScreen from '../../ImageViewScreen';
+
 import AllNotification from '../../screens/AllNotification';
 import { useCallback, useState } from 'react';
 import ResourcesPost from '../../screens/Resources/ResourcesPost';
@@ -50,7 +50,6 @@ import ProductsList from '../../screens/Products/ProductsList';
 import RelatedProductDetails from '../../screens/Products/RelatedProductsDetails';
 import ResourceDetails from '../../screens/Resources/ResourceDetails';
 import JobDetailScreen from '../../screens/Job/JobDetailScreen';
-import PageView from '../../screens/Forum/PagerViewForum';
 import ForumPostScreen from '../../screens/Forum/ForumPost';
 import JobListScreen from '../../screens/Job/JobListScreen';
 import BlockedUsers from '../../screens/Profile/BlockedUsers';
@@ -70,6 +69,9 @@ import InPrivacyPolicy from '../../screens/Bme_content/InPrivacyPolicy';
 
 import { createStackNavigator } from '@react-navigation/stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AllPosts from '../../screens/Forum/Feed';
+import LatestPosts from '../../screens/Forum/FeedLatest';
+import TrendingPosts from '../../screens/Forum/FeedTrending';
 
 const Stack = createStackNavigator();
 
@@ -103,10 +105,12 @@ const CompanyStackNav = () => {
       <Stack.Screen name="AllNotification" component={AllNotification} options={screenOption} />
       <Stack.Screen name="CompanyProfileUpdate" component={CompanyProfileUpdateScreen} options={screenOption} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={screenOption} />
-      <Stack.Screen name="PageView" component={PageView} options={screenOption} />
+      <Stack.Screen name="AllPosts" component={AllPosts} options={screenOption} />
+      <Stack.Screen name="Latest" component={LatestPosts} options={screenOption} />
+      <Stack.Screen name="Trending" component={TrendingPosts} options={screenOption} />
+
       <Stack.Screen name="ResourcesPost" component={ResourcesPost} options={screenOption} />
       <Stack.Screen name="Comment" component={CommentScreen} options={screenOption} />
-      <Stack.Screen name="ImageView" component={ImageViewScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CompanyGetAppliedJobs" component={CompanyGetAppliedJobsScreen} options={screenOption} />
       <Stack.Screen name="CompanySubscription" component={CompanySubscriptionScreen} options={screenOption} />
       <Stack.Screen name="CompanyDetails" component={CompanyDetailsScreen} options={screenOption} />
@@ -176,9 +180,12 @@ const CompanyJobNav = () => {
 
 const CompanyForumNav = () => (
 
-  <Stack.Navigator screenOptions={screenOptionStyle}>
+  <Stack.Navigator screenOptions={screenOptionStyle} initialRouteName="AllPosts">
+    <Stack.Screen name="AllPosts" component={AllPosts} options={screenOption} />
 
-    <Stack.Screen name="PageView" component={PageView} options={screenOption} />
+    <Stack.Screen name="Latest" component={LatestPosts} options={screenOption} />
+    <Stack.Screen name="Trending" component={TrendingPosts} options={screenOption} />
+
     <Stack.Screen name="ForumPost" component={ForumPostScreen} options={screenOption} />
     <Stack.Screen name="Home3" component={CompanyHomeScreen} options={screenOption} />
     <Stack.Screen name="AllNotification" component={AllNotification} options={screenOption} />
@@ -218,7 +225,6 @@ const CompanyProfileNav = () => (
 
     <Stack.Screen name="CompanyGetAppliedJobs" component={CompanyGetAppliedJobsScreen} options={screenOption} />
     <Stack.Screen name="CompanyGetJobCandidates" component={CompanyGetJobCandidatesScreen} options={screenOption} />
-    <Stack.Screen name="ImageView" component={ImageViewScreen} options={{ headerShown: false }} />
 
     <Stack.Screen name="CompanyAppliedJob" component={CompanyAppliedJobScreen} options={screenOption} />
 
@@ -323,7 +329,7 @@ const CompanyProducts = () => {
       <Stack.Screen name="EditProduct" component={EditProduct} options={screenOption} />
       <Stack.Screen name="CreateProduct" component={CreateProduct} options={screenOption} />
       <Stack.Screen name="MyProducts" component={MyProducts} options={screenOption} />
-      
+
       <Stack.Screen name="UserDetailsPage" component={UserDetailsPage} options={screenOption} />
       <Stack.Screen name="CompanyDetailsPage" component={CompanyDetailsPage} options={screenOption} />
       <Stack.Screen name="ServiceDetails" component={ServiceDetails} options={screenOption} />

@@ -14,10 +14,10 @@ import Video from 'react-native-video';
 import { FlatList } from 'react-native-gesture-handler';
 import { Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ContactSupplierModal from '../helperComponents.jsx/ContactsModal';
+import ContactSupplierModal from '../helperComponents/ContactsModal';
 import apiClient from '../ApiClient';
 import DisclaimerBox from '../Products/DisclaimerBox';
-import { useFileOpener } from '../helperComponents.jsx/fileViewer';
+import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import AppStyles from '../AppUtils/AppStyles';
 
@@ -97,24 +97,24 @@ const RelatedServicesDetails = () => {
         return nextIndex;
       });
     }, 3000);
-  
+
   };
-  
+
   const [isFlatListReady, setIsFlatListReady] = useState(false);
 
   useEffect(() => {
     const dataReady =
       (Array.isArray(imageUrls) && imageUrls.length > 0) ||
       (Array.isArray(videoUrls) && videoUrls.length > 0);
-  
+
     if (dataReady && isFlatListReady && flatListRef.current) {
       flatListRef.current.scrollToIndex({ index: 0, animated: false });
       setCurrentIndex(0);
       startAutoScroll();
     }
   }, [imageUrls, videoUrls, isFlatListReady, flatListRef.current]);
-  
-  
+
+
   const handleScroll = (event) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(offsetX / width);
@@ -128,7 +128,7 @@ const RelatedServicesDetails = () => {
       }, 1000);
     }
   };
-  
+
 
 
 
@@ -383,13 +383,7 @@ const RelatedServicesDetails = () => {
     }
   };
 
-  const handleGoBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('Home');
-    }
-  };
+  const handleGoBack = () => { navigation.goBack() };
 
   const toggleFullText = () => {
     setShowFullText((prev) => !prev);
@@ -494,9 +488,8 @@ const RelatedServicesDetails = () => {
         </View>
       ) : (
         <>
-          <ScrollView  showsVerticalScrollIndicator={false} 
-          bounces={false}
-          ref={scrollViewRef}>
+          <ScrollView showsVerticalScrollIndicator={false}
+            ref={scrollViewRef}>
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product.title}</Text>
               <Text style={styles.category}>{product.category}</Text>
@@ -576,7 +569,7 @@ const RelatedServicesDetails = () => {
                   showsHorizontalScrollIndicator={false}
                   onScroll={handleScroll}
                   scrollEventThrottle={16}
-                  onLayout={() => {  setIsFlatListReady(true); }}                
+                  onLayout={() => { setIsFlatListReady(true); }}
                   getItemLayout={(data, index) => ({
                     length: width,
                     offset: width * index,
@@ -605,7 +598,7 @@ const RelatedServicesDetails = () => {
               <TouchableOpacity activeOpacity={1} style={styles.headerRow} onPress={() => handleNavigate(product.company_id)}>
                 <Text style={styles.company} >{product.company_name}</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.priceRow}>
                 {typeof product.price === 'string' && product.price.trim() && (
                   <Text style={styles.price}>₹ {product.price.trim()}</Text>
@@ -680,7 +673,7 @@ const RelatedServicesDetails = () => {
                 </View>
               </Modal>
 
-{
+              {
                 product?.files.length > 0 &&
                 product.files.some(file => file.toLowerCase().endsWith('.pdf')) && (
                   <TouchableOpacity

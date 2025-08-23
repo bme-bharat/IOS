@@ -1,8 +1,9 @@
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
 import NavigationItem from './NavigationItem';
+import { settingStyles as styles } from '../Styles/settingStyles';
 
-const DrawerNavigationList = ({ items, expandedItem, onToggle, isConnected, styles }) => {
+const DrawerNavigationList = ({ items, expandedItem, onToggle, isConnected }) => {
   return items.filter(Boolean).map((item, index) => (
     <NavigationItem
       key={index}
@@ -20,9 +21,7 @@ const DrawerNavigationList = ({ items, expandedItem, onToggle, isConnected, styl
           key={subIndex}
           onPress={() => {
             if (isConnected) subItem.onPress?.();
-          }}
-          style={styles.drawerItem}
-        >
+          }} >
           <Text style={styles.subItem}>{subItem.label}</Text>
         </TouchableOpacity>
       ))}

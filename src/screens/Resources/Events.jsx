@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import Fuse from 'fuse.js';
 import apiClient from '../ApiClient';
 import AppStyles from '../AppUtils/AppStyles';
-import { highlightMatch } from '../helperComponents.jsx/signedUrls';
+import { highlightMatch } from '../helperComponents/signedUrls';
 
 
 const AllEvents = () => {
@@ -270,7 +270,7 @@ const AllEvents = () => {
   }
 
   return (
-    <SafeAreaView style={styles.mainContainer}>
+    <View style={styles.mainContainer}>
       <View style={AppStyles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -316,7 +316,7 @@ const AllEvents = () => {
         renderItem={renderItem}
         keyExtractor={(item, index) => `${item.event_id}-${index}`}
         onScrollBeginDrag={() => Keyboard.dismiss()}
-        contentContainerStyle={{ padding: 10, paddingBottom: '20%' }}
+        contentContainerStyle={[AppStyles.scrollView,{paddingHorizontal:10, }]}
         onEndReached={() => {
           if (hasMore && !loadingMore) fetchEvents(lastKey);
         }}
@@ -352,7 +352,7 @@ const AllEvents = () => {
         }
       />
 
-    </SafeAreaView>
+    </View>
   );
 };
 

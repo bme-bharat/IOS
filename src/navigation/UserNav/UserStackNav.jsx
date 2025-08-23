@@ -52,7 +52,6 @@ import MyProducts from '../../screens/Products/MyProducts';
 import EditProduct from '../../screens/Products/ProductEdit';
 
 import ResourceDetails from '../../screens/Resources/ResourceDetails';
-import PageView from '../../screens/Forum/PagerViewForum';
 import ForumPostScreen from '../../screens/Forum/ForumPost';
 import BlockedUsers from '../../screens/Profile/BlockedUsers';
 import ServicesList from '../../screens/Services/ServicesList';
@@ -64,6 +63,9 @@ import EnquiryDetails from '../../screens/Services/EnquiryDetails';
 import InPrivacyPolicy from '../../screens/Bme_content/InPrivacyPolicy';
 import UserHomeScreen from '../../screens/UserHomeScreen';
 import { createStackNavigator } from '@react-navigation/stack';
+import AllPosts from '../../screens/Forum/Feed';
+import LatestPosts from '../../screens/Forum/FeedLatest';
+import TrendingPosts from '../../screens/Forum/FeedTrending';
 
 
 const Stack = createStackNavigator();
@@ -87,7 +89,7 @@ const screenOption = {
   title: null, // Removes the title
   headerBackTitleVisible: false,
   headerShown: false,
- 
+
 };
 
 
@@ -108,7 +110,11 @@ const UserStackNav = () => {
       <Stack.Screen name="UserProfile" component={UserProfilescreen} options={screenOption} />
       <Stack.Screen name="CompanyDetails" component={CompanyDetailsScreen} options={screenOption} />
       <Stack.Screen name="UserJobProfileCreate" component={UserJobProfileCreateScreen} options={screenOption} />
-      <Stack.Screen name="PageView" component={PageView} options={screenOption} />
+      <Stack.Screen name="AllPosts" component={AllPosts} options={screenOption} />
+      <Stack.Screen name="Latest" component={LatestPosts} options={screenOption} />
+      <Stack.Screen name="Trending" component={TrendingPosts} options={screenOption} />
+
+
       <Stack.Screen name="Comment" component={CommentScreen} options={screenOption} />
       <Stack.Screen name="EnquiryForm" component={EnquiryForm} options={screenOption} />
       <Stack.Screen name="EnquiryDetails" component={EnquiryDetails} options={screenOption} />
@@ -180,26 +186,17 @@ const UserCompanyListNav = () => {
 }
 
 const UserForumNav = () => {
-  const [refreshList, setRefreshList] = useState(false);
-
-  const handleFocus = useCallback(() => {
-    setRefreshList(true);
-  }, []);
 
   return (
 
     <Stack.Navigator
       screenOptions={screenOptionStyle}
-      initialRouteName="PageView"
+      initialRouteName="AllPosts"
     >
-      <Stack.Screen
-        name="PageView"
-        component={PageView}
-        options={screenOption}
-        listeners={{
-          focus: handleFocus,
-        }}
-      />
+      <Stack.Screen name="AllPosts" component={AllPosts} options={screenOption} />
+      <Stack.Screen name="Latest" component={LatestPosts} options={screenOption} />
+      <Stack.Screen name="Trending" component={TrendingPosts} options={screenOption} />
+
       <Stack.Screen name="Home3" component={HomeScreen} options={screenOption} />
       <Stack.Screen name="ForumPost" component={ForumPostScreen} options={screenOption} />
 

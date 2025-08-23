@@ -3,8 +3,8 @@ import apiClient from '../ApiClient';
 import { Dimensions } from 'react-native';
 
 import { fetchCommentCount } from '../AppUtils/CommentCount';
-import { getSignedUrl } from '../helperComponents.jsx/signedUrls';
-import { generateAvatarFromName } from '../helperComponents.jsx/useInitialsAvatar';
+import { getSignedUrl } from '../helperComponents/signedUrls';
+import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import { fetchForumReactionsRaw } from './useForumReactions';
 
 const withTimeout = (promise, timeout = 10000) => {
@@ -13,8 +13,7 @@ const withTimeout = (promise, timeout = 10000) => {
     new Promise((_, reject) => setTimeout(() => reject(new Error("Request timed out")), timeout)),
   ]);
 };
-
-export const enrichForumPost = async (post, myId) => {
+export const enrichForum = async (post, myId) => {
   const forumId = post.forum_id;
   const fileKey = post?.fileKey;
   const authorFileKey = post?.author_fileKey;
@@ -43,6 +42,42 @@ export const enrichForumPost = async (post, myId) => {
     authorSignedUrl: authorSignedUrl[forumId] || '',
     authorImageUri,
   };
+};
+
+
+export const enrichForumPost = async (posts, myId) => {
+  return Promise.all(
+    posts.map(async post => {
+      const forumId = post.forum_id;
+      const fileKey = post?.fileKey;
+      const authorFileKey = post?.author_fileKey;
+      const thumbnailFileKey = post?.thumbnail_fileKey;
+
+      const [reactionData, commentCount, fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
+        fetchForumReactionsRaw(forumId, myId),
+        fetchCommentCount(forumId),
+        fileKey ? getSignedUrl(forumId, fileKey) : Promise.resolve({}),
+        authorFileKey ? getSignedUrl(forumId, authorFileKey) : Promise.resolve({}),
+        thumbnailFileKey ? getSignedUrl(forumId, thumbnailFileKey) : Promise.resolve({}),
+      ]);
+
+      const authorImageUri = authorFileKey
+        ? authorSignedUrl[forumId] || ''
+        : generateAvatarFromName(post.author || 'U');
+
+      return {
+        ...post,
+        commentCount: commentCount || 0,
+        reactionsCount: reactionData.reactionsCount || {},
+        totalReactions: reactionData.totalReactions || 0,
+        userReaction: reactionData.userReaction || null,
+        fileKeySignedUrl: fileKeySignedUrl[forumId] || '',
+        thumbnailSignedUrl: thumbnailSignedUrl[forumId] || '',
+        authorSignedUrl: authorSignedUrl[forumId] || '',
+        authorImageUri,
+      };
+    })
+  );
 };
 
 
@@ -96,9 +131,8 @@ export default function useForumFetcher({ command, type, fetchLimit = 10, isConn
           const authorFileKey = post?.author_fileKey;
           const thumbnailFileKey = post?.thumbnail_fileKey;
       
-          const [reactionData, commentCount, fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
-            fetchForumReactionsRaw(forumId, myId),
-            fetchCommentCount(forumId),
+          const [ fileKeySignedUrl, authorSignedUrl, thumbnailSignedUrl] = await Promise.all([
+    
             fileKey ? getSignedUrl(forumId, fileKey) : Promise.resolve({}),
             authorFileKey ? getSignedUrl(forumId, authorFileKey) : Promise.resolve({}),
             thumbnailFileKey ? getSignedUrl(forumId, thumbnailFileKey) : Promise.resolve({}),
@@ -110,10 +144,6 @@ export default function useForumFetcher({ command, type, fetchLimit = 10, isConn
       
           return {
             ...post,
-            commentCount: commentCount || 0,
-            reactionsCount: reactionData.reactionsCount || {},
-            totalReactions: reactionData.totalReactions || 0,
-            userReaction: reactionData.userReaction || null,
             fileKeySignedUrl: fileKeySignedUrl[forumId] || '',
             thumbnailSignedUrl: thumbnailSignedUrl[forumId] || '',
             authorSignedUrl: authorSignedUrl[forumId] || '',

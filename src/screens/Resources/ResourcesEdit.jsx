@@ -2,35 +2,28 @@
 
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text, ScrollView, TextInput, Alert, SafeAreaView, ActivityIndicator, Keyboard, Linking, ActionSheetIOS, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-native';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { View, Image, StyleSheet, TouchableOpacity, Text, ScrollView, TextInput, Alert, SafeAreaView, ActivityIndicator, } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import DocumentPicker from 'react-native-document-picker';
-import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Message3 from '../../components/Message3';
-import ImageResizer from 'react-native-image-resizer';
 import RNFS from 'react-native-fs';
-import FastImage from 'react-native-fast-image';
-import * as Compressor from 'react-native-compressor';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { updateResourcePost } from '../Redux/Resource_Actions';
 import { useDispatch, useSelector } from 'react-redux';
-import { captureFinalThumbnail, generateVideoThumbnail, moveToPersistentStorage, resizeImage } from '../Forum/VideoParams';
 import PlayOverlayThumbnail from '../Forum/Play';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import apiClient from '../ApiClient';
-import AppStyles from '../AppUtils/AppStyles';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
-import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
-import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
-import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
-import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
+import { MediaPreview } from '../helperComponents/MediaPreview';
+import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
+import { deleteS3KeyIfExists } from '../helperComponents/s3Helpers';
+import { uploadFromBase64 } from '../Forum/VideoParams';
 
 const videoExtensions = [
   '.mp4', '.mov', '.avi', '.mkv', '.flv', '.wmv', '.webm',
@@ -40,7 +33,7 @@ const ResourcesEditScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { post, imageUrl } = route.params;
-  console.log('post',post)
+  console.log('post', post)
   const [signedUrl, setSignedUrl] = useState(
     post?.signedUrl?.includes('image.jpg') ? '' : imageUrl
   );
@@ -52,6 +45,8 @@ const ResourcesEditScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState(null);
+  const [overlayUri, setOverlayUri] = useState(null);
+
   const [file, setFile] = useState(null);
   const [fileType, setFileType] = useState('');
   const [mediaMeta, setMediaMeta] = useState(null);
@@ -192,198 +187,6 @@ const ResourcesEditScreen = () => {
 
 
 
-
-
-
-
-
-
-
-
-  const [capturedThumbnailUri, setCapturedThumbnailUri] = useState(null);
-
-  const playIcon = require('../../images/homepage/PlayIcon.png');
-
-
-
-  const handleThumbnailUpload = async (thumbnailUri, fileKey) => {
-    try {
-
-      const thumbStat = await RNFS.stat(thumbnailUri);
-      const thumbBlob = await uriToBlob(thumbnailUri);
-
-      const thumbnailFileKey = `thumbnail-${fileKey}`;
-
-      const res = await apiClient.post('/uploadFileToS3', {
-        command: 'uploadFileToS3',
-        fileKey: thumbnailFileKey,
-        headers: {
-          'Content-Type': 'image/jpeg',
-          'Content-Length': thumbStat.size,
-        },
-      });
-
-      if (res.data.status !== 'success') {
-        throw new Error('Failed to get upload URL for thumbnail');
-      }
-
-      const uploadUrl = res.data.url;
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'image/jpeg' },
-        body: thumbBlob,
-      });
-
-      if (uploadRes.status !== 200) {
-        throw new Error('Failed to upload thumbnail to S3');
-      }
-
-      return thumbnailFileKey;
-    } catch (error) {
-
-      return null;
-    }
-  };
-
-
-
-  const uploadNewFile = async (fileUri, mimeType) => {
-    try {
-      setIsLoading(true);
-
-      if (postData.fileKey) {
-
-        await handleDeleteOldFile(postData.fileKey);
-
-      }
-
-
-      const uploadResult = await handleUploadFile(fileUri, mimeType);
-
-      if (uploadResult) {
-        const { fileKey, thumbnailFileKey, fileUrl } = uploadResult;
-
-        setPostData(prevState => ({
-          ...prevState,
-          fileKey: fileKey || '',
-          thumbnail_fileKey: thumbnailFileKey || '',
-        }));
-
-
-      }
-
-    } catch (error) {
-
-      showToast('File upload failed', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const documentExtensions = [
-    DocumentPicker.types.pdf,
-    DocumentPicker.types.doc,
-    DocumentPicker.types.docx,
-    DocumentPicker.types.plainText,
-    DocumentPicker.types.csv,
-    DocumentPicker.types.ppt,
-    DocumentPicker.types.pptx,
-    DocumentPicker.types.xls,
-    DocumentPicker.types.xlsx,
-  ];
-
-
-
-  const selectDocument = async () => {
-    try {
-      const res = await DocumentPicker.pickSingle({ type: documentExtensions });
-      if (!res || !res.uri) return;
-
-      const fileStat = await RNFS.stat(res.uri);
-      if (fileStat.size > 4 * 1024 * 1024) {
-        showToast("File size shouldn't exceeds 5MB limit", 'error');
-
-        return;
-      }
-
-      await uploadNewFile(res.uri, res.type || 'application/pdf');
-    } catch (error) {
-      if (!DocumentPicker.isCancel(error)) {
-
-        showToast("Error selecting document", 'error');
-
-      }
-    }
-  };
-
-
-
-
-  const handleUploadFile = async (fileUri, fileType) => {
-    try {
-      setIsLoading(true);
-  
-      const fileStat = await RNFS.stat(fileUri);
-      const fileSize = fileStat.size;
-  
-      if (fileType.startsWith('image/') && fileSize > 5 * 1024 * 1024) {
-        showToast("Image size shouldn't exceed 5MB", 'error');
-        return { fileKey: null, thumbnailFileKey: null };
-      }
-  
-      if (fileType.startsWith('video/') && fileSize > 10 * 1024 * 1024) {
-        showToast("Video size shouldn't exceed 10MB", 'error');
-        return { fileKey: null, thumbnailFileKey: null };
-      }
-  
-      // 1. Get upload URL and fileKey from backend
-      const res = await apiClient.post('/uploadFileToS3', {
-        command: 'uploadFileToS3',
-        headers: {
-          'Content-Type': fileType,
-          'Content-Length': fileSize,
-        },
-      });
-  
-      if (res.data.status !== 'success') {
-        throw new Error(res.data.errorMessage || 'Failed to get upload URL');
-      }
-  
-      const uploadUrl = res.data.url;
-      const fileKey = res.data.fileKey || '';
-  
-      // 2. Upload the file to S3
-      const fileBlob = await uriToBlob(fileUri);
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': fileType },
-        body: fileBlob,
-      });
-  
-      if (uploadRes.status !== 200) {
-        throw new Error('Failed to upload file to S3');
-      }
-  
-      // 3. Upload thumbnail only if it's a video and thumbnailUri exists
-      let thumbnailFileKey = null;
-      if (fileType.startsWith("video/") && thumbnailUri) {
-        thumbnailFileKey = await handleThumbnailUpload(thumbnailUri, fileKey);
-      }
-  
-      return { fileKey, thumbnailFileKey };
-    } catch (error) {
-      showToast("Something went wrong during file upload", 'error');
-      return { fileKey: null, thumbnailFileKey: null };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-
-
-
-
   async function uriToBlob(uri) {
     const response = await fetch(uri);
     const blob = await response.blob();
@@ -405,7 +208,7 @@ const ResourcesEditScreen = () => {
 
 
   const dispatch = useDispatch();
-  
+
   const uploadSelectedMedia = async (media, thumbnailUri) => {
     console.log('📥 Starting uploadSelectedMedia');
 
@@ -453,29 +256,10 @@ const ResourcesEditScreen = () => {
 
       let thumbnailFileKey = null;
 
-      if (isVideo && thumbnailUri) {
-        const thumbStat = await RNFS.stat(thumbnailUri);
-        const thumbBlob = await uriToBlob(thumbnailUri);
-        const thumbKey = `thumbnail-${data.fileKey}`;
+      if (file.type.startsWith("video/")) {
 
-        const thumbRes = await apiClient.post('/uploadFileToS3', {
-          command: 'uploadFileToS3',
-          fileKey: thumbKey,
-          headers: {
-            'Content-Type': 'image/jpeg',
-            'Content-Length': thumbStat.size,
-          },
-        });
+        thumbnailFileKey = await uploadFromBase64(overlayUri, data.fileKey);
 
-
-        await fetch(thumbRes.data.url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: thumbBlob,
-        });
-
-        thumbnailFileKey = thumbKey;
-        console.log('🖼️ Thumbnail uploaded as:', thumbnailFileKey);
       }
 
       return {
@@ -492,44 +276,44 @@ const ResourcesEditScreen = () => {
   const handlePostSubmission = async () => {
     setHasChanges(true);
     setIsLoading(true);
-  
+
     try {
       const trimmedTitle = stripHtmlTags(postData.title)?.trim();
       const cleanedBody = sanitizeHtmlBody(postData.resource_body?.trim() || '');
-  
+
       if (!trimmedTitle) {
         showToast("Title field cannot be empty", 'info');
         setIsLoading(false);
         return;
       }
-  
+
       if (!cleanedBody) {
         showToast("Resource description field cannot be empty", 'info');
         setIsLoading(false);
         return;
       }
-  
+
       let fileKey = '';
       let thumbnailFileKey = '';
-  
+
       const mediaWasRemoved = !postData.signedUrl && !file;
       const mediaWasReplaced = !!file;
-  
+
       if (mediaWasReplaced) {
         // ✅ Media was changed: delete old & upload new
         if (post.fileKey) await deleteS3KeyIfExists(post.fileKey);
         if (post.thumbnail_fileKey) await deleteS3KeyIfExists(post.thumbnail_fileKey);
-  
+
         const uploaded = await uploadSelectedMedia(file, thumbnailUri);
         if (!uploaded) throw new Error('Upload failed');
-  
+
         fileKey = uploaded.fileKey;
         thumbnailFileKey = uploaded.thumbnailFileKey || '';
       } else if (mediaWasRemoved) {
         // ✅ Media was removed
         if (post.fileKey) await deleteS3KeyIfExists(post.fileKey);
         if (post.thumbnail_fileKey) await deleteS3KeyIfExists(post.thumbnail_fileKey);
-  
+
         fileKey = '';
         thumbnailFileKey = '';
       } else {
@@ -537,11 +321,11 @@ const ResourcesEditScreen = () => {
         fileKey = post.fileKey || '';
         thumbnailFileKey = post.thumbnail_fileKey || '';
       }
-  
-      const extraDataToSend = 
-      (file || fileKey) 
-        ? (mediaMeta || post.extraData || {}) 
-        : {};
+
+      const extraDataToSend =
+        (file || fileKey)
+          ? (mediaMeta || post.extraData || {})
+          : {};
 
       const payload = {
         command: "updateResourcePost",
@@ -553,9 +337,9 @@ const ResourcesEditScreen = () => {
         thumbnail_fileKey: thumbnailFileKey,
         extraData: extraDataToSend,
       };
-  
+
       const response = await apiClient.post('/updateResourcePost', payload);
-  
+
       const updatedPostData = {
         ...post,
         title: trimmedTitle,
@@ -564,22 +348,22 @@ const ResourcesEditScreen = () => {
         thumbnail_fileKey: thumbnailFileKey,
         extraData: extraDataToSend,
       };
-  
+
       if (response.data.status === 'success') {
         EventRegister.emit('onResourcePostUpdated', {
           updatedPost: updatedPostData,
         });
-  
+
         const postWithMedia = await fetchMediaForPost(updatedPostData);
         dispatch(updateResourcePost(postWithMedia));
-  
+
         setFile(null);
         setFileType('');
         setThumbnailUri(null);
         setMediaMeta(null);
         setSignedUrl('');
         setHasChanges(false);
-  
+
         showToast("Resource post updated successfully", 'success');
         navigation.goBack();
       } else {
@@ -592,9 +376,9 @@ const ResourcesEditScreen = () => {
       setHasChanges(false);
     }
   };
-  
-  
-  
+
+
+
 
   const fetchMediaForPost = async (post) => {
     const mediaData = { resource_id: post.resource_id };
@@ -909,25 +693,32 @@ const ResourcesEditScreen = () => {
         />
 
 
-
         <PlayOverlayThumbnail
-          ref={overlayRef}
-          thumbnailUri={thumbnailUri}
-          playIcon={playIcon}
-
+          thumbnailUri={thumbnailUri} // input
+          onCaptured={(dataUri) => {
+            if (dataUri && dataUri.trim() !== "") {
+              setOverlayUri(dataUri);   // ✅ captured overlay thumbnail
+            } else {
+              setOverlayUri(thumbnailUri); // 🔄 fallback to original
+            }
+          }}
         />
-        <MediaPreview
-          uri={file?.uri || signedUrl}
-          type={fileType || post?.extraData?.type}
-          name={file?.name || post?.extraData?.fileName}
-          onRemove={handleRemoveMedia}
-        />
+        <View style={{ paddingHorizontal: 10, }}>
+          <MediaPreview
+            uri={file?.uri || signedUrl}
+            type={fileType || post?.extraData?.type}
+            name={file?.name || post?.extraData?.fileName}
+            onRemove={handleRemoveMedia}
+          />
+        </View>
 
         {!(file || signedUrl) && (
-          <MediaPickerButton
-            onPress={() => showMediaOptions()}
-            isLoading={isCompressing}
-          />
+          <View style={{ paddingHorizontal: 10, }}>
+            <MediaPickerButton
+              onPress={() => showMediaOptions()}
+              isLoading={isCompressing}
+            />
+          </View>
         )}
 
 

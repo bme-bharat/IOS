@@ -14,10 +14,12 @@ import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { actions, RichEditor, RichToolbar } from 'react-native-pell-rich-editor';
 import { cleanForumHtml } from './forumBody';
-import { MediaPickerButton } from '../helperComponents.jsx/MediaPickerButton';
-import { useMediaPicker } from '../helperComponents.jsx/MediaPicker';
-import { MediaPreview } from '../helperComponents.jsx/MediaPreview';
-import { deleteS3KeyIfExists } from '../helperComponents.jsx/s3Helpers';
+import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
+import { useMediaPicker } from '../helperComponents/MediaPicker';
+import { MediaPreview } from '../helperComponents/MediaPreview';
+import { deleteS3KeyIfExists } from '../helperComponents/s3Helpers';
+import PlayOverlayThumbnail from './Play';
+import { uploadFromBase64 } from './VideoParams';
 
 
 const ForumEditScreen = () => {
@@ -34,6 +36,7 @@ const ForumEditScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [thumbnailUri, setThumbnailUri] = useState(null);
+    const [overlayUri, setOverlayUri] = useState(null);       
   const [file, setFile] = useState(null);
   const [fileType, setFileType] = useState('');
   const [mediaMeta, setMediaMeta] = useState(null);
@@ -194,29 +197,12 @@ const ForumEditScreen = () => {
 
       let thumbnailFileKey = null;
 
-      if (isVideo && thumbnailUri) {
-        const thumbStat = await RNFS.stat(thumbnailUri);
-        const thumbBlob = await uriToBlob(thumbnailUri);
-        const thumbKey = `thumbnail-${data.fileKey}`;
+      if (fileType.startsWith("video/")) {
+        const thumbnailToUpload = overlayUri;
 
-        const thumbRes = await apiClient.post('/uploadFileToS3', {
-          command: 'uploadFileToS3',
-          fileKey: thumbKey,
-          headers: {
-            'Content-Type': 'image/jpeg',
-            'Content-Length': thumbStat.size,
-          },
-        });
-
-
-        await fetch(thumbRes.data.url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: thumbBlob,
-        });
-
-        thumbnailFileKey = thumbKey;
-        console.log('🖼️ Thumbnail uploaded as:', thumbnailFileKey);
+        if (thumbnailToUpload) {
+          thumbnailFileKey = await uploadFromBase64(thumbnailToUpload, data.fileKey);
+        }
       }
 
       return {
@@ -532,6 +518,17 @@ const ForumEditScreen = () => {
           />
         </View>
 
+
+        <PlayOverlayThumbnail
+          thumbnailUri={thumbnailUri} // input
+          onCaptured={(dataUri) => {
+            if (dataUri && dataUri.trim() !== "") {
+              setOverlayUri(dataUri);   // ✅ captured overlay thumbnail
+            } else {
+              setOverlayUri(thumbnailUri); // 🔄 fallback to original
+            }
+          }}
+        />
 
         <MediaPreview
           uri={file?.uri || signedUrl}

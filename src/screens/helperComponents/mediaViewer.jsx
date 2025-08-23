@@ -33,6 +33,7 @@ const MediaViewer = () => {
     const videoRefs = useRef({});
     const [currentTimes, setCurrentTimes] = useState({});
     const [videoDurations, setVideoDurations] = useState({});
+    const [pausedStates, setPausedStates] = useState({});
 
     const updateBuffering = (index, isBuffering) => {
         setBufferingStates(prev => ({
@@ -110,7 +111,7 @@ const MediaViewer = () => {
                     source={{ uri: item.url }}
                     style={[styles.media, isBuffering && styles.buffering]}
                     resizeMode="contain"
-                    paused={!isCurrent}
+                    paused={pausedStates[index] ?? index !== currentIndex}
                     muted={isMuted}
                     onLoadStart={() => updateBuffering(index, true)}
                     onReadyForDisplay={() => updateBuffering(index, false)}
@@ -202,7 +203,14 @@ const MediaViewer = () => {
                     onMomentumScrollEnd={e => {
                         const index = Math.round(e.nativeEvent.contentOffset.x / width);
                         setCurrentIndex(index);
+                    
+                        // Optional: reset paused state for new video
+                        setPausedStates(prev => ({
+                            ...prev,
+                            [index]: false, // autoplay current video
+                        }));
                     }}
+                    
                 />
 
                 {/* BOTTOM CONTROLS */}
@@ -226,39 +234,38 @@ const MediaViewer = () => {
                                 <TouchableOpacity
                                     onPress={() => {
                                         const currentTime = currentTimes[currentIndex] || 0;
-                                        videoRefs.current[currentIndex]?.seek(Math.max(0, currentTime - 10));
+                                        videoRefs.current[currentIndex]?.seek(Math.max(0, currentTime - 5));
                                     }}
                                     style={styles.controlButton}
                                 >
-                                    <Icon name="replay-10" size={32} color="white" />
+                                    <Icon name="replay-5" size={32} color="white" />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
                                     onPress={() => {
-                                        const videoRef = videoRefs.current[currentIndex];
-                                        if (videoRef) {
-                                            videoRef.props.paused 
-                                                ? videoRef.resume() 
-                                                : videoRef.pause();
-                                        }
+                                        setPausedStates(prev => ({
+                                            ...prev,
+                                            [currentIndex]: !prev[currentIndex],
+                                        }));
                                     }}
                                     style={styles.controlButton}
                                 >
                                     <Icon
-                                        name={videoRefs.current[currentIndex]?.props?.paused ? 'play-arrow' : 'pause'}
+                                        name={pausedStates[currentIndex] ? 'play-arrow' : 'pause'}
                                         size={40}
                                         color="white"
                                     />
                                 </TouchableOpacity>
 
+
                                 <TouchableOpacity
                                     onPress={() => {
                                         const currentTime = currentTimes[currentIndex] || 0;
-                                        videoRefs.current[currentIndex]?.seek(currentTime + 10);
+                                        videoRefs.current[currentIndex]?.seek(currentTime + 5);
                                     }}
                                     style={styles.controlButton}
                                 >
-                                    <Icon name="forward-10" size={32} color="white" />
+                                    <Icon name="forward-5" size={32} color="white" />
                                 </TouchableOpacity>
                             </View>
                         </>
@@ -391,7 +398,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     thumbnailWrapper: {
-        borderRadius: 6,
+        borderRadius: 8,
         borderWidth: 2,
         borderColor: 'transparent',
         marginHorizontal: 5,
