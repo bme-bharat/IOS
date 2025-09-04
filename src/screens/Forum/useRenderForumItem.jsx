@@ -11,6 +11,7 @@ import Video from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
 import { enrichForumPost } from './useForumFetcher';
 import Markdown from 'react-native-markdown-display';
+import BMEVideoPlayer from '../BMEVideoPlayer';
 
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const maxAllowedHeight = Math.round(deviceHeight * 0.6);
@@ -32,7 +33,7 @@ export default function useRenderForumItem({
   searchQuery,
   openMediaViewer,
   reactionSheetRef,
-  context = "latest"   
+  context = "latest"
 }) {
   const [interactions, setInteractions] = useState({});
 
@@ -238,7 +239,7 @@ export default function useRenderForumItem({
                     end={{ x: 1, y: 0 }}
                     style={styles.trendingBadge}
                   >
-                   
+
                     <Icon name="fire" size={14} color="#fff" />
                   </LinearGradient>
                 )}

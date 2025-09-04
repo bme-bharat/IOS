@@ -155,10 +155,12 @@ const YourSubscriptionListScreen = () => {
   return (
     <SafeAreaView style={styles.container1}>
       <View style={styles.container} >
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Icon name="arrow-left" size={24} color="#075cab" />
+          </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
-        </TouchableOpacity>
         <Text style={styles.header}>My Subscriptions</Text>
         <FlatList
           data={[...transactions].sort((a, b) => b.transaction_on - a.transaction_on)} // newest first
@@ -193,6 +195,15 @@ const styles = StyleSheet.create({
   backButton: {
     alignItems: 'flex-start',
     padding: 10
+
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'whitesmoke',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
 
   },
   itemContainer: {

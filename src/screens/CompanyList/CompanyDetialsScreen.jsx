@@ -236,7 +236,6 @@ const CompanyDetailsScreen = ({ route }) => {
 
   useEffect(() => {
     if (routeProfile) {
-      console.log('Setting profile from route.params:', routeProfile);
       setProfile(routeProfile);
 
       if (routeProfile.fileKey?.trim()) {
@@ -332,7 +331,7 @@ const CompanyDetailsScreen = ({ route }) => {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton}
           activeOpacity={1}
@@ -577,7 +576,7 @@ const CompanyDetailsScreen = ({ route }) => {
         </TouchableOpacity>
       </ScrollView>
 
-    </SafeAreaView>
+    </View>
 
   );
 };
@@ -593,11 +592,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
 
   loaderContainer: {
@@ -638,7 +634,6 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     padding: 10,
-    marginTop: -5
   },
 
   pdfButton: {
@@ -664,7 +659,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 5,
     backgroundColor: 'white',
-    shadowColor: '#0d6efd',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,

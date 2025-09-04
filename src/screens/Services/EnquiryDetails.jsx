@@ -209,7 +209,7 @@ const EnquiryDetails = () => {
     return (
 
         <SafeAreaView style={styles.mainContainer}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'white' }}>
+            <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
@@ -326,6 +326,15 @@ const styles = StyleSheet.create({
         marginBottom: 15,
 
     },
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'white',
+          borderBottomWidth: 1,
+        borderColor: '#f0f0f0'
+    
+      },
     pdfButton: {
         flexDirection: 'column',
         alignItems: 'center',

@@ -246,7 +246,7 @@ const ResourcesDetails = () => {
     }
     return (
 
-        <SafeAreaView style={styles.mainContainer}>
+        <View style={styles.mainContainer}>
             <View style={styles.headerContainer1}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -356,7 +356,7 @@ const ResourcesDetails = () => {
                 </View>
             </ScrollView>
 
-        </SafeAreaView>
+        </View>
 
     );
 };
@@ -376,11 +376,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: 'white',
-        elevation: 1,  // for Android
-        shadowColor: '#000',  // shadow color for iOS
-        shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
-        shadowOpacity: 0.1,  // shadow opacity for iOS
-        shadowRadius: 2,  // shadow radius for iOS
+        borderBottomWidth: 1,
+        borderColor: '#f0f0f0'
     },
 
     pdfButton: {

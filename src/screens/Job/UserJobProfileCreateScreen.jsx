@@ -460,10 +460,12 @@ const UserJobProfileCreateScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container1}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerContainer}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color="#075cab" />
       </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -648,13 +650,9 @@ const UserJobProfileCreateScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: 'white',
+    backgroundColor: 'whitesmoke'
   },
-  container1: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
+
   backButton: {
     padding: 10,
     alignSelf: 'flex-start',
@@ -676,11 +674,12 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   header: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 25,
     textAlign: 'center',
-    color: '#222',
+    color: '#075cab',
+    top: 10,
   },
   input: {
     height: 40,
@@ -694,6 +693,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
 
   },
   uploadButton: {
@@ -786,6 +787,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
   dropdownButtonText: {
     fontSize: 16,

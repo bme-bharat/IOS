@@ -146,7 +146,6 @@ const App = () => {
 
       if (response.status === 200 && response.data.status === 'success') {
         const newVersion = response.data.ios_version_number;
-        setUpdateVersion(newVersion);
 
         const isUpdateAvailable = compareVersions(currentVersion, newVersion);
 
@@ -534,7 +533,6 @@ const App = () => {
           normalUserData ? 'users' : companyUserData ? 'company' : 'BME_ADMIN'
         );
 
-
       } else {
         setIsLoggedIn(false);
         setUserType(null);
@@ -576,7 +574,6 @@ const App = () => {
 
               <NavigationContainer ref={navigationRef}
                 onReady={() => {
-                  console.log('NavigationContainer onReady called');
                   onNavigationContainerReady();
                 }}
               >

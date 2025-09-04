@@ -1058,6 +1058,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
 
   },
   input1: {
@@ -1122,6 +1124,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
   dropdownButtonText: {
     fontSize: 16,

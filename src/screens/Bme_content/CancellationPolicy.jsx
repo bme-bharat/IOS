@@ -9,10 +9,12 @@ const CancellationPolicy = () => {
 
   return (
     <SafeAreaView style={styles.container1} >
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Icon name="arrow-left" size={24} color="#075cab" />
-      </TouchableOpacity>
-      
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Icon name="arrow-left" size={24} color="#075cab" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.heading}>Subscription Cancellation and Refund Policy</Text>
         <Text style={styles.paragraph}>
@@ -94,13 +96,19 @@ const CancellationPolicy = () => {
 const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
-
-padding:10
-
+    padding: 10
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   container1: {
     flex: 1,
- 
+
     backgroundColor: '#fff',
   },
   container: {
@@ -118,7 +126,7 @@ padding:10
   heading: {
     fontSize: 14,
     fontWeight: '500',
-    marginVertical:5,
+    marginVertical: 5,
     color: "black",
   },
   subHeading: {

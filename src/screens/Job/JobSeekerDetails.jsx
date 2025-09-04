@@ -223,11 +223,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
   },
   imageContainer: {
@@ -271,7 +268,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     elevation: 3, // Android shadow
     backgroundColor: 'white',
-    shadowColor: '#0d6efd', // iOS shadow color
+    shadowColor: '#000', // iOS shadow color
     shadowOffset: { width: 0, height: 2 }, // iOS shadow offset
     shadowOpacity: 0.2, // iOS shadow opacity
     shadowRadius: 3, // iOS shadow radius

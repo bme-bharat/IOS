@@ -120,6 +120,10 @@ const UserJobAppliedScreen = () => {
     navigation.navigate('UserAppliedJobDetails', { jobDetails: item });
   };
 
+  const navigateToDetails = (job) => {
+    navigation.navigate("JobDetail", { post_id: job.post_id, post: job });
+  };
+
   if (appliedJobs?.removed_by_author) {
     return (
       <SafeAreaView style={styles.container}>
@@ -131,7 +135,7 @@ const UserJobAppliedScreen = () => {
         </View>
 
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, color: 'gray' }}>No jobs available</Text>
+          <Text style={{ fontSize: 16, color: 'gray' }}>No jobs applied</Text>
         </View>
       </SafeAreaView>
     );
@@ -139,7 +143,7 @@ const UserJobAppliedScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container1} >
+    <View style={styles.container1} >
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -181,7 +185,7 @@ const UserJobAppliedScreen = () => {
               </View>
 
               <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={() => handleDetails(item)} style={styles.viewMoreButton}>
+                <TouchableOpacity onPress={() => navigateToDetails(item)} style={styles.viewMoreButton}>
                   <Text style={styles.viewMoreText}>View More</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => confirmRevoke(item.post_id)} style={styles.revokeButton}>
@@ -203,7 +207,7 @@ const UserJobAppliedScreen = () => {
         iconType="warning"
       />
 
-    </SafeAreaView>
+    </View>
   );
 
 }; const styles = StyleSheet.create({
@@ -222,11 +226,8 @@ const UserJobAppliedScreen = () => {
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1, 
-    shadowColor: '#000',  
-    shadowOffset: { width: 0, height: 1 },  
-    shadowOpacity: 0.1,  
-    shadowRadius: 2,  
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   title: {
     fontSize: 22,

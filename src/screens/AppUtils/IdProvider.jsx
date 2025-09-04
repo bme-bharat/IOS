@@ -48,8 +48,14 @@ export const NetworkProvider = ({ children }) => {
     getUserData();
   }, []);
 
+  const updateMyData = (updates) => {
+    console.log('updates',updates)
+    setMyData((prev) => ({ ...prev, ...updates }));
+  };
+
+
   return (
-    <NetworkContext.Provider value={{ myId, myData }}>
+    <NetworkContext.Provider value={{ myId, myData, updateMyData }}>
       {children}
     </NetworkContext.Provider>
   );

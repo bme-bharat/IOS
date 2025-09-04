@@ -461,10 +461,11 @@ const UserJobProfileUpdateScreen = () => {
   return (
 
     <SafeAreaView style={styles.container1}>
+       <View style={styles.headerContainer}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color="#075cab" />
       </TouchableOpacity>
-
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -477,6 +478,8 @@ const UserJobProfileUpdateScreen = () => {
           extraScrollHeight={20}
           style={styles.container}
         >
+                    <Text style={styles.header}>Update job profile</Text>
+          
           <View style={styles.inputContainer}>
             <Text style={[styles.title]}>Industry Type <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropDownMenu
@@ -660,11 +663,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
+  },
   header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#000',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#075cab',
+    top: 10,
   },
   title: {
     color: 'black',
@@ -702,6 +715,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
   backButton: {
     padding: 10,
@@ -760,6 +775,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
   dropdownButtonText: {
     fontSize: 16,

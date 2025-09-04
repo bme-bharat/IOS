@@ -114,7 +114,6 @@ const UserSettingScreen = () => {
   const DrawerList = [
     { icon: 'id-card', label: 'Job profile', onPress: navigateTo('UserJobProfile') },
     { icon: 'id-card', label: 'Applied jobs', onPress: navigateTo('UserJobApplied') },
-    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
     {
       icon: 'rss',
       label: 'My posts',
@@ -124,6 +123,8 @@ const UserSettingScreen = () => {
         { label: 'Resources', onPress: navigateTo('Resourcesposted') },
       ],
     },
+    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
+  
     { icon: 'account-cancel', label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
     { icon: 'card-account-details', label: 'Subscription', onPress: navigateTo('UserSubscription') },
     hasSubscription && transactions.length > 0 && {

@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, SafeAreaView, ScrollView, Keyboard
+  StyleSheet, Alert, SafeAreaView, ScrollView, Keyboard,
+  Platform
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
@@ -19,33 +20,21 @@ import { getMessaging, getToken, requestPermission, AuthorizationStatus } from '
 import messaging from '@react-native-firebase/messaging';
 import { showToast } from '../AppUtils/CustomToast';
 import { OtpInput } from "react-native-otp-entry";
+import { useFcmToken } from '../AppUtils/fcmToken';
+import apiClient from '../ApiClient';
 
 
 const LoginVerifyOTPScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { fullPhoneNumber, userid, phone } = route.params;
-  // console.log('userid',userid)
-  // console.log('email', phone)
-  // console.log('fullPhoneNumber', fullPhoneNumber)
-
   const [otp, setOTP] = useState('');
-const otpRef = useRef('');
-
+  const otpRef = useRef('');
   const otpInputs = useRef([]);
-  const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(30);
   const [isResendEnabled, setIsResendEnabled] = useState(false);
   const isProcessing = useRef(false);
-
-  const [fcmToken, setFcmToken] = useState('');
-  const [apnsToken, setApnsToken] = useState(null);
-
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertTitle, setAlertTitle] = useState('');
-
-  const [alertIconType, setAlertIconType] = useState('success');
-
+  const { fcmToken, refreshFcmToken } = useFcmToken();
 
 
   useEffect(() => {
@@ -64,102 +53,40 @@ const otpRef = useRef('');
     }
   }, []);
 
-
-  const handleOTPChange = (index, value) => {
-    setOTP((prevOTP) => {
-      const otpCopy = [...prevOTP];
-
-      if (value === '') {
-
-        otpCopy[index] = '';
-
-        if (index > 0) {
-
-          requestAnimationFrame(() => otpInputs.current[index - 1]?.focus());
-        }
-      } else if (/^\d$/.test(value)) {
-        otpCopy[index] = value;
-
-        if (index < otp.length - 1 && otpCopy[index + 1] === '') {
-
-          requestAnimationFrame(() => otpInputs.current[index + 1]?.focus());
-        } else if (index === otp.length - 1) {
-
-          Keyboard.dismiss();
-        }
-      }
-
-      return otpCopy;
-    });
-  };
-
-
-  const handleKeyPress = ({ nativeEvent }, index) => {
-
-    if (nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
-      setOTP((prevOTP) => {
-        const otpCopy = [...prevOTP];
-        otpCopy[index - 1] = '';
-        requestAnimationFrame(() => otpInputs.current[index - 1]?.focus());
-
-        return otpCopy;
-      });
-    }
-  };
-
-
   const handleVerifyOTP = async () => {
     if (isProcessing.current) return;
-  
-    const enteredOTP = otpRef.current; 
-    console.log('Entered OTP:', enteredOTP); // ✅ LOGGING
-  
+
+    const enteredOTP = otpRef.current;
+
     if (enteredOTP.length !== 6 || !/^\d{6}$/.test(enteredOTP)) {
       showToast("Please enter a valid 6 digit OTP", 'error');
       return;
     }
-  
+
     isProcessing.current = true;
-    setLoading(true);
-  
+
     try {
       let response = null;
-  
+
       if (fullPhoneNumber) {
-        response = await axios.post(
-          'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/verifyOtpMsg91',
-          {
-            command: 'verifyOtpMsg91',
-            otp: enteredOTP,
-            user_phone_number: fullPhoneNumber,
-          },
-          {
-            headers: {
-              'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk',
-            },
-          }
-        );
+        response = await apiClient.post('/verifyOtpMsg91', {
+          command: 'verifyOtpMsg91',
+          otp: enteredOTP,
+          user_phone_number: fullPhoneNumber,
+        });
       } else if (phone) {
-        response = await axios.post(
-          'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/verifyEmailOtp',
-          {
-            command: 'verifyEmailOtp',
-            otp: enteredOTP,
-            email: phone,
-          },
-          {
-            headers: {
-              'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk',
-            },
-          }
-        );
+        response = await apiClient.post('/verifyEmailOtp', {
+          command: 'verifyEmailOtp',
+          otp: enteredOTP,
+          email: phone,
+        });
       } else {
         throw new Error("No valid phone number or email provided.");
       }
-  
+
       const status = response?.data?.status || response?.data?.type;
       const message = response?.data?.message;
-  
+
       if (status === "success") {
         await createUserSession(userid);
         await handleLoginSuccess(userid);
@@ -174,29 +101,11 @@ const otpRef = useRef('');
         "Something went wrong. Please try again.";
       showToast(errorMessage, 'error');
     } finally {
-      setLoading(false);
+
       isProcessing.current = false;
     }
   };
-  
 
-
-  useEffect(() => {
-    const getFcmToken = async () => {
-      try {
-        const app = getApp();
-        const messaging = getMessaging(app);
-        const token = await getToken(messaging);
-        setFcmToken(token);
-        console.log("🔹 FCM Token:", token);
-
-      } catch (error) {
-        console.error("❌ Error fetching FCM token:", error);
-      }
-    };
-
-    getFcmToken();
-  }, []);
 
 
   const createUserSession = async (userId) => {
@@ -206,12 +115,6 @@ const otpRef = useRef('');
     }
 
     const finalFcmToken = fcmToken || "FCM_NOT_AVAILABLE";
-    let apnsType = "UNKNOWN";
-    if (Platform.OS === "ios") {
-      const type = __DEV__ ? "SANDBOX" : "PRODUCTION";
-      const tokenPart = apnsToken || "APNS_NOT_AVAILABLE";
-      apnsType = `${type}:${tokenPart}`;
-    }
 
     const deviceModel = await DeviceInfo.getModel(); // your existing usage
 
@@ -226,27 +129,18 @@ const otpRef = useRef('');
       userAgent: await DeviceInfo.getUserAgent(),
       ipAddress: await DeviceInfo.getIpAddress(),
     };
-    
+
     const payload = {
       command: "createUserSession",
       user_id: userId,
       fcm_token: finalFcmToken,
-      apns_type: apnsType,
       deviceInfo: deviceInfo,
     };
 
     console.log("📦 [Payload Sent to API]:", payload);
 
     try {
-      const response = await axios.post(
-        "https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/createUserSession",
-        payload,
-        {
-          headers: {
-            "x-api-key": "k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk",
-          },
-        }
-      );
+      const response = await apiClient.post('/createUserSession', payload);
 
       if (response?.data?.status === "success") {
         const sessionId = response.data.data.session_id;
@@ -405,15 +299,12 @@ const otpRef = useRef('');
     if (isProcessing.current) return;  // Prevent duplicate clicks
 
     isProcessing.current = true;
-    setLoading(true);
     try {
       const response = await axios.post(
         'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/resendOtpMsg91',
         { command: 'resendOtpMsg91', user_phone_number: fullPhoneNumber },
         { headers: { 'x-api-key': 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk' } }
       );
-
-      setLoading(false);
       if (response.data.type === 'success') {
 
         showToast("OTP sent", 'success');
@@ -426,12 +317,11 @@ const otpRef = useRef('');
 
       }
     } catch (error) {
-      setLoading(false);
 
       showToast("Unable to resend\nTry again later", 'error');
 
     } finally {
-      setLoading(false);
+
       isProcessing.current = false;
     }
   };
@@ -479,7 +369,7 @@ const otpRef = useRef('');
               otpRef.current = text;
               handleVerifyOTP();
             }}
-          
+
             textInputProps={{
               accessibilityLabel: "One-Time Password",
             }}
@@ -516,12 +406,6 @@ const otpRef = useRef('');
         </View>
       </View>
 
-      <Message1
-        visible={showAlert}
-        title={alertTitle}
-        iconType={alertIconType}
-        onOk={() => setShowAlert(false)}
-      />
     </SafeAreaView>
   );
 };
@@ -553,14 +437,14 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingBottom: 40,
     justifyContent: 'flex-start',
-    
+
   },
   infoText: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#333',
-    fontWeight:'500'
+    fontWeight: '500'
   },
   inputContainer: {
     marginBottom: 40,
@@ -615,13 +499,13 @@ const styles = StyleSheet.create({
     color: '#075cab',
     fontSize: 16,
     fontWeight: '500',
-    padding:10
+    padding: 10
 
   },
   timerText: {
     color: '#999',
     fontSize: 13,
-    padding:10
+    padding: 10
 
   },
   verifyButton: {

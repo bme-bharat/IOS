@@ -265,7 +265,7 @@ const CompanyListScreen = () => {
     const resizeMode = imageUrl?.includes('buliding.jpg') ? 'cover' : 'contain';
 
     return (
-      <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 10 }}>
+   
         <TouchableOpacity style={styles.card} activeOpacity={1} onPress={() => navigateToDetails(item)} >
 
           <TouchableOpacity style={AppStyles.cardImage1} onPress={() => navigateToDetails(item)} activeOpacity={0.8} >
@@ -356,7 +356,7 @@ const CompanyListScreen = () => {
           </View>
 
         </TouchableOpacity>
-      </TouchableOpacity>
+   
     );
   };
 
@@ -441,10 +441,10 @@ const CompanyListScreen = () => {
               }
               ListHeaderComponent={
                 <View>
-                  {!loading && (
+                  {searchTriggered && (
                     <>
                       <Text style={styles.companyCount}>
-                        {searchTriggered ? `${searchResults.length} companies found` : `${companyCount} companies found`}
+                        {searchTriggered && `${searchResults.length} companies found` }
                       </Text>
 
                       {searchTriggered && searchResults.length > 0 && (
@@ -522,6 +522,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'whitesmoke',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
 
   },
   backButton: {
@@ -655,10 +657,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   card: {
-    width: '100%',
-    marginBottom: 10,
+    marginBottom: 5,
     backgroundColor: "white",
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginHorizontal:10
   },
   cardImage: {
     width: '100%',
@@ -675,7 +679,7 @@ const styles = StyleSheet.create({
   },
 
   textContainer: {
-    padding: 16,
+    padding: 10,
   },
   buttonContainer: {
     display: 'flex',

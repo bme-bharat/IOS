@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     elevation: 3, // Android shadow
     backgroundColor: 'white',
-    shadowColor: '#0d6efd', // iOS shadow color
+    shadowColor: '#000', // iOS shadow color
     shadowOffset: { width: 0, height: 2 }, // iOS shadow offset
     shadowOpacity: 0.2, // iOS shadow opacity
     shadowRadius: 3, // iOS shadow radius

@@ -295,9 +295,12 @@ const UserSubscriptionScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerContainer}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
+      </View>
+  
 
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
@@ -800,7 +803,14 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
 
-
+  headerContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
+  },
 
   backButton: {
     padding: 10,
@@ -885,7 +895,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     color: '#075cab',
-    fontWeight: '900',
+    fontWeight: '700',
 
   },
   featureRow: {

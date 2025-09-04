@@ -35,7 +35,7 @@ const UserJobProfilescreen = () => {
     } finally {
       setLoading(false);
     }
-  }; 
+  };
 
   // Handle delete confirmation
   const handleDelete1 = async () => {
@@ -205,7 +205,7 @@ const UserJobProfilescreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} >
+    <View style={styles.container} >
       <View style={styles.headerContainer}>
         {/* Back Button */}
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -416,7 +416,7 @@ const UserJobProfilescreen = () => {
         iconType="warning"
       />
 
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 3,
     backgroundColor: 'white',
-    shadowColor: '#0d6efd',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
@@ -546,11 +546,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
   },
 

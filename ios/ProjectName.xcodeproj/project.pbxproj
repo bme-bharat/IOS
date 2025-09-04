@@ -39,6 +39,22 @@
 		97A888E82C9BEF85005A3F7E /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 97A888D42C9BEF84005A3F7E /* SimpleLineIcons.ttf */; };
 		97A888E92C9BEF85005A3F7E /* Zocial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 97A888D52C9BEF84005A3F7E /* Zocial.ttf */; };
 		97BB45BC2D003A7100CDDF5E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97BB45BB2D003A7100CDDF5E /* UIKit.framework */; };
+		97F67B902E65A5D2000B4850 /* PlayerEventListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B892E65A5D2000B4850 /* PlayerEventListener.swift */; };
+		97F67B912E65A5D2000B4850 /* BMEVideoPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B852E65A5D2000B4850 /* BMEVideoPlayerManager.swift */; };
+		97F67B922E65A5D2000B4850 /* BMEApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B7E2E65A5D2000B4850 /* BMEApplication.swift */; };
+		97F67B932E65A5D2000B4850 /* CacheProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B882E65A5D2000B4850 /* CacheProvider.swift */; };
+		97F67B942E65A5D2000B4850 /* BMEVideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B822E65A5D2000B4850 /* BMEVideoPlayer.swift */; };
+		97F67B952E65A5D2000B4850 /* PreloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B8C2E65A5D2000B4850 /* PreloadManager.swift */; };
+		97F67B962E65A5D2000B4850 /* BMEEventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B7F2E65A5D2000B4850 /* BMEEventEmitter.swift */; };
+		97F67B972E65A5D2000B4850 /* PlayerPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B8A2E65A5D2000B4850 /* PlayerPool.swift */; };
+		97F67B982E65A5D2000B4850 /* BMEVideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B872E65A5D2000B4850 /* BMEVideoPlayerView.swift */; };
+		97F67B992E65A5D2000B4850 /* BMEVideoPlayerPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B862E65A5D2000B4850 /* BMEVideoPlayerPackage.swift */; };
+		97F67B9A2E65A5D2000B4850 /* BMEVideoPlayerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B832E65A5D2000B4850 /* BMEVideoPlayerBridge.m */; };
+		97F67B9B2E65A5D2000B4850 /* BMEPreloadModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B802E65A5D2000B4850 /* BMEPreloadModule.swift */; };
+		97F67B9C2E65A5D2000B4850 /* BMEVideoPlayerEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F67B842E65A5D2000B4850 /* BMEVideoPlayerEvent.swift */; };
+		97F67B9D2E65A5D2000B4850 /* README_BRIDGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 97F67B8E2E65A5D2000B4850 /* README_BRIDGE.txt */; };
+		97F67B9E2E65A5D2000B4850 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 97F67B8D2E65A5D2000B4850 /* README.md */; };
+		97F67B9F2E65A5D2000B4850 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = 97F67B8B2E65A5D2000B4850 /* Podfile */; };
 		BA835635C779068678243A6B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0DBF70CE91DFD4CA461DA2B8 /* PrivacyInfo.xcprivacy */; };
 		F75E37DCC0D65016E6F4B4C5 /* Pods_ProjectName_ProjectNameTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79F00486E14EDAC937F619B2 /* Pods_ProjectName_ProjectNameTests.framework */; };
 /* End PBXBuildFile section */
@@ -117,6 +133,23 @@
 		97D8AEE82DDD99DB002FA078 /* ProjectName.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProjectName.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97D8AEE92DDD99DB002FA078 /* ServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		97D8AEEA2DDD99DB002FA078 /* ProjectNameTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProjectNameTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		97F67B7E2E65A5D2000B4850 /* BMEApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEApplication.swift; sourceTree = "<group>"; };
+		97F67B7F2E65A5D2000B4850 /* BMEEventEmitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEEventEmitter.swift; sourceTree = "<group>"; };
+		97F67B802E65A5D2000B4850 /* BMEPreloadModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEPreloadModule.swift; sourceTree = "<group>"; };
+		97F67B812E65A5D2000B4850 /* BMEVideo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BMEVideo-Bridging-Header.h"; sourceTree = "<group>"; };
+		97F67B822E65A5D2000B4850 /* BMEVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEVideoPlayer.swift; sourceTree = "<group>"; };
+		97F67B832E65A5D2000B4850 /* BMEVideoPlayerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BMEVideoPlayerBridge.m; sourceTree = "<group>"; };
+		97F67B842E65A5D2000B4850 /* BMEVideoPlayerEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEVideoPlayerEvent.swift; sourceTree = "<group>"; };
+		97F67B852E65A5D2000B4850 /* BMEVideoPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEVideoPlayerManager.swift; sourceTree = "<group>"; };
+		97F67B862E65A5D2000B4850 /* BMEVideoPlayerPackage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEVideoPlayerPackage.swift; sourceTree = "<group>"; };
+		97F67B872E65A5D2000B4850 /* BMEVideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMEVideoPlayerView.swift; sourceTree = "<group>"; };
+		97F67B882E65A5D2000B4850 /* CacheProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheProvider.swift; sourceTree = "<group>"; };
+		97F67B892E65A5D2000B4850 /* PlayerEventListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerEventListener.swift; sourceTree = "<group>"; };
+		97F67B8A2E65A5D2000B4850 /* PlayerPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPool.swift; sourceTree = "<group>"; };
+		97F67B8B2E65A5D2000B4850 /* Podfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
+		97F67B8C2E65A5D2000B4850 /* PreloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadManager.swift; sourceTree = "<group>"; };
+		97F67B8D2E65A5D2000B4850 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		97F67B8E2E65A5D2000B4850 /* README_BRIDGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README_BRIDGE.txt; sourceTree = "<group>"; };
 		A34D19A515D574BD4A16997C /* Pods-ProjectName-ProjectNameTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProjectName-ProjectNameTests.release.xcconfig"; path = "Target Support Files/Pods-ProjectName-ProjectNameTests/Pods-ProjectName-ProjectNameTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F3E7C924041FC3198109794D /* Pods_ProjectName.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ProjectName.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -194,6 +227,7 @@
 		13B07FAE1A68108700A75B9A /* ProjectName */ = {
 			isa = PBXGroup;
 			children = (
+				97F67B8F2E65A5D2000B4850 /* bmevideo */,
 				977978C22D1E7F0500C2953B /* ProjectName.entitlements */,
 				97BB45BD2D003A7D00CDDF5E /* ProjectNameDebug.entitlements */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -274,6 +308,30 @@
 			);
 			name = Fonts;
 			path = "../node_modules/react-native-vector-icons/Fonts";
+			sourceTree = "<group>";
+		};
+		97F67B8F2E65A5D2000B4850 /* bmevideo */ = {
+			isa = PBXGroup;
+			children = (
+				97F67B7E2E65A5D2000B4850 /* BMEApplication.swift */,
+				97F67B7F2E65A5D2000B4850 /* BMEEventEmitter.swift */,
+				97F67B802E65A5D2000B4850 /* BMEPreloadModule.swift */,
+				97F67B812E65A5D2000B4850 /* BMEVideo-Bridging-Header.h */,
+				97F67B822E65A5D2000B4850 /* BMEVideoPlayer.swift */,
+				97F67B832E65A5D2000B4850 /* BMEVideoPlayerBridge.m */,
+				97F67B842E65A5D2000B4850 /* BMEVideoPlayerEvent.swift */,
+				97F67B852E65A5D2000B4850 /* BMEVideoPlayerManager.swift */,
+				97F67B862E65A5D2000B4850 /* BMEVideoPlayerPackage.swift */,
+				97F67B872E65A5D2000B4850 /* BMEVideoPlayerView.swift */,
+				97F67B882E65A5D2000B4850 /* CacheProvider.swift */,
+				97F67B892E65A5D2000B4850 /* PlayerEventListener.swift */,
+				97F67B8A2E65A5D2000B4850 /* PlayerPool.swift */,
+				97F67B8B2E65A5D2000B4850 /* Podfile */,
+				97F67B8C2E65A5D2000B4850 /* PreloadManager.swift */,
+				97F67B8D2E65A5D2000B4850 /* README.md */,
+				97F67B8E2E65A5D2000B4850 /* README_BRIDGE.txt */,
+			);
+			path = bmevideo;
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
@@ -410,6 +468,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				97F67B9D2E65A5D2000B4850 /* README_BRIDGE.txt in Resources */,
+				97F67B9E2E65A5D2000B4850 /* README.md in Resources */,
+				97F67B9F2E65A5D2000B4850 /* Podfile in Resources */,
 				97A888E32C9BEF85005A3F7E /* Foundation.ttf in Resources */,
 				97A888DA2C9BEF85005A3F7E /* Feather.ttf in Resources */,
 				97A888E02C9BEF85005A3F7E /* FontAwesome6_Regular.ttf in Resources */,
@@ -603,6 +664,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				97F67B902E65A5D2000B4850 /* PlayerEventListener.swift in Sources */,
+				97F67B912E65A5D2000B4850 /* BMEVideoPlayerManager.swift in Sources */,
+				97F67B922E65A5D2000B4850 /* BMEApplication.swift in Sources */,
+				97F67B932E65A5D2000B4850 /* CacheProvider.swift in Sources */,
+				97F67B942E65A5D2000B4850 /* BMEVideoPlayer.swift in Sources */,
+				97F67B952E65A5D2000B4850 /* PreloadManager.swift in Sources */,
+				97F67B962E65A5D2000B4850 /* BMEEventEmitter.swift in Sources */,
+				97F67B972E65A5D2000B4850 /* PlayerPool.swift in Sources */,
+				97F67B982E65A5D2000B4850 /* BMEVideoPlayerView.swift in Sources */,
+				97F67B992E65A5D2000B4850 /* BMEVideoPlayerPackage.swift in Sources */,
+				97F67B9A2E65A5D2000B4850 /* BMEVideoPlayerBridge.m in Sources */,
+				97F67B9B2E65A5D2000B4850 /* BMEPreloadModule.swift in Sources */,
+				97F67B9C2E65A5D2000B4850 /* BMEVideoPlayerEvent.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -693,7 +767,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = M6X6N2GDS4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = ProjectName/Info.plist;
@@ -701,7 +775,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.9;
+				MARKETING_VERSION = 5.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -727,14 +801,14 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = M6X6N2GDS4;
 				INFOPLIST_FILE = ProjectName/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.5.9;
+				MARKETING_VERSION = 5.0.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

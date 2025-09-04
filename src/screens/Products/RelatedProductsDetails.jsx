@@ -432,7 +432,7 @@ const RelatedProductDetails = () => {
         </View>
       ) :
         <>
-          <ScrollView contentContainerStyle={{ backgroundColor: 'white', }} showsVerticalScrollIndicator={false}
+          <ScrollView contentContainerStyle={{paddingBottom:'20%'}} showsVerticalScrollIndicator={false}
             ref={scrollViewRef} >
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product.title}</Text>
@@ -701,12 +701,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'whitesmoke',
-    elevation: 1,  // for Android
-    shadowColor: '#000',  // shadow color for iOS
-    shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
-    shadowOpacity: 0.1,  // shadow opacity for iOS
-    shadowRadius: 2,  // shadow radius for iOS
+    backgroundColor: 'white',
+        borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
   },
   backButton: {

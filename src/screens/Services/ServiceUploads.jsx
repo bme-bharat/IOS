@@ -394,11 +394,11 @@ const CreateService = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
-        </TouchableOpacity>
-      </View>
+     <View style={styles.headerContainer}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <Icon name="arrow-left" size={24} color="#075cab" />
+                </TouchableOpacity>
+                </View>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
@@ -615,21 +615,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'whitesmoke',
   },
 
-  searchContainer: {
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 10
+  },
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,  // for Android
-    shadowColor: '#000',  // shadow color for iOS
-    shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
-    shadowOpacity: 0.1,  // shadow opacity for iOS
-    shadowRadius: 2,  // shadow radius for iOS
-
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    padding: 10
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   header: {
     fontSize: 18,
@@ -662,6 +658,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
 
   input2: {
@@ -722,6 +720,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd'
   },
   dropdownButtonText: {
     fontSize: 16,

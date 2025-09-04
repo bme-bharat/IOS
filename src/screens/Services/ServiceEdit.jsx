@@ -195,38 +195,38 @@ const EditService = () => {
     const [signedUrls, setSignedUrls] = useState({});
 
 
-        const {
-            showMediaOptions,
-            pickImage,
-            pickVideo,
-            isCompressing,
-            overlayRef,
-        } = useMediaPicker({
-            onMediaSelected: (file, meta, previewThumbnail) => {
-                if (!file || !file.type) return;
-    
-                // Route based on file type
-                if (file.type.startsWith('image/')) {
-                    setNewImages((prev) => {
-                        if (prev.length >= 4) return prev;
-                        return [...prev, file];
-                    });
-                } else if (file.type.startsWith('video/')) {
-                    setNewVideos((prev) => {
-                        if (prev.length >= 1) return prev;
-                        return [...prev, file];
-                    });
-                } else if (file.type === 'application/pdf') {
-                    setNewFiles(file);
-                }
-    
-            },
-            includeDocuments: true, // Allow PDF upload now
-            includeCamera: false,
-            mediaType: 'mixed',
-            maxImageSizeMB: 5,
-            maxVideoSizeMB: 10,
-        });
+    const {
+        showMediaOptions,
+        pickImage,
+        pickVideo,
+        isCompressing,
+        overlayRef,
+    } = useMediaPicker({
+        onMediaSelected: (file, meta, previewThumbnail) => {
+            if (!file || !file.type) return;
+
+            // Route based on file type
+            if (file.type.startsWith('image/')) {
+                setNewImages((prev) => {
+                    if (prev.length >= 4) return prev;
+                    return [...prev, file];
+                });
+            } else if (file.type.startsWith('video/')) {
+                setNewVideos((prev) => {
+                    if (prev.length >= 1) return prev;
+                    return [...prev, file];
+                });
+            } else if (file.type === 'application/pdf') {
+                setNewFiles(file);
+            }
+
+        },
+        includeDocuments: true, // Allow PDF upload now
+        includeCamera: false,
+        mediaType: 'mixed',
+        maxImageSizeMB: 5,
+        maxVideoSizeMB: 10,
+    });
 
     useEffect(() => {
         const fetchSignedUrls = async () => {
@@ -443,34 +443,34 @@ const EditService = () => {
                 { key: "category", label: "Category" },
                 { key: "subcategory", label: "Subcategory" },
             ];
-    
+
             for (let field of requiredFields) {
                 const keys = field.key.split(".");
                 let value = productData;
-    
+
                 for (let key of keys) {
                     value = value[key] ?? "";
                 }
-    
+
                 value = typeof value === "string" ? value.trim() : value;
-    
+
                 if (!value) {
                     showToast(`${field.label} is mandatory.`, "info");
                     setSubmitting(false);
                     return;
                 }
             }
-    
+
             const existingImages = (product.images || []).filter(
                 (img) => !removedMedia.includes(img)
             );
-    
+
             if (existingImages.length + newImages.length === 0) {
                 showToast("Please upload at least one image for the service", "info");
                 setSubmitting(false);
                 return;
             }
-    
+
             if (removedMedia.length > 0) {
                 await Promise.all(
                     removedMedia.map((fileKey) =>
@@ -479,9 +479,9 @@ const EditService = () => {
                 );
                 setRemovedMedia([]);
             }
-    
+
             showToast("Uploading media...", "info");
-    
+
             // Directly upload without compression
             const uploadedImages = await Promise.all(
                 newImages.map((img) => uploadFileToS3(img.uri, "image/jpeg"))
@@ -494,22 +494,22 @@ const EditService = () => {
             const uploadedFiles = await Promise.all(
                 newFiles.map((file) => uploadFileToS3(file.uri, "application/pdf"))
             );
-    
+
             const finalFiles = [
                 ...(product.files || []).filter((file) => !removedFiles.includes(file)),
                 ...uploadedFiles.filter(Boolean),
             ];
-    
+
             const finalImages = [
                 ...(product.images || []).filter((img) => !removedMedia.includes(img)),
                 ...uploadedImages.filter(Boolean),
             ];
-    
+
             const finalVideos = [
                 ...(product.videos || []).filter((vid) => !removedMedia.includes(vid)),
                 ...uploadedVideos.filter(Boolean),
             ];
-    
+
             const trimStrings = (obj) => {
                 if (typeof obj === "string") return obj.trim();
                 if (Array.isArray(obj)) return obj.map(trimStrings);
@@ -520,9 +520,9 @@ const EditService = () => {
                 }
                 return obj;
             };
-    
+
             setLoading(true);
-    
+
             const requestBody = {
                 command: "updateService",
                 service_id: product.service_id,
@@ -532,9 +532,9 @@ const EditService = () => {
                 videos: finalVideos,
                 files: finalFiles,
             };
-    
+
             const response = await apiClient.post("/updateService", requestBody);
-    
+
             if (response.data.status === "success") {
                 setHasChanges(false);
                 setNewImages([]);
@@ -545,7 +545,7 @@ const EditService = () => {
                         ...requestBody,
                     },
                 });
-    
+
                 showToast("Service updated successfully", "success");
                 navigation.goBack();
             } else {
@@ -560,7 +560,7 @@ const EditService = () => {
             setHasChanges(false);
         }
     };
-    
+
 
 
 
@@ -595,9 +595,12 @@ const EditService = () => {
     return (
 
         <SafeAreaView style={styles.container} >
+            <View style={styles.headerContainer}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Icon name="arrow-left" size={24} color="#075cab" />
             </TouchableOpacity>
+            </View>
+            
             <KeyboardAwareScrollView
                 contentContainerStyle={{ flexGrow: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 10, }}
                 keyboardShouldPersistTaps="handled"
@@ -607,7 +610,7 @@ const EditService = () => {
 
 
 
-                    <Text style={styles.title}>Edit a service</Text>
+                <Text style={styles.title}>Edit a service</Text>
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Service name <Text style={{ color: 'red' }}>*</Text></Text>
                     <TextInput
@@ -787,7 +790,7 @@ const EditService = () => {
                             {[...files, ...newFiles].length > 0 ? (
                                 [...files, ...newFiles].map((file, index) => (
                                     <View key={index} style={[styles.mediaWrapper, { padding: 20 }]}>
-                                     <Icon name="file-document-outline" size={50} color="black" />
+                                        <Icon name="file-document-outline" size={50} color="black" />
 
                                         {/* Display file name if available */}
                                         <Text style={[styles.fileName, { marginTop: 5 }]}>{file?.name || "Selected File"}</Text>
@@ -883,6 +886,14 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
         padding: 10,
     },
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderColor: '#f0f0f0'
+      },
     headerTitle: {
         fontSize: 18,
         fontWeight: "bold",
@@ -916,6 +927,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#ddd'
     },
     sectionTitle: {
         fontSize: 18,
@@ -1017,6 +1030,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#ddd'
     },
     textInput: {
         height: 40,
@@ -1032,7 +1047,7 @@ const styles = StyleSheet.create({
         elevation: 2,
         marginTop: 10,
     },
-    title:{
+    title: {
         fontSize: 18,
         fontWeight: '600',
         marginBottom: 25,

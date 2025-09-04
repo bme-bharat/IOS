@@ -544,10 +544,10 @@ const ProductsList = () => {
                     }
                     ListHeaderComponent={
                         <View>
-                            {!loading && (
+                            {searchTriggered && (
                                 <>
                                     <Text style={styles.companyCount}>
-                                        {searchTriggered ? `${searchResults.length} products found` : `${companyCount} products found`}
+                                        {searchTriggered && `${searchResults.length} products found`}
                                     </Text>
 
                                     {searchQuery && (

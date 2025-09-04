@@ -1,0 +1,9 @@
+platform :ios, '12.0'
+use_frameworks!
+
+target 'BMEVideo' do
+  config = use_native_modules!
+  use_react_native!(
+    :path => config["reactNativePath"]
+  )
+end

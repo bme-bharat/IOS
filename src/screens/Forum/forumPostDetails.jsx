@@ -45,10 +45,10 @@ const { width } = Dimensions.get('window');
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
 const CommentScreen = ({ route }) => {
-  const { highlightId, highlightReactId, forum_id ,url} = route.params;
+  const { highlightId, highlightReactId, forum_id, url } = route.params;
+  
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
-
   const { openSheet, closeSheet } = useBottomSheet();
 
   const [post, setPost] = useState(null);
@@ -228,7 +228,7 @@ const CommentScreen = ({ route }) => {
       }
 
       setMediaUrl('');
- 
+
       setMediaUrl1('');
       seLoading(false);
     }
@@ -419,9 +419,9 @@ const CommentScreen = ({ route }) => {
     height = deviceWidth;
   }
 
-
+  console.log('post', post)
   return (
-    <SafeAreaView style={styles.outerContainer}>
+    <View style={styles.outerContainer}>
       <View style={styles.headerContainer1}>
 
         <TouchableOpacity
@@ -504,40 +504,38 @@ const CommentScreen = ({ route }) => {
               ignoredDomTags={['font']}
             />
           </View>
+
           {mediaUrl ? (
-            <TouchableOpacity
-              style={[styles.mediaContainer, { width: '100%', height: height, }]}
-              activeOpacity={1}
-            >
-              {isVideo ? (
-                <View style={styles.videoContainer}>
-                  <Video
-                    source={{ uri: mediaUrl }}
-                    style={{
-                      width: '100%',
-                      height: height
-                    }}
-                    controls
-                    repeat={true}
-                    // paused={!isVideoPlaying}
-                    resizeMode="cover"
-                    poster={{uri: url}}
-                    posterResizeMode='cover'
-                  />
+            isVideo ? (
 
-                </View>
-              ) : (
-                <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: mediaUrl }])} activeOpacity={1}>
+              <Video
+                source={{ uri: mediaUrl }}
+                style={{
+                  width: '100%',
+                  height: height,
+                }}
+                controls
+                repeat={true}
+                paused={false}
+                resizeMode="cover"
+                poster={url ? { uri: url } : undefined} // ✅ ensure poster is an object
+                posterResizeMode="cover"
+              />
 
-                  <Image
-                    source={{ uri: mediaUrl }}
-                    style={[styles.image, { width: '100%', height: height, }]}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => openMediaViewer([{ type: 'image', url: mediaUrl }])}
+                activeOpacity={1}
+              >
+                <Image
+                  source={{ uri: mediaUrl }}
+                  style={[styles.image, { width: '100%', height: height }]}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            )
           ) : null}
+
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 40, }}>
             <View>
@@ -718,7 +716,7 @@ const CommentScreen = ({ route }) => {
 
       </>
 
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -785,11 +783,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,  // for Android
-    shadowColor: '#000',  // shadow color for iOS
-    shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
-    shadowOpacity: 0.1,  // shadow opacity for iOS
-    shadowRadius: 2,  // shadow radius for iOS
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   backButton: {
     alignSelf: 'flex-start',

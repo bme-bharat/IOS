@@ -520,7 +520,7 @@ const JobListScreen = () => {
     const resizeMode = imageUrl?.includes('buliding.jpg') ? 'cover' : 'contain';
 
     return (
-      <TouchableOpacity style={{ paddingHorizontal: 10, paddingBottom: 5, }} activeOpacity={1}>
+
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigateToDetails(job)}
@@ -599,7 +599,7 @@ const JobListScreen = () => {
             </View>
           </View>
         </TouchableOpacity>
-      </TouchableOpacity>
+   
     );
   };
   
@@ -708,10 +708,10 @@ const JobListScreen = () => {
             }
             ListHeaderComponent={
               <View>
-                {!loading && (
+                {searchTriggered && (
                   <>
                     <Text style={styles.companyCount}>
-                      {searchTriggered ? `${searchResults.length} jobs found` : `${companyCount} jobs found`}
+                      {searchTriggered && `${searchResults.length} jobs found`}
                     </Text>
 
                     {searchTriggered && searchResults.length > 0 && (
@@ -834,10 +834,14 @@ const styles = StyleSheet.create({
 
 
   card: {
-    width: '100%',
     backgroundColor: "white",
     borderRadius: 10,
+    marginHorizontal:10,
+  marginBottom:5,
+  borderWidth: 0.5,
+    borderColor: '#ddd',
   },
+
 
 
   textContainer: {

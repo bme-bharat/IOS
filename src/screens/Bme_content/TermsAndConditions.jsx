@@ -8,9 +8,12 @@ const TermsAndConditionsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container1} >
-    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+      <View style={styles.headerContainer}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
       <Icon name="arrow-left" size={24} color="#075cab" />
     </TouchableOpacity>
+      </View>
+
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Welcome to BME Bharat App</Text>
       <Text style={styles.paragraph}>
@@ -99,6 +102,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding:10
     
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   container1: {
     flex: 1,

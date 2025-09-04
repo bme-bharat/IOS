@@ -473,7 +473,7 @@ const ServiceDetails = () => {
   }
   return (
 
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -491,7 +491,7 @@ const ServiceDetails = () => {
         </View>
       ) : (
         <>
-          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} >
+          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} contentContainerStyle={{paddingBottom:'20%'}}>
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product.title}</Text>
               <Text style={styles.category}>{product.category}</Text>
@@ -729,7 +729,7 @@ const ServiceDetails = () => {
         </>
       )}
 
-    </SafeAreaView>
+    </View>
   );
 
 };
@@ -753,7 +753,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'whitesmoke',
+    backgroundColor: 'white',
+        borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
   },
   backButton: {

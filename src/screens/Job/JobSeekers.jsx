@@ -436,15 +436,20 @@ const styles = StyleSheet.create({
 
   },
   imageContainer: {
-    alignItems: 'center',
     marginBottom: 10,
-  },
-  image: {
     width: 100,
     height: 100,
-    borderRadius: 50,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    alignSelf:'center'
+  },
+  image: {
+    width:'100%',
+    height:'100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 70,
+    
   },
   avatarText: {
     fontSize: 40,

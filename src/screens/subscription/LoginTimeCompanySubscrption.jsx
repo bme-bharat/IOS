@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     color: '#075cab',
-    fontWeight: '900',
+    fontWeight: '700',
 
   },
   featureRow: {

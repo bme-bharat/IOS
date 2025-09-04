@@ -105,14 +105,21 @@ const JobDetailScreen = ({ route }) => {
       if (hasValidResponse) {
         const jobData = res.data.response[0];
 
-        // Case: No fileKey → generate avatar first
         if (!jobData.fileKey) {
-          jobData.companyAvatar = generateAvatarFromName(jobData.company_name);
+          // fallback avatar
+          const avatar = generateAvatarFromName(jobData.company_name);
+          jobData.companyAvatar = avatar;
+
+          setJobImageUrls(prev => ({
+            ...prev,
+            [jobData.post_id]: { type: "avatar", value: avatar },
+          }));
+
           setPost(jobData);
           return;
         }
 
-        // fileKey exists → try fetching image URL
+        // fileKey exists → try fetching signed URL
         try {
           const imgRes = await apiClient.post('/getObjectSignedUrl', {
             command: 'getObjectSignedUrl',
@@ -120,21 +127,32 @@ const JobDetailScreen = ({ route }) => {
           });
 
           if (imgRes.data) {
-            setJobImageUrls(prevUrls => ({
-              ...prevUrls,
-              [jobData.post_id]: imgRes.data,
+            setJobImageUrls(prev => ({
+              ...prev,
+              [jobData.post_id]: { type: "url", value: imgRes.data },
+            }));
+          } else {
+            const avatar = generateAvatarFromName(jobData.company_name);
+            jobData.companyAvatar = avatar;
+            setJobImageUrls(prev => ({
+              ...prev,
+              [jobData.post_id]: { type: "avatar", value: avatar },
             }));
           }
         } catch (error) {
           console.warn('Error fetching image URL, falling back to avatar:', error);
-          jobData.companyAvatar = generateAvatarFromName(jobData.company_name);
+          const avatar = generateAvatarFromName(jobData.company_name);
+          jobData.companyAvatar = avatar;
+          setJobImageUrls(prev => ({
+            ...prev,
+            [jobData.post_id]: { type: "avatar", value: avatar },
+          }));
         }
 
         setPost(jobData);
       } else {
         setPost({ removed_by_author: true });
       }
-
     } catch (error) {
       showToast('Network error', 'error');
     }
@@ -142,37 +160,53 @@ const JobDetailScreen = ({ route }) => {
 
 
 
+
   useEffect(() => {
     if (routePost) {
-
       setPost(routePost);
-
-      if (routePost?.fileKey) {
+      const fileKey = routePost?.fileKey || routePost?.company_file_key
+      console.log('fileKey', fileKey)
+      if (fileKey) {
         (async () => {
           try {
             const imgRes = await apiClient.post('/getObjectSignedUrl', {
               command: 'getObjectSignedUrl',
-              key: routePost.fileKey,
+              key: fileKey,
             });
-            if (imgRes.data) {
 
+            if (imgRes.data) {
               setJobImageUrls(prev => ({
                 ...prev,
-                [routePost.post_id]: imgRes.data,
+                [routePost.post_id]: { type: "url", value: imgRes.data },
+              }));
+            } else {
+              const avatar = generateAvatarFromName(routePost.company_name);
+              setJobImageUrls(prev => ({
+                ...prev,
+                [routePost.post_id]: { type: "avatar", value: avatar },
               }));
             }
           } catch (error) {
-
+            const avatar = generateAvatarFromName(routePost.company_name);
+            setJobImageUrls(prev => ({
+              ...prev,
+              [routePost.post_id]: { type: "avatar", value: avatar },
+            }));
           }
         })();
       } else {
-
+        const avatar = generateAvatarFromName(routePost.company_name);
+        setJobImageUrls(prev => ({
+          ...prev,
+          [routePost.post_id]: { type: "avatar", value: avatar },
+        }));
       }
     } else {
       console.log('No routePost found, fetching from API'); // 🟡 LOG: from API
       fetchJobs();
     }
   }, []);
+
 
 
 
@@ -205,7 +239,6 @@ const JobDetailScreen = ({ route }) => {
 
     }
   };
-
 
 
 
@@ -316,6 +349,8 @@ const JobDetailScreen = ({ route }) => {
 
   };
 
+  const jobImage = jobImageUrls[post?.post_id];
+
   if (!post) {
 
     return (
@@ -395,23 +430,37 @@ const JobDetailScreen = ({ route }) => {
 
       <>
         {post ? (
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '30%', paddingTop: 10 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '30%', paddingTop: 5 }}>
 
             <TouchableOpacity
-              onPress={() => openMediaViewer([{ type: 'image', url: jobImageUrls[post?.post_id] }])}
+              onPress={() => {
+                if (jobImage?.type === "url") {
+                  openMediaViewer([{ type: "image", url: jobImage.value }]);
+                }
+              }}
               activeOpacity={1}
               style={styles.imageContainer}
             >
-              {post.fileKey ? (
+              {jobImage?.type === "url" ? (
                 <FastImage
-                  source={{ uri: jobImageUrls[post?.post_id] }}
+                  source={{ uri: jobImage.value }}
                   style={styles.detailImage}
                   resizeMode={FastImage.resizeMode.contain}
                 />
               ) : (
-                <View style={[AppStyles.avatarContainerDetails, { backgroundColor: post?.companyAvatar?.backgroundColor }]}>
-                  <Text style={[AppStyles.avatarText, { color: post?.companyAvatar?.textColor }]}>
-                    {post?.companyAvatar?.initials}
+                <View
+                  style={[
+                    AppStyles.avatarContainerDetails,
+                    { backgroundColor: jobImage?.value?.backgroundColor },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      AppStyles.avatarText,
+                      { color: jobImage?.value?.textColor },
+                    ]}
+                  >
+                    {jobImage?.value?.initials}
                   </Text>
                 </View>
               )}
@@ -435,7 +484,7 @@ const JobDetailScreen = ({ route }) => {
               <Text style={styles.label}>Category</Text>
 
               <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{post?.category || ''}</Text>
+              <Text style={styles.value}>{post?.company_category || ''}</Text>
             </View>
 
             {post?.Website ? (
@@ -545,7 +594,7 @@ const JobDetailScreen = ({ route }) => {
                 <Text style={[styles.label]}>Required languages</Text>
 
                 <Text style={styles.colon}>:</Text>
-              
+
                 <View style={{ flexDirection: "column", flex: 2 }}>
                   {post.preferred_languages
                     .split(",")
@@ -711,11 +760,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
 
   backButton: {
@@ -755,7 +801,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',  // Center the items vertically
     elevation: 3, // Android shadow
     backgroundColor: 'white',
-    shadowColor: '#0d6efd', // iOS shadow color
+    shadowColor: '#000', // iOS shadow color
     shadowOffset: { width: 0, height: 2 }, // iOS shadow offset
     shadowOpacity: 0.2, // iOS shadow opacity
     shadowRadius: 3, // iOS shadow radius

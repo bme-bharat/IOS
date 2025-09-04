@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import XLogo from './XLogo';
 
 const HelpCenter = () => {
   const navigation = useNavigation();
@@ -23,6 +24,7 @@ const HelpCenter = () => {
       instagram: 'https://www.instagram.com/b_m_e_bharat/',
       youtube: 'https://www.youtube.com/channel/UCxEPxTe3RhRXlBd3Er4653Q',
       linkedin: 'https://in.linkedin.com/in/bme-bharat-6859b6201',
+      x: 'https://x.com/bme_india',
     },
     whatsapp: 'https://wa.me/918310491223',
   };
@@ -34,13 +36,14 @@ const HelpCenter = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
+      <View style={styles.headerContainer}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.backButton}>
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
-
+      </View>
       <ScrollView style={styles.container}>
         <TouchableOpacity activeOpacity={1}>
           <Text style={styles.description}>
@@ -112,7 +115,7 @@ const HelpCenter = () => {
 
             <TouchableOpacity style={styles.row} onPress={() => handlePress(contactDetails.social.facebook)}>
               <View style={[styles.iconLeftSocial, { borderColor: '#3b5998' }]}>
-              <Icon name="facebook" size={18} color="#3b5998" />
+                <Icon name="facebook" size={18} color="#3b5998" />
 
               </View>
               <View>
@@ -146,8 +149,8 @@ const HelpCenter = () => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.row} onPress={() => handlePress(contactDetails.social.linkedin)}>
-              <View style={[styles.iconLeftSocial, { borderColor: '#0077B5' }]}>
-              <Icon name="linkedin" size={18} color="#0077B5" />
+              <View style={[styles.iconLeftSocial, { borderColor: '#0077B5',  }]}>
+                <Icon name="linkedin" size={18} color="#0077B5" />
               </View>
               <View>
                 <View>
@@ -157,27 +160,49 @@ const HelpCenter = () => {
               </View>
             </TouchableOpacity>
 
+            <TouchableOpacity style={styles.row} onPress={() => handlePress(contactDetails.social.x)}>
+              <View style={[styles.iconLeftSocial, { borderColor: '#000' }]}>
+                <XLogo size={14} color="#000" />
+
+              </View>
+              <View>
+                <View>
+                  <Text style={styles.label}>X</Text>
+                  <Text style={styles.detail}>@BME_BHARAT</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
           </View>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#f9f9f9',
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth:1,
-    borderColor:'#ddd'
+    alignSelf: 'flex-start',
+    padding: 10,
+    
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     backgroundColor: '#f9f9f9',
+    paddingBottom:'20%'
   },
   description: {
     fontSize: 15,
@@ -188,13 +213,15 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
+    borderWidth:1,
+    borderColor:'#ddd'
   },
   cardTitle: {
     fontSize: 17,
@@ -215,7 +242,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
-    
+
   },
   textColumn: {
     flex: 1,

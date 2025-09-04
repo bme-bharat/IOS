@@ -24,7 +24,6 @@ import { openLink } from '../AppUtils/openLinks';
 const CompanyProfileScreen = ({ route }) => {
   const navigation = useNavigation();
   const profile = useSelector(state => state.CompanyProfile.profile);
-  console.log('profile', profile)
   const { myId } = useNetwork();
   const [isProductDropdownVisible, setProductDropdownVisible] = useState(false);
   const [isServiceDropdownVisible, setServiceDropdownVisible] = useState(false);
@@ -445,8 +444,7 @@ const CompanyProfileScreen = ({ route }) => {
             <Text style={styles.label}>Email ID     </Text>
             <Text style={styles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.company_email_id || ""}
-              <Text>{profile.is_email_verified && (
+            <Text style={styles.value}>{profile?.company_email_id || ""} <Text >{profile.is_email_verified && (
                 <Ionicons name="checkmark-circle" size={12} color="green" />
               )}</Text>
             </Text>
@@ -897,7 +895,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',  // Align label and detail in a row
     alignItems: 'center',  // Center the items vertically
     backgroundColor: 'white',
-    shadowColor: '#0d6efd', // iOS shadow color
+    shadowColor: '#000', // iOS shadow color
     shadowOffset: { width: 0, height: 2 }, // iOS shadow offset
     shadowOpacity: 0.2, // iOS shadow opacity
     shadowRadius: 3, // iOS shadow radius

@@ -4,7 +4,7 @@ const headerHeight = 60;
 const bottomHeight = 60;
 
 export default AppStyle = StyleSheet.create({
-  
+
   scrollView: {
     paddingTop: headerHeight,
     paddingBottom: bottomHeight,
@@ -104,6 +104,8 @@ export default AppStyle = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
 
   },
   headerContainerForum: {
@@ -258,8 +260,7 @@ export default AppStyle = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    borderRadius: 8
   },
   avatarText: {
     fontSize: 50,
@@ -311,12 +312,17 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     marginHorizontal: 6,
-    marginBottom: 10,
-    borderRadius: 16,
+    marginBottom: 5,
+    borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 0.5,
     borderColor: '#ddd',
-    height: 100
+    height: 100,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  
   },
 
   eduCardLeft: {
@@ -325,13 +331,13 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRightWidth: 0.5,
     borderColor: '#eee',
+    padding: 5
   },
 
   eduImage: {
     width: '100%',
     height: '100%',
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    borderRadius: 8,
     resizeMode: 'contain',
   },
 
@@ -537,7 +543,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     paddingLeft: 15,
     borderBottomWidth: 1,
-    borderColor: '#ddd'
+    borderColor: '#f0f0f0'
   },
 
   rightContainer: {
@@ -670,9 +676,16 @@ export const styles = StyleSheet.create({
   articleCard: {
     padding: 12,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 12,
-    elevation: 2,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: '#ddd',
+    marginHorizontal: 6,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  
   },
   articleCardHeader: {
     flexDirection: 'row',

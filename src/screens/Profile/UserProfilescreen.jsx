@@ -275,7 +275,7 @@ const UserProfileScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton}
           activeOpacity={1}
@@ -530,7 +530,7 @@ const UserProfileScreen = () => {
       </ScrollView >
 
 
-    </SafeAreaView >
+    </View >
   );
 };
 
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    shadowColor: '#0d6efd',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,

@@ -3,9 +3,6 @@ import { AppState, NativeEventEmitter, NativeModules, Platform } from 'react-nat
 import QuickActions from 'react-native-quick-actions';
 import { navigationRef } from '../../App';
 
-// Initial setup logging
-console.log('[QuickActions] Initializing QuickActions handler');
-
 const NAVIGATION_READY_TIMEOUT = 10000; // 10 seconds max wait
 
 const TAB_SCREENS = [

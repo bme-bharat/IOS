@@ -133,7 +133,7 @@ const BlockedUsers = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container1}>
+    <View style={styles.container1}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#075cab" />
@@ -166,7 +166,7 @@ const BlockedUsers = () => {
         />
 
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -184,11 +184,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+      borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
   },
   loader: {

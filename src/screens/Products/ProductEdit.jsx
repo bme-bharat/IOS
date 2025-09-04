@@ -424,7 +424,7 @@ const EditProduct = () => {
 
             return { uri: videoUri, size: 0, sizeMB: "N/A" };
         } finally {
-      
+
             Toast.hide();
         }
     };
@@ -566,24 +566,24 @@ const EditProduct = () => {
                 { key: "tags", label: "Tags" },
                 { key: "specifications.brand", label: "Brand" },
             ];
-    
+
             for (let field of requiredFields) {
                 const keys = field.key.split(".");
                 let value = productData;
-    
+
                 for (let key of keys) {
                     value = value[key] ?? "";
                 }
-    
+
                 value = typeof value === "string" ? value.trim() : value;
-    
+
                 if (!value) {
                     showToast(`${field.label} is mandatory`, 'info');
                     setSubmitting(false);
                     return;
                 }
             }
-    
+
             // Validate "Others" fields
             for (const field in formData) {
                 if (formData[field]?.toLowerCase() === "others") {
@@ -595,7 +595,7 @@ const EditProduct = () => {
                     }
                 }
             }
-    
+
             // Ensure at least one image
             const existingImages = (product.images || []).filter((img) => !removedMedia.includes(img));
             if (existingImages.length + newImages.length === 0) {
@@ -603,7 +603,7 @@ const EditProduct = () => {
                 setSubmitting(false);
                 return;
             }
-    
+
             // Delete removed media
             if (removedMedia.length > 0) {
                 await Promise.all(removedMedia.map((fileKey) =>
@@ -611,35 +611,35 @@ const EditProduct = () => {
                 ));
                 setRemovedMedia([]);
             }
-    
+
             // Upload new files directly (no compression)
             const uploadedImages = await Promise.all(
                 newImages.map((img) => uploadFileToS3(img.uri, "image/jpeg"))
             );
-    
+
             const uploadedVideos = await Promise.all(
                 newVideos.map((vid) => uploadFileToS3(vid.uri, "video/mp4"))
             );
-    
+
             const uploadedFiles = await Promise.all(
                 newFiles.map((file) => uploadFileToS3(file.uri, "application/pdf"))
             );
-    
+
             const finalFiles = [
                 ...(product.files || []).filter((file) => !removedFiles.includes(file)),
                 ...uploadedFiles.filter(Boolean)
             ];
-    
+
             const finalImages = [
                 ...(product.images || []).filter((img) => !removedMedia.includes(img)),
                 ...uploadedImages.filter(Boolean)
             ];
-    
+
             const finalVideos = [
                 ...(product.videos || []).filter((vid) => !removedMedia.includes(vid)),
                 ...uploadedVideos.filter(Boolean)
             ];
-    
+
             // Trim all strings
             const trimStrings = (obj) => {
                 if (typeof obj === "string") return obj.trim();
@@ -651,9 +651,9 @@ const EditProduct = () => {
                 }
                 return obj;
             };
-    
+
             setLoading(true);
-    
+
             const requestBody = {
                 command: "updateProduct",
                 product_id: product.product_id,
@@ -663,9 +663,9 @@ const EditProduct = () => {
                 videos: finalVideos,
                 files: finalFiles,
             };
-    
+
             const response = await apiClient.post("/updateProduct", requestBody);
-    
+
             if (response.data.status === "success") {
                 setHasChanges(false);
                 showToast("Product updated successfully", 'success');
@@ -689,7 +689,7 @@ const EditProduct = () => {
             setSubmitting(false);
         }
     };
-    
+
 
 
 
@@ -1199,6 +1199,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#ddd'
 
     },
     sectionTitle: {
@@ -1303,6 +1305,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#ddd'
     },
     textInput: {
         minHeight: 50,

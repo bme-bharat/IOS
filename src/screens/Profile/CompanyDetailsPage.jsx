@@ -1316,7 +1316,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     elevation: 3,
     backgroundColor: 'white',
-    shadowColor: '#0d6efd',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,

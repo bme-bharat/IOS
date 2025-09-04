@@ -10,9 +10,12 @@ const AboutUs = () => {
   return (
 
     <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={styles.headerContainer}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Icon name="arrow-left" size={24} color="#075cab" />
       </TouchableOpacity>
+      </View>
+  
       <ScrollView contentContainerStyle={styles.scrollViewContainer} showsVerticalScrollIndicator={false} >
 
         <View style={styles.container}>
@@ -87,6 +90,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: '20%',
 
+  },
+
+  headerContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
 
   backButton: {

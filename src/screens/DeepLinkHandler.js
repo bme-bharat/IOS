@@ -100,12 +100,10 @@ const DeepLinkHandler = () => {
 
     const handleInitialURL = async () => {
       const initialUrl = await Linking.getInitialURL();
-      console.log('🌐 Initial URL:', initialUrl);
       if (initialUrl) {
         console.log("🛠️ Processing deep link before navigation is ready.");
         handleDeepLink({ url: initialUrl });
       } else {
-        console.log("❌ No initial deep link found");
         EventRegister.emit('deepLinkDone');
       }
     };

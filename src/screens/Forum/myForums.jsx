@@ -194,9 +194,10 @@ const YourForumListScreen = ({ navigation, route }) => {
     navigation.navigate("ForumEdit", { post, imageUrl });
   };
 
-  const forumDetails = (forum_id) => {
-    navigation.navigate("Comment", { forum_id });
+  const forumDetails = (forum_id, url) => {
+    navigation.navigate("Comment", { forum_id, url });
   };
+  
   const handleDelete = (forum_id, fileKey, thumbnail_fileKey) => {
     const filesToDelete = [fileKey, thumbnail_fileKey];
 
@@ -276,7 +277,7 @@ const YourForumListScreen = ({ navigation, route }) => {
 
     return (
       <TouchableOpacity activeOpacity={1} onPress={() => {
-        forumDetails(item.forum_id);
+        forumDetails(item.forum_id,imageUri);
       }}>
         <View style={styles.postContainer}>
           <View style={styles.imageContainer}>

@@ -110,7 +110,6 @@ const CompanySettingScreen = () => {
     { icon: 'shopping', label: 'My products', onPress: navigateTo('MyProducts') },
     { icon: 'tools', label: 'My services', onPress: navigateTo('MyServices') },
     { icon: 'briefcase', label: 'My jobs', onPress: navigateTo('PostedJob') },
-    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
     { icon: 'account-tie', label: 'Job seekers', onPress: navigateTo('CompanyListJobCandiates') },
     {
       icon: 'rss',
@@ -121,6 +120,7 @@ const CompanySettingScreen = () => {
         { label: 'Resources', onPress: navigateTo('Resourcesposted') },
       ],
     },
+    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
     { icon: 'account-cancel', label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
     { icon: 'card-account-details', label: 'Subscription', onPress: navigateTo('CompanySubscription') },
     hasSubscription && transactions.length > 0 && {

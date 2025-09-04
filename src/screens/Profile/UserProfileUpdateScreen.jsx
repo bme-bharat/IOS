@@ -16,7 +16,7 @@ import Message1 from '../../components/Message1';
 import Message3 from '../../components/Message3';
 import PhoneDropDown from '../../components/PhoneDropDown';
 import ImagePicker from 'react-native-image-crop-picker';
-import defaultImage from '../../images/homepage/dummy.png';
+import dummy from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
 import ImageResizer from 'react-native-image-resizer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -32,7 +32,7 @@ import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
 import { useMediaPicker } from '../helperComponents/MediaPicker';
 
 
-const defautImage = Image.resolveAssetSource(defaultImage).uri;
+const defaultImage = Image.resolveAssetSource(dummy).uri;
 
 const UserProfileUpdateScreen = () => {
   const navigation = useNavigation();
@@ -41,7 +41,6 @@ const UserProfileUpdateScreen = () => {
 
   const { profile, imageUrl } = route.params;
   const [localImageUrl, setLocalImageUrl] = useState(imageUrl);
-  // console.log('profile email', profile.is_email_verified)
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isStateChanged, setIsStateChanged] = useState(false);
@@ -57,43 +56,35 @@ const UserProfileUpdateScreen = () => {
   const [selectedProfile, setSelectedProfile] = useState(profile.select_your_profile || "");
   const [selectedCategory, setSelectedCategory] = useState(profile.category || "");
   const [availableCategories, setAvailableCategories] = useState([]);
-  const [file, setFile] = useState(null);
   const [fileType, setFileType] = useState('');
 
 
   useEffect(() => {
     if (selectedProfile) {
-      console.log("Selected Profile:", selectedProfile);
-
       const categories =
         ProfileSelect.normalProfiles[selectedProfile] ||
         ProfileSelect.companyProfiles[selectedProfile] ||
         [];
-
-      console.log("Available Categories for selected profile:", categories);
-
       setAvailableCategories(categories);
 
       // Reset category if it's not valid for the new profile
       if (!categories.includes(selectedCategory)) {
-        console.log(
-          `Selected category "${selectedCategory}" is not valid for the new profile. Resetting.`
-        );
+
         setSelectedCategory("");
       } else {
-        console.log(`Selected category "${selectedCategory}" is valid.`);
+
       }
     }
   }, [selectedProfile]);
 
   const handleProfileSelect = (item) => {
-    console.log('Selected Profile:', item);
+
     setSelectedProfile(item.label); // store only the label string
     setHasChanges(true);
   };
 
   const handleCategorySelect = (item) => {
-    console.log('Selected Category:', item);
+
     setSelectedCategory(item.label); // store only the label string
     setHasChanges(true);
   };
@@ -474,8 +465,6 @@ const UserProfileUpdateScreen = () => {
   const [imageUri, setImageUri] = useState(null);
   const [fileUri, setFileUri] = useState(null);
   const [fileKey, setFileKey] = useState(null);
-  const [isMediaSelection, setIsMediaSelection] = useState(false);
-
 
   const handleImageSelection = () => {
     const hasImage = postData.fileKey && postData.fileKey.trim() !== '';
@@ -523,8 +512,6 @@ const UserProfileUpdateScreen = () => {
     })
       .then((image) => {
         const initialImageSize = image.size / 1024 / 1024;
-        console.log(`Initial image size: ${initialImageSize.toFixed(2)} MB`);
-
         const uri = image.path;
         setImageUri(uri);
         setFileUri(uri);
@@ -535,8 +522,6 @@ const UserProfileUpdateScreen = () => {
         ImageResizer.createResizedImage(uri, 800, 600, 'JPEG', 80)
           .then((resizedImage) => {
             const resizedImageSize = resizedImage.size / 1024 / 1024;
-            console.log(`Resized image size: ${resizedImageSize.toFixed(2)} MB`);
-
             if (resizedImage.size > image.size) {
               // Keep original if smaller
               return;
@@ -567,12 +552,10 @@ const UserProfileUpdateScreen = () => {
 
   const handleRemoveImage = async () => {
     if (!fileKey && !localImageUrl) {
-
       return;
     }
 
     try {
-
       if (fileKey) {
         await handleDeleteOldImage(fileKey);
       }
@@ -585,11 +568,9 @@ const UserProfileUpdateScreen = () => {
         fileKey: null,
       }));
 
-
+      // now <Image /> will automatically fallback to defaultImage
     } catch (error) {
-
       showToast("Error while deleting image\nPlease try again", 'error');
-
     }
   };
 
@@ -1142,30 +1123,37 @@ const UserProfileUpdateScreen = () => {
 
 
 
-  const defaultImage = profile?.imageUrl ? localImageUrl : (imageUri || defautImage) ;
+  const imageSource = localImageUrl
+    ? { uri: localImageUrl }
+    : imageUri
+      ? { uri: imageUri }
+      : require("../../images/homepage/dummy.png");;
 
 
   return (
 
-    <SafeAreaView style={styles.container} >
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#075cab" />
-      </TouchableOpacity>
+    <View style={styles.container} >
+      <View style={styles.headerContainer}>
+
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#075cab" />
+        </TouchableOpacity>
+      </View>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: '40%', paddingHorizontal: 10 }}
+        contentContainerStyle={{ paddingBottom: '40%', paddingHorizontal: 10, backgroundColor: 'whitesmoke' }}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.header}>Edit your profile</Text>
 
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageContainer}>
 
-          <FastImage
-            source={{ uri: defaultImage , priority: FastImage.priority.normal }}
-            cache="immutable"
+          <Image
+            source={imageSource}
             style={styles.image}
-            resizeMode='contain'
-            onError={() => { }}
+            resizeMode="contain"
           />
+
 
           <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
             <Icon name="camera-enhance" size={22} color="#333" />
@@ -1579,7 +1567,7 @@ const UserProfileUpdateScreen = () => {
 
       </KeyboardAwareScrollView>
       <Toast />
-    </SafeAreaView>
+    </View>
 
   );
 };
@@ -1587,8 +1575,8 @@ const UserProfileUpdateScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: 'white'
+    paddingHorizontal: 1,
+    backgroundColor: 'whitesmoke'
   },
   downIcon: {
     position: 'absolute',
@@ -1644,6 +1632,14 @@ const styles = StyleSheet.create({
     margin: 10,
     alignSelf: 'flex-start'
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
+  },
   otpInputContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1680,13 +1676,21 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: 'center',
   },
+  header: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#075cab',
+    top: 10,
+  },
   imageContainer: {
     borderRadius: 80,
     alignItems: 'center',
     justifyContent: 'center',
     height: 140,
     width: 140,
-    marginVertical: 20,
+    marginBottom: 20,
     alignSelf: 'center',
     position: 'relative',
     resizeMode: 'contain'

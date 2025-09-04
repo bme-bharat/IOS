@@ -577,7 +577,7 @@ const CompanyHomeScreen = React.memo(() => {
                         Jobs  <Icon name="briefcase" size={19} color="#075cab" />
                       </Text>
                       <TouchableOpacity onPress={allJobs}>
-                        <Text style={styles.seeAllText}>See more</Text>
+                        <Text style={styles.seeAllText}>see more ...</Text>
                       </TouchableOpacity>
                     </View>
 
@@ -622,7 +622,7 @@ const CompanyHomeScreen = React.memo(() => {
                         Trending posts  <Icon name="trending-up" size={19} color="#075cab" />
                       </Text>
                       <TouchableOpacity onPress={goToTrending}>
-                        <Text style={styles.seeAllText}>See more</Text>
+                        <Text style={styles.seeAllText}>see more ...</Text>
                       </TouchableOpacity>
                     </View>
                     <FlatList
@@ -652,7 +652,7 @@ const CompanyHomeScreen = React.memo(() => {
                         Latest posts  <Icon name="new-box" size={19} color="#075cab" />
                       </Text>
                       <TouchableOpacity onPress={goToLatest}>
-                        <Text style={styles.seeAllText}>See more</Text>
+                        <Text style={styles.seeAllText}>see more ...</Text>
                       </TouchableOpacity>
                     </View>
                     <FlatList
@@ -680,7 +680,7 @@ const CompanyHomeScreen = React.memo(() => {
                         Products  <Icon name="shopping" size={19} color="#075cab" />
                       </Text>
                       <TouchableOpacity onPress={allProducts}>
-                        <Text style={styles.seeAllText}>See more</Text>
+                        <Text style={styles.seeAllText}>see more ...</Text>
                       </TouchableOpacity>
                     </View>
 
@@ -707,7 +707,7 @@ const CompanyHomeScreen = React.memo(() => {
                         Services  <Icon name="tools" size={19} color="#075cab" />
                       </Text>
                       <TouchableOpacity onPress={allServices}>
-                        <Text style={styles.seeAllText}>See more</Text>
+                        <Text style={styles.seeAllText}>see more ...</Text>
                       </TouchableOpacity>
                     </View>
 

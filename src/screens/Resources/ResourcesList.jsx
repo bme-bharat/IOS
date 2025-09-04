@@ -38,6 +38,7 @@ const ResourcesList = ({ navigation, route }) => {
     const { isConnected } = useConnection();
     const videoRefs = useRef({});
     const [localPosts, setLocalPosts] = useState([]);
+    console.log('localPosts',localPosts[1])
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const listRef = useRef(null);
