@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  SafeAreaView,
+
   Animated
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -17,6 +17,16 @@ import UserProfileCard from './UserProfileCard';
 import DrawerNavigationList from './DrawerNavigationList';
 import LottieView from 'lottie-react-native';
 import { settingStyles as styles } from '../Styles/settingStyles';
+import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
+
+import Enquire from '../../assets/svgIcons/enquire.svg';
+import Graduation from '../../assets/svgIcons/graduation.svg';
+import Policy from '../../assets/svgIcons/shield.svg';
+import Vip from '../../assets/svgIcons/vip.svg';
+import Grid from '../../assets/svgIcons/latest.svg';
+import Information from '../../assets/svgIcons/information.svg';
+import Restrict from '../../assets/svgIcons/user-forbid.svg';
+import Apply from '../../assets/svgIcons/apply.svg';
 
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
@@ -25,9 +35,14 @@ const AllPosts = React.lazy(() => import('../Forum/Feed'));
 
 
 const tabNameMap = {
-  CompanyJobList: "Jobs",
-  Home3: 'Home',
+  Home3: "Home",
+  ProductsList: "Products",
+  Feed: "Feed",
+  Jobs: "Jobs",
+  Settings: "Settings",
 };
+
+
 const tabConfig = [
   { name: "Home", component: UserHomeScreen, focusedIcon: 'home', unfocusedIcon: 'home-outline', iconComponent: Icon },
   { name: "Jobs", component: JobListScreen, focusedIcon: 'briefcase', unfocusedIcon: 'briefcase-outline', iconComponent: Icon },
@@ -112,10 +127,10 @@ const UserSettingScreen = () => {
   const navigateTo = screen => () => navigation.navigate(screen);
 
   const DrawerList = [
-    { icon: 'id-card', label: 'Job profile', onPress: navigateTo('UserJobProfile') },
-    { icon: 'id-card', label: 'Applied jobs', onPress: navigateTo('UserJobApplied') },
+    { icon: Graduation, label: 'Job profile', onPress: navigateTo('UserJobProfile') },
+    { icon: Apply, label: 'Applied jobs', onPress: navigateTo('UserJobApplied') },
     {
-      icon: 'rss',
+      icon: Grid,
       label: 'My posts',
       onPress: () => handleToggle('My posts'),
       subItems: [
@@ -123,18 +138,18 @@ const UserSettingScreen = () => {
         { label: 'Resources', onPress: navigateTo('Resourcesposted') },
       ],
     },
-    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
-  
-    { icon: 'account-cancel', label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
-    { icon: 'card-account-details', label: 'Subscription', onPress: navigateTo('UserSubscription') },
+    { icon: Enquire, label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
+
+    { icon: Restrict, label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
+    { icon: Vip, label: 'Subscription', onPress: navigateTo('UserSubscription') },
     hasSubscription && transactions.length > 0 && {
-      icon: 'card-account-details',
+      icon: Vip,
       label: 'My subscriptions',
       onPress: navigateTo('YourSubscriptionList'),
     },
-    { icon: 'information', label: 'About us', onPress: navigateTo('AboutUs') },
+    { icon: Information, label: 'About us', onPress: navigateTo('AboutUs') },
     {
-      icon: 'shield-lock',
+      icon: Policy,
       label: 'Policies',
       onPress: () => handleToggle('Policies'),
       subItems: [
@@ -157,7 +172,7 @@ const UserSettingScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container1} >
+    <View style={styles.container1} >
 
       <Animated.ScrollView contentContainerStyle={[styles.container, { paddingBottom: '20%', }]}
         showsVerticalScrollIndicator={false}  >
@@ -168,7 +183,7 @@ const UserSettingScreen = () => {
               profile={profile}
               onEdit={handleUpdate}
               onNavigate={() => navigation.navigate('UserProfile')}
-         
+
             />
 
           </Animated.View>
@@ -180,7 +195,7 @@ const UserSettingScreen = () => {
           expandedItem={expandedItem}
           onToggle={handleToggle}
           isConnected={isConnected}
-          
+
         />
 
         <NotificationSettings />
@@ -191,32 +206,14 @@ const UserSettingScreen = () => {
 
       </Animated.ScrollView>
 
-      <View style={styles.bottomNavContainer}>
-        {tabConfig.map((tab, index) => {
-          const isFocused = currentRouteName === tab.name;
+      <BottomNavigationBar
+        tabs={tabConfig}
+        currentRouteName={currentRouteName}
+        navigation={navigation}
+        tabNameMap={tabNameMap}
 
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => navigation.navigate(tab.name)}
-              style={styles.navItem}
-              activeOpacity={0.8}
-
-            >
-              <tab.iconComponent
-                name={isFocused ? tab.focusedIcon : tab.unfocusedIcon}
-                size={22}
-                color={isFocused ? '#075cab' : 'black'}
-              />
-              <Text style={[styles.navText, { color: isFocused ? '#075cab' : 'black' }]}>
-                {tab.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-    </SafeAreaView>
+      />
+    </View>
 
   );
 

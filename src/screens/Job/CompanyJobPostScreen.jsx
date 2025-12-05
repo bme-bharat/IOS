@@ -19,7 +19,9 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import AppStyles from '../AppUtils/AppStyles';
 import { EventRegister } from 'react-native-event-listeners';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 
 const CompanyJobPostScreen = () => {
@@ -96,7 +98,7 @@ const CompanyJobPostScreen = () => {
         jobFormData.speicializations_required !== initialJobFormData.speicializations_required ||
         jobFormData.Package !== initialJobFormData.Package ||
         jobFormData.required_expertise !== initialJobFormData.required_expertise ||
-      jobFormData.required_qualifications !== initialJobFormData.required_qualifications;
+        jobFormData.required_qualifications !== initialJobFormData.required_qualifications;
 
       setHasChanges(hasAnyChanges);
     };
@@ -277,11 +279,12 @@ const CompanyJobPostScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container} >
+    <View style={styles.container} >
 
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.5}>
-          <Icon name="arrow-back" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
       </View>
       <KeyboardAvoidingView
@@ -290,7 +293,7 @@ const CompanyJobPostScreen = () => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <KeyboardAwareScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10, paddingBottom: '30%', }}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 5, paddingBottom: '30%', }}
           keyboardShouldPersistTaps="handled"
           extraScrollHeight={20}
           onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -300,68 +303,63 @@ const CompanyJobPostScreen = () => {
             <Text style={styles.header}>Post a job</Text>
 
             <Text style={[styles.title]}>Job title <Text style={{ color: 'red' }}>*</Text></Text>
-            <View style={styles.inputContainer}>
 
-              <TextInput
-                style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
-                onChangeText={text => { handleChange('job_title', text); }}
+            <TextInput
+              style={[styles.input]}
+              onChangeText={text => { handleChange('job_title', text); }}
 
-                value={jobFormData.job_title || ""}
-                placeholderTextColor="gray"
-                multiline
-              />
-
-            </View>
-            <View style={styles.inputContainer}>
-              <Text style={styles.title}>
-                Industry type <Text style={{ color: 'red' }}>*</Text>
-              </Text>
-              <CustomDropDownMenu
-                items={industryType}
-                onSelect={handleIndustrySelect}
-                buttonStyle={styles.dropdownButton}
-                buttonTextStyle={styles.dropdownButtonText}
-                placeholderTextColor="gray"
-                placeholder=""
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.title}>
-                Required expertise <Text style={{ color: 'red' }}>*</Text>
-              </Text>
-              <CustomDropDownMenu
-                key={expertiseKey}
-                items={expertiseOptions.map(item => ({ label: item, value: item }))}
-                onSelect={handleSkillSelect}
-                buttonStyle={styles.dropdownButton}
-                buttonTextStyle={styles.dropdownButtonText}
-                placeholder="Select skills"
-                multiSelect
-              />
-              {selectedSkills.length === 0 && (
-                <Text style={styles.instructionText}>You can select up to 3 skills</Text>
-              )}
-              {renderSelectedItems(selectedSkills, removeSkill)}
-           
-            </View>
+              value={jobFormData.job_title || ""}
+              placeholderTextColor="gray"
+              multiline
+            />
 
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.title}>Required qualification <Text style={{ color: 'red' }}>*</Text></Text>
-              <TextInput
-                style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
-                onChangeText={text => handleChange('required_qualifications', text)}
-                placeholderTextColor="gray"
-                multiline
-                value={jobFormData.required_qualifications || ""}
-              />
-            </View>
+
+            <Text style={styles.title}>
+              Industry type <Text style={{ color: 'red' }}>*</Text>
+            </Text>
+            <CustomDropDownMenu
+              items={industryType}
+              onSelect={handleIndustrySelect}
+              buttonStyle={styles.dropdownButton}
+              buttonTextStyle={styles.dropdownButtonText}
+              placeholderTextColor="gray"
+              placeholder=""
+            />
+
+
+
+            <Text style={styles.title}>
+              Required expertise <Text style={{ color: 'red' }}>*</Text>
+            </Text>
+            <CustomDropDownMenu
+              key={expertiseKey}
+              items={expertiseOptions.map(item => ({ label: item, value: item }))}
+              onSelect={handleSkillSelect}
+              buttonStyle={styles.dropdownButton}
+              buttonTextStyle={styles.dropdownButtonText}
+              placeholder="Select skills"
+              multiSelect
+            />
+            {selectedSkills.length === 0 && (
+              <Text style={styles.instructionText}>You can select up to 3 skills</Text>
+            )}
+            {renderSelectedItems(selectedSkills, removeSkill)}
 
 
 
 
-            <View style={styles.inputContainer}>
+
+            <Text style={styles.title}>Required qualification <Text style={{ color: 'red' }}>*</Text></Text>
+            <TextInput
+              style={[styles.input]}
+              onChangeText={text => handleChange('required_qualifications', text)}
+              placeholderTextColor="gray"
+              multiline
+              value={jobFormData.required_qualifications || ""}
+            />
+
+
               <Text style={[styles.title]}> Required experience <Text style={{ color: 'red' }}>*</Text></Text>
               <CustomDropDownMenu
                 items={ExperienceType}
@@ -370,41 +368,38 @@ const CompanyJobPostScreen = () => {
                 buttonTextStyle={styles.dropdownButtonText}
                 placeholderTextColor="gray"
               />
-            </View>
+         
 
-            <View style={styles.inputContainer}>
               <Text style={styles.title}>Required specializations <Text style={{ color: 'red' }}>*</Text></Text>
               <TextInput
-                style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
+                style={[styles.input]}
                 multiline
                 onChangeText={text => handleChange('speicializations_required', text)}
                 placeholderTextColor="gray"
                 value={jobFormData.speicializations_required || ""}
               />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.title}>
-                Work location <Text style={{ color: 'red' }}>*</Text>
-              </Text>
-              <CustomDropDownMenu
-                items={topTierCities.map(city => ({ label: city, value: city }))}
-                onSelect={handleCitySelect}
-                buttonStyle={styles.dropdownButton}
-                buttonTextStyle={styles.dropdownButtonText}
-                placeholderTextColor="gray"
-                placeholder="Select cities"
-                multiSelect
-              />
-                {selectedCities.length === 0 && (
-    <Text style={styles.instructionText}>You can select up to 5 cities</Text>
-  )}
-
-              {renderSelectedItems(selectedCities, removeCity)}
-            </View>
+   
 
 
-            <View style={styles.inputContainer}>
+            <Text style={styles.title}>
+              Work location <Text style={{ color: 'red' }}>*</Text>
+            </Text>
+            <CustomDropDownMenu
+              items={topTierCities.map(city => ({ label: city, value: city }))}
+              onSelect={handleCitySelect}
+              buttonStyle={styles.dropdownButton}
+              buttonTextStyle={styles.dropdownButtonText}
+              placeholderTextColor="gray"
+              placeholder="Select cities"
+              multiSelect
+            />
+            {selectedCities.length === 0 && (
+              <Text style={styles.instructionText}>You can select up to 5 cities</Text>
+            )}
+
+            {renderSelectedItems(selectedCities, removeCity)}
+
+
               <Text style={[styles.title]}>Salary package <Text style={{ color: 'red' }}>*</Text></Text>
               <CustomDropDownMenu
                 items={SalaryType}
@@ -413,29 +408,27 @@ const CompanyJobPostScreen = () => {
                 buttonTextStyle={styles.dropdownButtonText}
                 placeholderTextColor="gray"
               />
-            </View>
+       
 
-            <View style={styles.inputContainer}>
               <Text style={styles.title}>Job description <Text style={{ color: 'red' }}>*</Text></Text>
               <TextInput
-                style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
+                style={[styles.input]}
                 multiline
                 onChangeText={text => handleChange('job_description', text)}
                 placeholderTextColor="gray"
                 value={jobFormData.job_description || ""}
               />
-            </View>
+         
 
-            <View style={styles.inputContainer}>
               <Text style={styles.title}>Required languages</Text>
               <TextInput
-                style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
+                style={[styles.input]}
                 onChangeText={text => handleChange('preferred_languages', text)}
                 placeholderTextColor="gray"
                 multiline
                 value={jobFormData.preferred_languages || ""}
               />
-            </View>
+      
 
             <TouchableOpacity onPress={JobPostHandle} style={AppStyles.Postbtn}>
               <Text style={AppStyles.PostbtnText}>Post</Text>
@@ -452,8 +445,8 @@ const CompanyJobPostScreen = () => {
           </TouchableOpacity>
         </KeyboardAwareScrollView>
       </KeyboardAvoidingView>
-      <Toast />
-    </SafeAreaView>
+
+    </View>
 
   );
 };
@@ -461,7 +454,6 @@ const CompanyJobPostScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
     backgroundColor: '#fff',
 
   },
@@ -487,15 +479,14 @@ const styles = StyleSheet.create({
 
   },
   inputContainer: {
-    marginBottom: 15,
   },
   header: {
     fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 25,
-        textAlign: 'center',
-        color: '#075cab',
-        top: 10,
+    fontWeight: '600',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#075cab',
+    top: 10,
   },
 
   backButton: {
@@ -511,8 +502,8 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   title: {
-    marginBottom: 10,
-    color: 'black',
+    marginBottom: 5,
+    color: colors.text_primary,
     fontSize: 15,
     fontWeight: '500',
   },
@@ -530,7 +521,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    height: 50,
+    height: 40,
     borderColor: '#ddd',
     borderWidth: 1,
     backgroundColor: '#fff',
@@ -539,32 +530,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    marginBottom: 10,
+
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
     flex: 1,
+    padding: 5,
   },
   input: {
+    minHeight: 40,
+    maxHeight: 150,
     borderWidth: 1,
     borderColor: '#ddd',
     backgroundColor: '#fff',
     paddingHorizontal: 15,
     paddingTop: 10, // Moves text down
     borderRadius: 8,
-    fontSize: 15,
-    color: '#222',
-    textAlignVertical: 'top', // Ensures text starts from the top
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    marginBottom: 10,
+
   },
 
 

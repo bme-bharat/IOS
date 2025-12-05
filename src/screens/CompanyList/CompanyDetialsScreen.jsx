@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableWithoutFeedback, TouchableOpacity, TextInput, Modal, FlatList, Linking, Pressable, SafeAreaView, RefreshControl, ActivityIndicator, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableWithoutFeedback, TouchableOpacity, TextInput, Modal, FlatList, Linking, Pressable, RefreshControl, ActivityIndicator, Share, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -10,7 +10,7 @@ import axios from 'axios';
 import RNRestart from 'react-native-restart';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import apiClient from '../ApiClient';
 import ContactSupplierModal from '../helperComponents/ContactsModal';
 import { useNetwork } from '../AppUtils/IdProvider';
@@ -18,7 +18,10 @@ import { useFileOpener } from '../helperComponents/fileViewer';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import { openLink } from '../AppUtils/openLinks';
-
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const CompanyDetailsScreen = ({ route }) => {
   const { myId, myData } = useNetwork();
@@ -293,39 +296,41 @@ const CompanyDetailsScreen = ({ route }) => {
   if (!profile) {
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
 
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton}
             activeOpacity={1}
             onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size='large' color='#075cab' />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (profile?.removed_by_author) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
           <TouchableOpacity style={styles.backButton}
             activeOpacity={1}
             onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>This post was removed by the author</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -336,19 +341,20 @@ const CompanyDetailsScreen = ({ route }) => {
         <TouchableOpacity style={styles.backButton}
           activeOpacity={1}
           onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
         <TouchableOpacity onPress={() => shareCompany(profile)} style={styles.dropdownItem}>
-          <Icon name="share" size={20} color="#075cab" style={styles.icon} />
+          <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           <Text style={styles.dropdownText}>Share</Text>
         </TouchableOpacity>
 
       </View>
 
 
-      <ScrollView showsVerticalScrollIndicator={false} >
-        <TouchableOpacity activeOpacity={1} style={{ paddingHorizontal: 15, }}>
-
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:5}}>
+ 
           <TouchableOpacity
             onPress={() => {
               if (typeof imageUrl === 'string' && imageUrl.trim() !== '') {
@@ -379,7 +385,7 @@ const CompanyDetailsScreen = ({ route }) => {
               >
                 <Text
                   style={[
-                    styles.avatarText,
+                    commonStyles.avatarText,
                     { color: profile?.companyAvatar?.textColor || '#000' },
                   ]}
                 >
@@ -393,44 +399,44 @@ const CompanyDetailsScreen = ({ route }) => {
 
           <View style={[styles.detailsContainer]}>
 
-            <View style={styles.title1}>
-              <Text style={styles.label}>Company     </Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{(profile?.company_name || "").trimStart().trimEnd()}</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Company     </Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{(profile?.company_name || "").trimStart().trimEnd()}</Text>
             </View>
 
-            <View style={styles.title1}>
-              <Text style={styles.label}>Category      </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Category      </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.category || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.category || ""}</Text>
             </View>
-            <View style={styles.title1}>
-              <Text style={styles.label}>City              </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>City              </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.company_located_city || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.company_located_city || ""}</Text>
             </View>
-            <View style={styles.title1}>
-              <Text style={styles.label}>State            </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>State            </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.company_located_state || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.company_located_state || ""}</Text>
             </View>
             {profile?.company_address?.trimStart().trimEnd() ? (
-              <View style={styles.title1}>
-                <Text style={styles.label}>Address</Text>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{profile.company_address.trim()}</Text>
+              <View style={commonStyles.labValContainer}>
+                <Text style={commonStyles.label}>Address</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{profile.company_address.trim()}</Text>
               </View>
             ) : null}
             {profile?.Website?.trimStart().trimEnd() ? (
-              <View style={styles.title1}>
-                <Text style={styles.label}>Website</Text>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>
+              <View style={commonStyles.labValContainer}>
+                <Text style={commonStyles.label}>Website</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>
                   <TouchableOpacity onPress={() => openLink(profile.Website)}>
-                    <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                    <Text style={[commonStyles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
                       {profile.Website.trim()}
                     </Text>
                   </TouchableOpacity>
@@ -439,10 +445,10 @@ const CompanyDetailsScreen = ({ route }) => {
             ) : null}
 
             {profile?.company_description?.trimStart().trimEnd() ? (
-              <View style={[styles.title1, { textAlign: 'justify' }]}>
-                <Text style={styles.label}>Description</Text>
-                <Text style={styles.colon}>:</Text>
-                <Text style={[styles.value, { textAlign: 'justify' }]}>{profile.company_description.trim()}</Text>
+              <View style={[commonStyles.labValContainer]}>
+                <Text style={commonStyles.label}>Description</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={[commonStyles.value]}>{profile.company_description.trim()}</Text>
               </View>
             ) : null}
 
@@ -573,7 +579,7 @@ const CompanyDetailsScreen = ({ route }) => {
               />
             </>
           )}
-        </TouchableOpacity>
+  
       </ScrollView>
 
     </View>
@@ -664,7 +670,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     borderRadius: 10,
-    padding: 10
+    padding: 10,
+    elevation:3
   },
   detailsContainer: {
 

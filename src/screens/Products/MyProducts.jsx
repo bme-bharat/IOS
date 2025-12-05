@@ -26,6 +26,10 @@ import Message from "../../components/Message";
 import { showToast } from "../AppUtils/CustomToast";
 import { useNetwork } from "../AppUtils/IdProvider";
 import { EventRegister } from "react-native-event-listeners";
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Add from '../../assets/svgIcons/add.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';
@@ -298,7 +302,6 @@ const MyProducts = () => {
                         <View style={styles.buttonContainer}>
                             <TouchableOpacity onPress={() => handleEditProduct(item)} style={[styles.actionButton, { marginLeft: 10 }]}>
                                 <View style={styles.iconTextContainer}>
-                                    <Icon name="pen" size={20} color="#075cab" opacity={1} />
                                     <Text style={styles.buttonText}>Edit</Text>
                                 </View>
                             </TouchableOpacity>
@@ -308,7 +311,6 @@ const MyProducts = () => {
                                 style={styles.actionButton}
                             >
                                 <View style={styles.deleteButton}>
-                                    <Icon name="delete" size={20} color="red" opacity={1} />
                                     <Text style={styles.deleteButtonText}>Delete</Text>
                                 </View>
                             </TouchableOpacity>
@@ -329,7 +331,8 @@ const MyProducts = () => {
                 <View style={styles.headerContainer}>
 
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
 
                 </View>
@@ -346,7 +349,8 @@ const MyProducts = () => {
                 <View style={styles.headerContainer}>
 
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.addProductButton} onPress={handleAddProduct}>
                         <Ionicons name="add-circle-outline" size={18} color="#075cab" />
@@ -365,10 +369,12 @@ const MyProducts = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.addProductButton} onPress={handleAddProduct}>
-                    <Ionicons name="add-circle-outline" size={18} color="#075cab" />
+                <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     <Text style={styles.addProductText}>Add product</Text>
                 </TouchableOpacity>
 

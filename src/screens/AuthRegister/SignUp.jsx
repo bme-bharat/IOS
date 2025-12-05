@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { View, Text, useWindowDimensions, SafeAreaView, TouchableOpacity, ScrollView, Modal, StyleSheet, FlatList, TextInput, StatusBar, Image, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, useWindowDimensions, TouchableOpacity, ScrollView, Modal, StyleSheet, FlatList, TextInput, StatusBar, Image, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -8,7 +8,12 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { CountryCodes } from '../../assets/Constants';
 import axios from 'axios';
 import { showToast } from '../AppUtils/CustomToast';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Phone from '../../assets/svgIcons/phone.svg';
+import Check from '../../assets/svgIcons/check.svg';
+import ArrowDown from '../../assets/svgIcons/arrow-down.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
 const EnterPhoneScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -136,223 +141,326 @@ const EnterPhoneScreen = () => {
 
 
   return (
-    <SafeAreaView style={{ backgroundColor: '#fff', flex: 1, alignItems: 'center' }}>
+    <View style={styles.screen}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Icon name="arrow-back" size={24} color="#075cab"
+      {/* Back Button */}
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+      >
+        <ArrowLeftIcon
+          width={dimensions.icon.medium}
+          height={dimensions.icon.medium}
+          color={colors.primary}
         />
       </TouchableOpacity>
 
-      <ScrollView style={{ backgroundColor: '#fff', flexWrap: 1, }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <Text style={styles.title}>Verify Your Phone</Text>
+        <Text style={styles.subtitle}>
+          Let’s verify your phone number to continue
+        </Text>
 
-        <View style={{ alignItems: 'center' }}>
-          <Image source={logo_png} style={{
-            width: 200,
-            height: 200,
-          }}
-            resizeMode="contain" />
-        </View>
-        <View style={{ paddingTop: 20, alignSelf: 'center' }}>
-          <Text style={{ color: '#000', fontSize: 19, fontWeight: 'bold' }}>
-            Welcome to <Text style={{ color: '#075cab', fontSize: 19, fontWeight: 'bold' }}>BME Bharat..!</Text>
-          </Text>
-          <View style={{ marginVertical: 10 }} />
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: 'bold', marginTop: 12 }}>
-            {/* Replace with your instruction rendering function */}
-            {renderInstructionText()}
-          </Text>
-          <View style={{ marginTop: 10, }}>
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              borderWidth: 1,
-              borderColor: '#075cab',
-              borderRadius: 10,
-              paddingHorizontal: 12,
-              height: 50,
-              marginTop: 10,
-            }}>
-              <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingRight: 10,
+        {/* Instruction */}
+        {/* <Text style={styles.instructionText}>{renderInstructionText()}</Text> */}
+
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          <View style={styles.phoneRow}>
+            <TouchableOpacity
+              style={styles.countrySelector}
+              onPress={() => setModalVisible('country')}
+            >
+              <Text style={styles.countryText}>{selectedCountry}</Text>
+              <ArrowDown
+                width={dimensions.icon.small}
+                height={dimensions.icon.small}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+
+            <View style={styles.phoneInputFlex}>
+              <Phone
+                width={dimensions.icon.medium}
+                height={dimensions.icon.medium}
+                color={colors.primary}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter phone number"
+                keyboardType="phone-pad"
+                maxLength={10}
+                placeholderTextColor="#999"
+                onChangeText={(text) => {
+                  setPhoneNumber(text);
+                  handlePhone(text);
                 }}
-                onPress={() => setModalVisible('country')}
-              >
-                <Text style={{ fontSize: 16, color: 'black' }}>
-                  {selectedCountry}
-                </Text>
-                <MaterialIcon name="chevron-down" size={15} color="black" style={{ marginLeft: 5 }} />
+                value={phone}
+              />
+            </View>
+          </View>
+        </View>
 
-              </TouchableOpacity>
-
-              <Modal
-                transparent
-                visible={modalVisible === 'country'}
-                animationType="slide"
-                onRequestClose={() => setModalVisible(null)}
-              >
-                <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-                  <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <View style={{ backgroundColor: 'white', height: 400, padding: 20, borderRadius: 10, marginHorizontal: 30 }}>
-                      <FlatList
-                        data={CountryCodes}
-                        showsVerticalScrollIndicator={false}
-                        keyExtractor={(item, index) => item.value + index}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            style={{ padding: 10, borderBottomWidth: 1, borderColor: '#ccc' }}
-                            onPress={() => handleCountrySelection(item)}
-                          >
-                            <Text style={{ color: 'black', fontWeight: '400', fontSize: 13 }}>{item.label} ({item.value})</Text>
-                          </TouchableOpacity>
-                        )}
-                      />
-                    </View>
-                  </View>
-                </TouchableWithoutFeedback>
-
-              </Modal>
-              <View style={{
-                height: '100%',
-                width: 1,
-                backgroundColor: '#075cab',
-                // marginHorizontal: 10,
-              }} />
-
-              <View style={styles.phoneInputFlex}>
-                <MaterialIcon name="phone" size={25} color="black" />
-                <TextInput
-                  style={{ flex: 1, fontSize: 16, color: 'black', paddingVertical: 5, marginLeft: 10, }}
-                  placeholder="Phone number"
-                  onChangeText={(text) => {
-                    setPhoneNumber(text); // Update phoneNumber directly
-                    handlePhone(text);    // Validate the phone number
-                  }}
-                  keyboardType="phone-pad"
-                  placeholderTextColor="gray"
-                  maxLength={10}
-                  value={phone}
-
+        {/* Country Modal */}
+        <Modal
+          transparent
+          visible={modalVisible === 'country'}
+          animationType="fade"
+          onRequestClose={() => setModalVisible(null)}
+        >
+          <TouchableWithoutFeedback onPress={() => setModalVisible(null)}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <FlatList
+                  data={CountryCodes}
+                  keyExtractor={(item, index) => item.value + index}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.countryItem}
+                      onPress={() => handleCountrySelection(item)}
+                    >
+                      <Text style={styles.countryItemText}>
+                        {item.label} ({item.value})
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 />
-                {/* {phone.length < 1 ? null : phoneVerify ? (
-                  <AntDesign name="checkcircle" color="green" size={17} />
-                ) : (
-                  <AntDesign name="closecircleo" color="red" size={17} />
-                )} */}
-
-                {phone.length < 1 ? null : (
-                  <TouchableOpacity onPress={() => setPhone('')} >
-                   <MaterialIcon name="close-circle" color="#ccc" size={20}  />
-                  </TouchableOpacity>
-                )}
               </View>
             </View>
-            {/* {!countryVerify && selectedCountry !== 'Country' && (
-              <Text style={{ marginLeft: 20, color: 'red', textAlign: 'center', top: 10 }}>Please select a valid country</Text>
-            )}
-            {phone.length < 1 ? null : !phoneVerify && (
-              <Text style={{ marginLeft: 20, color: 'red', textAlign: 'center', top: 10 }}>Phone number should start with 1-9 and be exactly 10 digits SHORT</Text>
-            )} */}
+          </TouchableWithoutFeedback>
+        </Modal>
 
-
-          </View>
+        {/* Checkbox */}
+        <View style={styles.checkboxContainer}>
           <TouchableOpacity
-            onPress={async () => {
-              setLoading(true); // Start loading
-              await sendOTPHandle(); // Execute the OTP sending logic
-              setTimeout(() => {
-                setLoading(false); // Stop loading after 1 second
-              }, 1000); // Delay for 1 second
-            }}
-            disabled={loading || !isChecked}
-            style={{ alignSelf: 'center' }}
+            onPress={() => setIsChecked(!isChecked)}
+            style={[
+              styles.checkbox,
+              isChecked && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
           >
-            <Text style={[styles.buttonText, (loading || !isChecked) && { opacity: 0.5 }]}>
-              {loading ? 'Sending...' : 'Send OTP'}
-            </Text>
+            {isChecked && (
+              <Check
+                width={dimensions.icon.small}
+                height={dimensions.icon.small}
+                color="#fff"
+              />
+            )}
           </TouchableOpacity>
-          <View style={[styles.checkboxContainer]}>
-            <TouchableOpacity onPress={() => setIsChecked(!isChecked)} style={styles.checkbox}>
-              {isChecked && <MaterialIcon name="check" size={18} color="green" /> }
-            </TouchableOpacity>
-            <Text style={styles.checkboxText}> Accept </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
-              <Text style={styles.linkText}> Privacy Policy </Text>
-            </TouchableOpacity>
-            <Text style={styles.checkboxText}> and </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')}>
-              <Text style={styles.linkText}> Terms and Conditions </Text>
-            </TouchableOpacity>
-          </View>
 
+          <Text style={styles.checkboxText}>I accept the </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+            <Text style={styles.linkText}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.checkboxText}> and </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TermsAndConditions')}
+          >
+            <Text style={styles.linkText}>Terms & Conditions</Text>
+          </TouchableOpacity>
         </View>
 
-      </ScrollView>
-    </SafeAreaView>
+        {/* Send OTP Button */}
+        <TouchableOpacity
+          onPress={async () => {
+            setLoading(true);
+            await sendOTPHandle();
+            setTimeout(() => setLoading(false), 1000);
+          }}
+          disabled={loading || !isChecked}
+          style={[
+            styles.submitButton,
+            (loading || !isChecked) && styles.disabledButton,
+          ]}
+        >
+          <Text style={styles.submitText}>
+            {loading ? 'Sending...' : 'Send OTP'}
+          </Text>
+        </TouchableOpacity>
 
+
+      </ScrollView>
+    </View>
   );
+
+
 };
 
 const styles = StyleSheet.create({
-  checkboxContainer: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAFD',
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 10,
+    margin: 10,
+    elevation: 3,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingVertical: 60,
+    paddingHorizontal: 15,
+
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: colors.primary,
+    // textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#444',
+    // textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 25,
+  },
+  instructionText: {
+    color: '#333',
+    fontSize: 15,
+    fontWeight: '500',
+    // textAlign: 'center',
+    marginBottom: 15,
+    paddingTop: 20,
+
+
+  },
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    // paddingVertical: 15,
+    // paddingHorizontal: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    // elevation: 3,
+  },
+  phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 15,
-  },
-  checkbox: {
-    // borderRadius: 8,
-    width:18,
-    height: 18,
+    borderColor: '#dcdcdc',
     borderWidth: 1,
-    borderColor: 'black',
-    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    height: 50,
+
+  },
+  countrySelector: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 5,
+    paddingHorizontal: 12,
+    borderRightColor: '#dcdcdc',
+    borderRightWidth: 1,
+  },
+  countryText: {
+    fontSize: 16,
+    color: colors.primary,
+    marginRight: 4,
+  },
+  divider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  phoneInputFlex: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   input: {
     flex: 1,
-    height: '100%',
-    fontSize: 14,
+    fontSize: 16,
+    color: '#000',
+    marginLeft: 10,
     fontWeight: '500',
-    color: 'black'
   },
-  phoneInputFlex: {
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    height: 420,
+    padding: 20,
+    borderRadius: 16,
+    marginHorizontal: 30,
+  },
+  countryItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  countryItemText: {
+    color: '#000',
+    fontSize: 15,
+  },
+  submitButton: {
+    marginTop: 20,
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  submitText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    marginLeft: 10,
-
+    marginTop: 50,
+    // marginBottom:20,
+    // justifyContent: 'center',
+    flexWrap: 'wrap',
   },
+
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1.5,
+    borderColor: '#666',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    marginRight: 6,
+    borderRadius: 4,
+  },
+  
   checkboxText: {
     fontSize: 13,
-    color: '#333',
+    color: '#444',
     fontWeight: '500',
   },
   linkText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#075cab',
-    textDecorationLine: 'underline'
+    fontWeight: '600',
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: "500",
-    color: '#075cab',
-    paddingTop: 20,
-    borderRadius: 10,
-    textAlign: 'center',
-    marginVertical: 5,
-  },
-  backButton: {
-    padding: 10,
-
-    alignSelf: 'flex-start',
-  }
+});
 
 
-})
 
 export default EnterPhoneScreen;

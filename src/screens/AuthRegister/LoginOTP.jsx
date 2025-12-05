@@ -22,18 +22,19 @@ import { showToast } from '../AppUtils/CustomToast';
 import { OtpInput } from "react-native-otp-entry";
 import { useFcmToken } from '../AppUtils/fcmToken';
 import apiClient from '../ApiClient';
+import { colors } from '../../assets/theme';
 
 
 const LoginVerifyOTPScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { fullPhoneNumber, userid, phone } = route.params;
-  const [otp, setOTP] = useState('');
+  const [OTP, setOTP] = useState('');
   const otpRef = useRef('');
   const otpInputs = useRef([]);
   const [timer, setTimer] = useState(30);
   const [isResendEnabled, setIsResendEnabled] = useState(false);
-  const isProcessing = useRef(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { fcmToken, refreshFcmToken } = useFcmToken();
 
 
@@ -54,7 +55,7 @@ const LoginVerifyOTPScreen = () => {
   }, []);
 
   const handleVerifyOTP = async () => {
-    if (isProcessing.current) return;
+    if (isProcessing) return;
 
     const enteredOTP = otpRef.current;
 
@@ -62,8 +63,7 @@ const LoginVerifyOTPScreen = () => {
       showToast("Please enter a valid 6 digit OTP", 'error');
       return;
     }
-
-    isProcessing.current = true;
+    setIsProcessing(true);
 
     try {
       let response = null;
@@ -88,7 +88,13 @@ const LoginVerifyOTPScreen = () => {
       const message = response?.data?.message;
 
       if (status === "success") {
-        await createUserSession(userid);
+        const sessionCreated = await createUserSession(userid);
+
+        if (!sessionCreated) {
+          showToast("Failed to create session. Please try again.", "error");
+          setIsProcessing(false);
+          return;  // ⛔ STOP LOGIN HERE
+        }
         await handleLoginSuccess(userid);
         showToast("Login Successful", 'success');
       } else {
@@ -101,8 +107,8 @@ const LoginVerifyOTPScreen = () => {
         "Something went wrong. Please try again.";
       showToast(errorMessage, 'error');
     } finally {
+      setIsProcessing(false);
 
-      isProcessing.current = false;
     }
   };
 
@@ -115,20 +121,22 @@ const LoginVerifyOTPScreen = () => {
     }
 
     const finalFcmToken = fcmToken || "FCM_NOT_AVAILABLE";
-
-    const deviceModel = await DeviceInfo.getModel(); // your existing usage
+    const [deviceName, model, userAgent, ipAddress] = await Promise.allSettled([
+      DeviceInfo.getDeviceName(),
+      DeviceInfo.getModel(),
+      DeviceInfo.getUserAgent(),
+      DeviceInfo.getIpAddress(),
+    ]);
 
     const deviceInfo = {
       os: Platform.OS,
-      // osVersion: DeviceInfo.getSystemVersion(),
-      deviceName: await DeviceInfo.getDeviceName(),
-      model: deviceModel,
-      // brand: DeviceInfo.getBrand(),
+      deviceName: deviceName.status === 'fulfilled' ? deviceName.value : 'Unknown',
+      model: model.status === 'fulfilled' ? model.value : 'Unknown',
       appVersion: DeviceInfo.getVersion(),
-      // buildNumber: DeviceInfo.getBuildNumber(),
-      userAgent: await DeviceInfo.getUserAgent(),
-      ipAddress: await DeviceInfo.getIpAddress(),
+      userAgent: userAgent.status === 'fulfilled' ? userAgent.value : 'Unknown',
+      ipAddress: ipAddress.status === 'fulfilled' ? ipAddress.value : '0.0.0.0',
     };
+
 
     const payload = {
       command: "createUserSession",
@@ -137,20 +145,18 @@ const LoginVerifyOTPScreen = () => {
       deviceInfo: deviceInfo,
     };
 
-    console.log("📦 [Payload Sent to API]:", payload);
-
     try {
       const response = await apiClient.post('/createUserSession', payload);
 
       if (response?.data?.status === "success") {
         const sessionId = response.data.data.session_id;
         await AsyncStorage.setItem("userSession", JSON.stringify({ sessionId }));
-        // console.log("✅ [User Session Created Successfully]:", response.data);
+        return true;
       } else {
-
+        return false; 
       }
     } catch (error) {
-
+      return false; 
     }
   };
 
@@ -296,9 +302,8 @@ const LoginVerifyOTPScreen = () => {
 
 
   const resendHandle = async () => {
-    if (isProcessing.current) return;  // Prevent duplicate clicks
+    if (isProcessing) return;  // Prevent duplicate clicks
 
-    isProcessing.current = true;
     try {
       const response = await axios.post(
         'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/resendOtpMsg91',
@@ -322,7 +327,6 @@ const LoginVerifyOTPScreen = () => {
 
     } finally {
 
-      isProcessing.current = false;
     }
   };
 
@@ -385,23 +389,36 @@ const LoginVerifyOTPScreen = () => {
               focusStickStyle: styles.focusStick,
               focusedPinCodeContainerStyle: styles.activePinCodeContainer,
               placeholderTextStyle: styles.placeholderText,
-              filledPinCodeContainerStyle: styles.filledPinCodeContainer,
-              disabledPinCodeContainerStyle: styles.disabledPinCodeContainer,
+              // filledPinCodeContainerStyle: styles.filledPinCodeContainer,
+              // disabledPinCodeContainerStyle: styles.disabledPinCodeContainer,
             }}
           />
         </View>
 
-        <View style={styles.actionsRow}>
-          {isResendEnabled ? (
-            <TouchableOpacity onPress={resendHandle} >
-              <Text style={styles.resendButtonText}>Resend OTP</Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.timerText}>Resend in {timer}s</Text>
-          )}
+        <View style={styles.actionsContainer}>
+          <View style={styles.resendRow}>
+            <Text style={styles.subtitle}>Didn't receive OTP?</Text>
 
-          <TouchableOpacity onPress={handleVerifyOTP} style={styles.verifyButton}>
-            <MaterialIcons name="arrow-right-circle-outline" size={40} color="#075cab" />
+            {isResendEnabled ? (
+              <TouchableOpacity onPress={resendHandle} style={styles.resendButton}>
+                <Text style={styles.resendText}>Resend OTP</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.timerText}>Resend in {timer}s</Text>
+            )}
+          </View>
+
+          <TouchableOpacity
+            onPress={() => handleVerifyOTP(OTP)} // ✅ make sure OTP value is passed
+            activeOpacity={0.8}
+            disabled={OTP.length !== 6 || isProcessing} // ⛔ disable while verifying
+            style={[
+              styles.verifyButton,
+              (OTP.length !== 6 || isProcessing) && styles.disabledButton, // 🔒 apply dim style when not ready or verifying
+            ]} >
+            <Text style={styles.verifyText}>
+              {isProcessing ? 'Verifying...' : 'Verify OTP'} {/* 🕐 feedback text */}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -488,28 +505,63 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#aaa',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  actionsContainer: {
+    width: '100%',
     alignItems: 'center',
-    marginTop: 10,
   },
 
-  resendButtonText: {
-    color: '#075cab',
-    fontSize: 16,
+  resendButton: {
+    paddingHorizontal: 6,
+  },
+  resendText: {
+    fontSize: 15,
+    color: colors.primary,
     fontWeight: '500',
-    padding: 10
+    textDecorationLine: 'underline'
+
+  },
+  resendRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 6, // (React Native 0.71+)
+  },
+
+  subtitle: {
+    fontSize: 15,
+    color: '#555',
 
   },
   timerText: {
-    color: '#999',
-    fontSize: 13,
-    padding: 10
+    color: colors.text_secondary,
+    fontSize: 14,
+    marginLeft: 6,
 
   },
   verifyButton: {
-    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    width: '90%',
+    // borderWidth: 1,
+    // borderColor: colors.primary
+  },
+  disabledButton: {
+    opacity: 0.6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  verifyText: {
+    color: colors.text_white,
+    fontSize: 16,
+    fontWeight: '600',
+
   },
 });
 

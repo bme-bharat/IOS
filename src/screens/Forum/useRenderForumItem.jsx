@@ -12,6 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { enrichForumPost } from './useForumFetcher';
 import Markdown from 'react-native-markdown-display';
 import BMEVideoPlayer from '../BMEVideoPlayer';
+import { colors } from '../../assets/theme';
 
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const maxAllowedHeight = Math.round(deviceHeight * 0.6);
@@ -254,16 +255,14 @@ export default function useRenderForumItem({
           </View>
         </View>
 
-        {/* Post content */}
-        <View style={{ paddingHorizontal: 10, marginBottom: 10 }}>
+ 
           <ForumBody
             html={normalizeHtml(item?.forum_body, searchQuery)}
             forumId={item.forum_id}
             isExpanded={expandedTexts[item.forum_id]}
             toggleFullText={toggleFullText}
           />
-        </View>
-
+ 
         {/* <Markdown style={{ body: { fontSize: 15, lineHeight: 20 } }}>
           {item?.forum_body}
         </Markdown> */}
@@ -482,8 +481,9 @@ const styles = StyleSheet.create({
 
   comments: {
     paddingHorizontal: 5,
-    // borderTopWidth: 0.5,
-    // borderColor: '#ccc',
+    borderTopWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderColor: '#ccc',
     paddingVertical: 10,
     backgroundColor: 'white',
     minHeight: 120,
@@ -507,10 +507,8 @@ const styles = StyleSheet.create({
   trendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginLeft: 6
+    borderRadius: 5,
+    padding: 5
   },
   trendingBadgeText: {
     fontSize: 11,
@@ -524,7 +522,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 13,
-    color: '#666',
+    color: colors.text_secondary,
     // marginBottom: 5,
     fontWeight: '300',
     textAlign: 'justify',
@@ -544,28 +542,16 @@ const styles = StyleSheet.create({
 
   },
   date1: {
-    fontSize: 13,
-    color: '#666',
-    // marginBottom: 5,
-    fontWeight: '300',
+    fontSize: 11,
+    fontWeight: "300",
+    color: colors.text_secondary,
 
 
-  },
-  title1: {
-    backgroundColor: 'red'
-
-  },
-
-  readMore: {
-    color: 'gray', // Blue color for "Read More"
-    fontWeight: '300', // Make it bold if needed
-    fontSize: 13,
   },
 
   dpContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10
 
   },
   dpContainer1: {

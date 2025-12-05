@@ -24,6 +24,7 @@ import Animated from "react-native-reanimated";
 import { FeedStyles as styles } from "../Styles/FeedStyles";
 import { searchForumPostsWithEnrichment } from "./useSearch";
 import ShimmerSkeleton from "../Skeleton";
+import { colors } from "../../assets/theme";
 
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
@@ -476,7 +477,7 @@ const AllPosts = () => {
 
     return (
     
-            <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+            <View style={{ flex: 1, backgroundColor: colors.app_background }}>
 
                 <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
                     <View style={AppStyles.searchContainer}>

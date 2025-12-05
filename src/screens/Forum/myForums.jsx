@@ -197,7 +197,7 @@ const YourForumListScreen = ({ navigation, route }) => {
   const forumDetails = (forum_id, url) => {
     navigation.navigate("Comment", { forum_id, url });
   };
-  
+
   const handleDelete = (forum_id, fileKey, thumbnail_fileKey) => {
     const filesToDelete = [fileKey, thumbnail_fileKey];
 
@@ -209,26 +209,26 @@ const YourForumListScreen = ({ navigation, route }) => {
 
   const confirmDelete = async () => {
     setShowDeleteConfirmation(false);
-  
+
     // ✅ Use utility function for S3 deletions
     if (fileKeyToDelete && fileKeyToDelete.length > 0) {
       try {
         for (const key of fileKeyToDelete) {
-          await deleteS3KeyIfExists(key); 
+          await deleteS3KeyIfExists(key);
         }
       } catch (error) {
- 
+
         return;
       }
     }
-  
+
     try {
       const response = await apiClient.post('/deleteForumPost', {
         command: "deleteForumPost",
         user_id: myId,
         forum_id: postToDelete,
       });
-  
+
       if (response.data.status === 'success') {
         EventRegister.emit('onForumPostDeleted', { forum_id: postToDelete });
         showToast("Forum post deleted", 'success');
@@ -239,7 +239,7 @@ const YourForumListScreen = ({ navigation, route }) => {
       showToast("Something went wrong", 'error');
     }
   };
-  
+
 
 
   const cancelDelete = () => {
@@ -251,20 +251,7 @@ const YourForumListScreen = ({ navigation, route }) => {
 
   const RenderPostItem = ({ item }) => {
 
-    const rawHtml = (item.forum_body || '').trim();
-    const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawHtml);
-    const forumBodyHtml = hasHtmlTags ? rawHtml : `<p>${rawHtml}</p>`;
-
-    const imageUri = item.thumbnailUrl
-      || imageUrls[item.forum_id]
-      || item.imageUrl
-      || item.signedUrl;
-
-    // Add cache busting parameter based on posted_on timestamp
-    const cacheBustedUri = imageUri
-      ? `${imageUri.split('?')[0]}?t=${item.posted_on}`
-      : null;
-    const hasImage = !!imageUri;
+    const imageUri = item.signedUrl || item.thumbnailUrl || item.imageUrl || defaultLogo;
 
     const formattedDate = item.posted_on
       ? new Date(item.posted_on * 1000).toLocaleDateString('en-GB', {
@@ -274,25 +261,22 @@ const YourForumListScreen = ({ navigation, route }) => {
       }).replace(/\//g, '-')
       : 'No date';
 
+    const cleanUri = (uri) => uri?.split('?')[0];
+
+    const isDefaultImage = cleanUri(imageUri) === cleanUri(defaultLogo);
 
     return (
       <TouchableOpacity activeOpacity={1} onPress={() => {
-        forumDetails(item.forum_id,imageUri);
+        forumDetails(item.forum_id, imageUri);
       }}>
         <View style={styles.postContainer}>
           <View style={styles.imageContainer}>
-            {hasImage && (
-              <Image
-                source={{ uri: cacheBustedUri }}
-                style={styles.image}
-                resizeMode="contain"
-                onError={() => console.log('Image load error')}
-              />
-
-
-            )}
-
-
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.image}
+              resizeMode="contain"
+              onError={() => console.log('Image load error')}
+            />
           </View>
 
           <View style={styles.textContainer}>
@@ -305,18 +289,18 @@ const YourForumListScreen = ({ navigation, route }) => {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditPress(item, imageUri)}
+                style={[styles.editButton, { marginRight: 10 }]}
+                onPress={() => handleEditPress(item, isDefaultImage ? undefined : imageUri)}
+                activeOpacity={1}
               >
-                <Icon name="pencil" size={20} style={{ color: '#075cab' }} />
                 <Text style={styles.editButtonText}>Edit</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={styles.editButton}
                 onPress={() => handleDelete(item.forum_id, item.fileKey, item.thumbnail_fileKey)}
+                activeOpacity={1}
               >
-                <Icon name="delete" size={20} color="#FF0000" />
                 <Text style={styles.deleteButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
@@ -400,8 +384,6 @@ const YourForumListScreen = ({ navigation, route }) => {
       )}
 
 
-      <Toast />
-
     </SafeAreaView>
 
 
@@ -420,15 +402,16 @@ const styles = StyleSheet.create({
   },
   postContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
-    marginHorizontal: 10,
+    marginBottom: 5,
+    marginHorizontal: 5,
     backgroundColor: 'white',
     justifyContent: 'center',
     borderRadius: 10,
     borderWidth: 0.5,
     borderColor: '#ddd',
     shadowColor: '#000',
-    top: 10
+    top: 5,
+    elevation: 2
   },
   noPostsContainer: {
     flex: 1,
@@ -509,7 +492,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'whitesmoke',
   },
   imageContainer: {
     flex: 1,
@@ -580,18 +563,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   editButton: {
+    width: 80,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
     backgroundColor: '#ffffff',
-    // elevation: 2,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 1 },
-
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    justifyContent: 'center'
   },
   editButtonText: {
     marginLeft: 5,
@@ -601,21 +585,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#FF0000",
   },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    marginLeft: 10,
-    backgroundColor: '#ffffff',
-    // elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 1 },
 
-  },
 
 
   shareButton: {
@@ -706,6 +676,7 @@ const styles = StyleSheet.create({
 
 
 });
+
 export default YourForumListScreen;
 
 

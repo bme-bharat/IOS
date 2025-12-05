@@ -1,9 +1,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Image, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Dimensions } from 'react-native';
+import { View, Image, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, ActivityIndicator, FlatList, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import apiClient from '../ApiClient';
 import { useSelector } from 'react-redux';
 import maleImage from '../../images/homepage/dummy.png';
@@ -12,7 +12,10 @@ import default_image1 from '../../images/homepage/image.jpg'
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { MyPostBody } from '../Forum/forumBody';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 
 const defautImage = Image.resolveAssetSource(default_image1).uri;
@@ -220,11 +223,11 @@ const UserDetailsPage = () => {
         command: 'getUserDetails',
         user_id: userId,
       });
-  
+
       if (response.data.status === 'success') {
         const profileData = response.data.status_message;
         setProfile(profileData);
-  
+
         if (profileData.fileKey && profileData.fileKey !== 'null') {
           const res = await apiClient.post('/getObjectSignedUrl', {
             command: 'getObjectSignedUrl',
@@ -261,7 +264,7 @@ const UserDetailsPage = () => {
       setLoading(false);
     }
   };
-  
+
 
 
   const { width } = Dimensions.get('window');
@@ -276,96 +279,82 @@ const UserDetailsPage = () => {
   const ProfileHeader = ({ profile, imageUrl, toggleModal, isModalVisibleImage, handleCancel }) => (
     <View style={styles.profileBox}>
 
-<View style={styles.imageContainerprofile}>
-  {typeof imageUrl === 'string' ? (
-    <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
-      <FastImage
-        source={{ uri: imageUrl }}
-        style={styles.imagerprofile}
-        resizeMode="contain"
-        onError={() => setImageUrl(null)}
-      />
-    </TouchableOpacity>
-  ) : (
-    <View
-      style={[
-        styles.imagerprofile,
-        { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
-      ]}
-    >
-      <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
-        {imageUrl?.initials || '?'}
-      </Text>
-    </View>
-  )}
-</View>
+      <View style={styles.imageContainerprofile}>
+        {typeof imageUrl === 'string' ? (
+          <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
+            <FastImage
+              source={{ uri: imageUrl }}
+              style={styles.imagerprofile}
+              resizeMode="contain"
+              onError={() => setImageUrl(null)}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View
+            style={[
+              styles.imagerprofile,
+              { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+            ]}
+          >
+            <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
+              {imageUrl?.initials || ''}
+            </Text>
+          </View>
+        )}
+      </View>
 
 
-      <Text style={[styles.title1, { textAlign: 'center', marginBottom: 20 }]}>
+      <Text style={[commonStyles.title, { textAlign: 'center', }]}>
         {profile?.first_name} {profile?.last_name}
       </Text>
 
       <View style={styles.textContainer}>
+        <View style={commonStyles.labValContainer}>
 
-
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Profile </Text>
-          </View>
-
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.select_your_profile || ""}</Text>
+          <Text style={commonStyles.label}>Profile </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.select_your_profile || ""}</Text>
         </View>
 
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Category </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.category || ""}</Text>
+          <Text style={commonStyles.label}>Category </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.category || ""}</Text>
         </View>
 
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>State </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.state || ""}</Text>
+          <Text style={commonStyles.label}>State </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.state || ""}</Text>
         </View>
 
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>City </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.city || ""}</Text>
+          <Text style={commonStyles.label}>City </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.city || ""}</Text>
         </View>
 
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Gender </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.gender || ""}</Text>
+          <Text style={commonStyles.label}>Gender </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.gender || ""}</Text>
         </View>
 
 
         {profile?.college ? (
-          <View style={styles.title}>
-            <View style={styles.lableIconContainer}>
-              <Text style={styles.label}>College </Text>
-            </View>
+          <View style={commonStyles.labValContainer}>
 
-            <Text style={styles.colon}>:</Text>
-            <Text style={styles.value}>{profile?.college || ""}</Text>
+            <Text style={commonStyles.label}>College </Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>{profile?.college || ""}</Text>
           </View>
         ) : null}
 
@@ -445,7 +434,7 @@ const UserDetailsPage = () => {
       <TouchableOpacity
         style={styles.cardresources}
         activeOpacity={1}
-        onPress={() => navigation.navigate('ResourceDetails', { resourceID: item.resource_id })}
+        onPress={() => navigation.push('ResourceDetails', { resourceID: item.resource_id })}
       >
 
         <View style={styles.imageContainer}>
@@ -470,7 +459,7 @@ const UserDetailsPage = () => {
             forumId={item?.resource_id}
             numberOfLines={2}
           />
-          <Text style={styles.labelProduct}>{formattedDate || ""}</Text>
+          <Text style={commonStyles.labelProduct}>{formattedDate || ""}</Text>
 
         </View>
       </TouchableOpacity>
@@ -526,7 +515,7 @@ const UserDetailsPage = () => {
             forumId={item?.forum_id}
             numberOfLines={2}
           />
-          <Text style={styles.labelProduct}>{formattedDate || ""}</Text>
+          <Text style={commonStyles.labelProduct}>{formattedDate || ""}</Text>
 
         </View>
 
@@ -538,11 +527,13 @@ const UserDetailsPage = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" size={24} color="#075cab" />
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={activeTab === 'forum' ? products : resources}
         keyExtractor={(item) =>
@@ -550,7 +541,7 @@ const UserDetailsPage = () => {
         }
         renderItem={activeTab === 'forum' ? renderItem : renderItemResources}
         numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 10 }}
+        columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 5 }}
         contentContainerStyle={{ paddingBottom: '20%', paddingTop: 10 }}
         onEndReached={() => {
           if (activeTab === 'forum') {
@@ -595,11 +586,10 @@ const UserDetailsPage = () => {
           </>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 
 };
-
 
 
 const styles = StyleSheet.create({
@@ -608,7 +598,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
 
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
+  },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 10,
@@ -692,7 +690,7 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     justifyContent: 'center',
     padding: 10,
-    
+
   },
 
   imageContainerprofile: {
@@ -701,14 +699,14 @@ const styles = StyleSheet.create({
     borderRadius: 75,
     alignSelf: 'center',
     marginBottom: 20,
-
+    marginTop: 5
   },
   imagerprofile: {
     width: '100%',
     height: '100%',
     borderRadius: 100,
-    alignItems:'center',
-    justifyContent:'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
 
   image: {
@@ -725,7 +723,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
 
   },
   card: {

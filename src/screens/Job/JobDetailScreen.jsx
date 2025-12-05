@@ -1,10 +1,10 @@
 
 import React, { useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Modal, ToastAndroid, Linking, RefreshControl, SafeAreaView, Pressable, TouchableWithoutFeedback, Share, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Modal, ToastAndroid, Linking, RefreshControl, Pressable, TouchableWithoutFeedback, Share, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import default_image from '../../images/homepage/buliding.jpg'
 import ImageViewer from 'react-native-image-zoom-viewer';
 import apiClient from '../ApiClient';
@@ -13,12 +13,17 @@ import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
-import AppStyles from '../AppUtils/AppStyles';
+import AppStyles, { commonStyles } from '../AppUtils/AppStyles';
 import { openLink } from '../AppUtils/openLinks';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import { colors, dimensions } from '../../assets/theme';
+
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
 const JobDetailScreen = ({ route }) => {
   const { myId, myData } = useNetwork();
+
   const { post_id } = route.params || {};
   const routePost = route.params?.post;
   const [profileCreated, setProfileCreated] = useState(false)
@@ -83,7 +88,7 @@ const JobDetailScreen = ({ route }) => {
   useEffect(() => {
     fetchProfile();
     fetchProfile1();
-  }, [])
+  }, [myId])
   const withTimeout = (promise, timeout = 5000) => {
     return Promise.race([
       promise,
@@ -327,7 +332,9 @@ const JobDetailScreen = ({ route }) => {
       if (response.data.status === 'success') {
         setIsApplied(false);
         showToast('The application has been successfully revoked', 'success');
-
+        setTimeout(() => {
+          navigation.goBack()
+        },100)
       } else {
         showToast('Something went wrong', 'error');
 
@@ -354,7 +361,7 @@ const JobDetailScreen = ({ route }) => {
   if (!post) {
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
 
         <View style={styles.headerContainer}>
 
@@ -368,20 +375,21 @@ const JobDetailScreen = ({ route }) => {
               }
             }}
           >
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size='small' color='#075cab' />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (post?.removed_by_author) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
 
           <TouchableOpacity
@@ -394,14 +402,15 @@ const JobDetailScreen = ({ route }) => {
               }
             }}
           >
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>This post was removed by the author</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
   return (
@@ -418,19 +427,20 @@ const JobDetailScreen = ({ route }) => {
             }
           }}
         >
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
 
-
         <TouchableOpacity onPress={() => shareJob(post)} style={AppStyles.circle}>
-          <Icon name="share" size={20} color="#075cab" style={styles.icon} />
-          <Text style={AppStyles.shareText}>Share</Text>
+          <ShareIcon width={24} height={24} color={'#075cab'} />
+          <Text style={AppStyles.shareText}> Share </Text>
+
         </TouchableOpacity>
       </View>
 
       <>
         {post ? (
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '30%', paddingTop: 5 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '30%', paddingTop: 5, paddingHorizontal:5 }}>
 
             <TouchableOpacity
               onPress={() => {
@@ -445,7 +455,7 @@ const JobDetailScreen = ({ route }) => {
                 <FastImage
                   source={{ uri: jobImage.value }}
                   style={styles.detailImage}
-                  resizeMode={FastImage.resizeMode.contain}
+
                 />
               ) : (
                 <View
@@ -468,34 +478,32 @@ const JobDetailScreen = ({ route }) => {
 
 
             <View style={styles.textContainer1}>
-              <Text style={styles.title}>{post?.job_title || 'No Title'}</Text>
+              <Text style={commonStyles.title}>{post?.job_title || 'No Title'}</Text>
             </View>
-            <View style={styles.detailContainer}>
-
-              <Text style={styles.label}>Company</Text>
-
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value} onPress={() => handleNavigate(post?.company_id)} >{post?.company_name || ''}</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Company</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value} onPress={() => handleNavigate(post?.company_id)} >{post?.company_name || ''}</Text>
             </View>
 
 
-            <View style={styles.detailContainer}>
+            <View style={commonStyles.labValContainer}>
 
-              <Text style={styles.label}>Category</Text>
+              <Text style={commonStyles.label}>Category</Text>
 
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{post?.company_category || ''}</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{post?.company_category || ''}</Text>
             </View>
 
             {post?.Website ? (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={styles.label}>Website</Text>
+                <Text style={commonStyles.label}>Website</Text>
 
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>
                   <TouchableOpacity activeOpacity={1} onPress={() => openLink(post.Website)}>
-                    <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                    <Text style={[commonStyles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
                       {post.Website.trim()}
                     </Text>
                   </TouchableOpacity>
@@ -504,64 +512,64 @@ const JobDetailScreen = ({ route }) => {
               </View>
             ) : null}
 
-            <View style={styles.detailContainer}>
+            <View style={commonStyles.labValContainer}>
 
-              <Text style={styles.label}>Industry type</Text>
+              <Text style={commonStyles.label}>Industry type</Text>
 
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{post?.industry_type || ''}</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{post?.industry_type || ''}</Text>
             </View>
 
             {post?.required_qualifications?.trim() && (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={styles.label}>Required qualification</Text>
+                <Text style={commonStyles.label}>Required qualification</Text>
 
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.required_qualifications.trim()}</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{post?.required_qualifications.trim()}</Text>
               </View>
             )}
 
             {post?.required_expertise?.trim() && (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={styles.label}>Required expertise</Text>
+                <Text style={commonStyles.label}>Required expertise</Text>
 
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.required_expertise.trim()}</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{post?.required_expertise.trim()}</Text>
               </View>
             )}
 
             {post?.experience_required?.trim() && (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={styles.label}>Required experience</Text>
+                <Text style={commonStyles.label}>Required experience</Text>
 
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.experience_required.trim()}</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{post?.experience_required.trim()}</Text>
               </View>
             )}
 
-            <View style={styles.detailContainer}>
+            <View style={commonStyles.labValContainer}>
 
-              <Text style={[styles.label]}>Required speicializations </Text>
+              <Text style={[commonStyles.label]}>Required speicializations </Text>
 
-              <Text style={styles.colon}>:</Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={[styles.value]}>{post?.speicializations_required || ''}</Text>
+              <Text style={[commonStyles.value]}>{post?.speicializations_required || ''}</Text>
             </View>
 
             {post?.working_location?.trim() && (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={styles.label}>Work location</Text>
+                <Text style={commonStyles.label}>Work location</Text>
 
-                <Text style={styles.colon}>:</Text>
+                <Text style={commonStyles.colon}>:</Text>
                 <View style={{ flexDirection: "column", flex: 2 }}>
                   {post.working_location
                     .split(",")
                     .map((city, index) => (
-                      <Text key={index} style={styles.value}>
+                      <Text key={index} style={commonStyles.value}>
                         {city.trim()}
                       </Text>
                     ))}
@@ -570,36 +578,36 @@ const JobDetailScreen = ({ route }) => {
             )}
 
 
-            <View style={styles.detailContainer}>
+            <View style={commonStyles.labValContainer}>
 
-              <Text style={styles.label}>Salary package</Text>
+              <Text style={commonStyles.label}>Salary package</Text>
 
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{post?.Package || ''}</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{post?.Package || ''}</Text>
             </View>
 
             {post?.job_description?.trimStart().trimEnd() ? (
-              <View style={styles.detailContainer}>
-                <Text style={styles.label}>Job description</Text>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{post?.job_description.trim()}</Text>
+              <View style={commonStyles.labValContainer}>
+                <Text style={commonStyles.label}>Job description</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{post?.job_description.trim()}</Text>
               </View>
             ) : null}
 
 
 
             {post?.preferred_languages?.trimStart().trimEnd() ? (
-              <View style={styles.detailContainer}>
+              <View style={commonStyles.labValContainer}>
 
-                <Text style={[styles.label]}>Required languages</Text>
+                <Text style={[commonStyles.label]}>Required languages</Text>
 
-                <Text style={styles.colon}>:</Text>
+                <Text style={commonStyles.colon}>:</Text>
 
                 <View style={{ flexDirection: "column", flex: 2 }}>
                   {post.preferred_languages
                     .split(",")
                     .map((language, index) => (
-                      <Text key={index} style={styles.value}>
+                      <Text key={index} style={commonStyles.value}>
                         {language.trim()}
                       </Text>
                     ))}
@@ -607,12 +615,12 @@ const JobDetailScreen = ({ route }) => {
               </View>
             ) : null}
 
-            <View style={styles.detailContainer}>
+            <View style={commonStyles.labValContainer}>
 
-              <Text style={styles.label}>Posted on</Text>
+              <Text style={commonStyles.label}>Posted on</Text>
 
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>
                 {
                   post?.job_post_created_on
                     ? (() => {
@@ -767,14 +775,15 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     padding: 10,
+
   },
 
   value: {
     flex: 2, // Take the remaining space
     flexShrink: 1,
-    color: 'black',
-    fontWeight: '400',
-    fontSize: 15,
+    color: colors.text_secondary,
+    fontWeight: '500',
+    fontSize: 13,
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
   },
@@ -785,9 +794,9 @@ const styles = StyleSheet.create({
 
   },
   title: {
-    color: 'black',
-    fontWeight: '500',
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_primary,
     paddingHorizontal: 12,
   },
 
@@ -814,9 +823,9 @@ const styles = StyleSheet.create({
 
   label: {
     flex: 1, // Take up available space
-    color: 'black',
+    color: colors.text_primary,
     fontWeight: '500',
-    fontSize: 15,
+    fontSize: 13,
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
 
@@ -856,8 +865,9 @@ const styles = StyleSheet.create({
   detailImage: {
     width: '100%',
     height: '100%',
-
+    resizeMode: 'contain'
   },
+  
   body: {
     fontSize: 16,
     color: '#333',

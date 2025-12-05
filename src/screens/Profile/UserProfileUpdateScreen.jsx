@@ -11,7 +11,6 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Keyboard } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomDropdown from '../../components/DropDownMenu';
-import CustomDropdown1 from '../../components/userSignupdropdown';
 import Message1 from '../../components/Message1';
 import Message3 from '../../components/Message3';
 import PhoneDropDown from '../../components/PhoneDropDown';
@@ -30,6 +29,13 @@ import { launchCamera } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import { MediaPickerButton } from '../helperComponents/MediaPickerButton';
 import { useMediaPicker } from '../helperComponents/MediaPicker';
+import { colors, dimensions } from '../../assets/theme';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Camera from '../../assets/svgIcons/camera.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Success from '../../assets/svgIcons/success.svg';
+
+import ArrowDown from '../../assets/svgIcons/arrow-down.svg';
 
 
 const defaultImage = Image.resolveAssetSource(dummy).uri;
@@ -435,30 +441,35 @@ const UserProfileUpdateScreen = () => {
   const [selectedCity, setSelectedCity] = useState(profile.city || '');
 
 
-  const states = Object.keys(stateCityData).map((state) => state);
+  const states = Object.keys(stateCityData).map((state) => ({
+    label: state,
+    key: state,
+  }));
 
-  const cities = selectedState && stateCityData[selectedState]
-    ? stateCityData[selectedState]
+  const cities = postData.state && stateCityData[postData.state]
+    ? stateCityData[postData.state].map((city) => ({
+      label: city,
+      key: city,
+    }))
     : [];
 
 
   const handleStateSelect = (item) => {
+    setPostData({
+      ...postData,
+      state: item.label,
+      city: "", // reset city when state changes
+    });
 
-    if (selectedState !== item) {
-      setSelectedState(item);
-      setIsStateChanged(true);
-      setIsCityChanged(false);
-      setSelectedCity('');
-      handleInputChange('state', item);
-    }
+    showToast('Please select city', 'info'); // toast when state changes
   };
 
 
   const handleCitySelect = (item) => {
-
-    setIsCityChanged(true);
-    setSelectedCity(item);
-    handleInputChange('city', item);
+    setPostData({
+      ...postData,
+      city: item.label,
+    });
   };
 
 
@@ -967,24 +978,7 @@ const UserProfileUpdateScreen = () => {
   const handlePostSubmission = async () => {
     setLoading(true);
 
-    if (isStateChanged && !isCityChanged) {
-
-      showToast("Select a city", 'info');
-
-      setLoading(false);
-      return;
-    }
-
-    if (!postData.state.trim()) {
-
-      showToast("Select a state", 'info');
-
-      setLoading(false);
-      return;
-    }
-
     if (!postData.city.trim()) {
-
       showToast("Select a city", 'info');
       setLoading(false);
       return;
@@ -1032,8 +1026,8 @@ const UserProfileUpdateScreen = () => {
         is_email_verified: postData.is_email_verified,
         first_name: trimmedFirstName,
         last_name: trimmedLastName,
-        city: selectedCity?.trimStart().trimEnd(),
-        state: selectedState?.trimStart().trimEnd(),
+        city: postData.city,
+        state: postData.state,
         date_of_birth: dateOfBirth ? formatDateToDDMMYYYY(dateOfBirth) : '',
         gender: postData.gender?.trimStart().trimEnd(),
         college: postData.college?.trimStart().trimEnd(),
@@ -1135,13 +1129,15 @@ const UserProfileUpdateScreen = () => {
     <View style={styles.container} >
       <View style={styles.headerContainer}>
 
+
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
       </View>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: '40%', paddingHorizontal: 10, backgroundColor: 'whitesmoke' }}
+        contentContainerStyle={{ paddingBottom: '20%', paddingHorizontal: 5, }}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.header}>Edit your profile</Text>
@@ -1388,26 +1384,33 @@ const UserProfileUpdateScreen = () => {
             </View>
           </View>
         </Modal>
+
         <View style={styles.inputContainer}>
-          <Text style={[styles.label,]}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
+          <Text style={[styles.title]}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
           <View style={styles.inputWithButton}>
             <TextInput
-              style={styles.inputemail1}
+              style={styles.input}
               value={postData.user_email_id || ''}
               onChangeText={(value) => handleInputChange('user_email_id', value)}
               placeholder="Email"
               editable={!postData.is_email_verified}
 
             />
-
-            {!postData.is_email_verified && postData.user_email_id !== verifiedEmail && (
-              < TouchableOpacity style={styles.buttonemailmain} onPress={handleOtpEmail}>
-                <Text style={styles.buttonTextemailtext}>{otpLoading ? 'Sending' : 'Verify'}</Text>
+            {profile.is_email_verified && postData.user_email_id === profile.user_email_id ? (
+              <Success
+                width={dimensions.icon.small}
+                height={dimensions.icon.small}
+                color={colors.success}
+              />
+            ) : (
+              <TouchableOpacity
+                style={styles.buttonemailmain}
+                onPress={handleOtpEmail}
+              >
+                <Text style={styles.buttonTextemailtext}>
+                  {otpLoading ? 'Sending' : 'Verify'}
+                </Text>
               </TouchableOpacity>
-            )}
-            {/* Show "Verified" if the email is verified */}
-            {profile.is_email_verified && postData.user_email_id === verifiedEmail && (
-              <Ionicons name="checkmark-circle" size={20} color="green" style={styles.verifiedIcon} />
             )}
 
           </View>
@@ -1470,7 +1473,8 @@ const UserProfileUpdateScreen = () => {
             <Text style={styles.datePickerButtonText}>
               {dateOfBirth ? formatDateToDDMMYYYY(dateOfBirth) : 'Select Date of Birth'}
             </Text>
-            <Icon name="arrow-drop-down" size={24} color="gray" />
+            <ArrowDown width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
           {showDatePicker && (
@@ -1487,26 +1491,28 @@ const UserProfileUpdateScreen = () => {
 
         <View style={[styles.inputContainer, {}]}>
           <Text style={[styles.title, {}]}>State <Text style={{ color: 'red' }}>*</Text></Text>
-
-          <CustomDropdown1
-            label="State"
-            data={states}
+          <CustomDropdown
+            items={states}
             onSelect={handleStateSelect}
-            selectedItem={selectedState}
-            setSelectedItem={setSelectedState}
+            placeholder={postData.state || "Select State"}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholderTextColor="gray"
 
           />
+
         </View>
         <View style={[styles.inputContainer, {}]}>
           <Text style={[styles.title, {}]}>City <Text style={{ color: 'red' }}>*</Text></Text>
 
-          <CustomDropdown1
-            label="City"
-            data={cities}
+          <CustomDropdown
+            items={cities}
             onSelect={handleCitySelect}
-            selectedItem={selectedCity}
-            setSelectedItem={setSelectedCity}
-            disabled={!selectedState}
+            placeholder={postData.city || "Select City"}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholderTextColor="gray"
+            disabled={!postData.state}
           />
         </View>
 
@@ -1605,7 +1611,7 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     top: 10,
-    left: 300,
+    right: 10,
     // padding: 15,
     // marginBottom:15,
     // backgroundColor: '#E0E0E0',
@@ -1760,7 +1766,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: 'black',
+    color: colors.text_primary,
     fontSize: 15,
     fontWeight: '500',
     marginVertical: 5,
@@ -1768,70 +1774,46 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    height: 50,
+    height: 40,
+    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    // paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    fontSize: 14,
+    fontWeight: '500',
     borderWidth: 1,
     borderColor: '#ddd',
-    paddingHorizontal: 12,
+    color: colors.text_secondary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
   },
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd'
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
     flex: 1,
-  },
-  dropdownItem: {
-    padding: 10,
-  },
-  dropdownItemText: {
-    fontSize: 15,
-    color: 'black',
-    fontWeight: '400',
-    marginLeft: 10,
-    padding: 2
+    paddingVertical: 5,
+
   },
 
   inputWithButton: {
-    height: 50,
-    backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    paddingHorizontal: 12
+
   },
   modalTitleemail: {
     fontSize: 20,
@@ -1888,7 +1870,9 @@ const styles = StyleSheet.create({
   },
   inputemail1: {
     flex: 1,
-    // padding:5,
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text_primary,
     flexDirection: 'row',
     backgroundColor: '#fff',
     alignItems: 'center',
@@ -1897,11 +1881,13 @@ const styles = StyleSheet.create({
 
   },
   buttonemailmain: {
-    // backgroundColor: '#075cab',
+    backgroundColor: '#fff',
     // paddingVertical: 13,
     // paddingHorizontal: 15,
-    borderRadius: 5,
-    // marginLeft: 10,
+    borderRadius: 8,
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   buttonTextemailtext: {
     color: '#075cab',
@@ -1910,7 +1896,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 10,
     color: "black",
 
   },
@@ -1938,7 +1924,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   datePickerButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
@@ -1955,9 +1941,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12
   },
   datePickerButtonText: {
-    fontSize: 15,
-    color: 'black',
-    fontWeight: '400'
+    fontSize: 14,
+    color: colors.text_secondary,
+    fontWeight: '500'
   },
 });
 

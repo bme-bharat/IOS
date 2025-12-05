@@ -33,11 +33,10 @@ const Message = ({ visible, onClose, onCancel, onOk, title, message, iconType })
     >
       <View style={styles.overlay}>
         <View style={styles.alertBox}>
-          {/* Icon based on iconType */}
-          <View style={styles.iconContainer}>
-            {getIcon()}
-          </View>
 
+          {/* <View style={styles.iconContainer}>
+            {getIcon()}
+          </View> */}
 
           <Text style={styles.title}>{title}</Text>
 

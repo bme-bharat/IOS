@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     SafeAreaView,
-    
+
 } from "react-native";
 
 import axios from "axios";
@@ -22,6 +22,10 @@ import apiClient from "../ApiClient";
 import { showToast } from "../AppUtils/CustomToast";
 import { useNetwork } from "../AppUtils/IdProvider";
 import { EventRegister } from "react-native-event-listeners";
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Add from '../../assets/svgIcons/add.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';
@@ -40,39 +44,39 @@ const MyServices = () => {
             const firstImage = Array.isArray(newProduct.images) && newProduct.images.length > 0
                 ? newProduct.images[0]
                 : null;
-    
+
             const signedUrl = await fetchSignedUrl(firstImage);
-    
+
             const enrichedProduct = {
                 ...newProduct,
                 signedImageUrl: signedUrl,
             };
-    
+
             setProducts((prev) => [enrichedProduct, ...(Array.isArray(prev) ? prev : [])]);
         };
-    
+
         const handleProductUpdated = async ({ updatedProduct }) => {
             console.log('✏️ Product updated:', updatedProduct);
-    
+
             const firstImage = Array.isArray(updatedProduct.images) && updatedProduct.images.length > 0
                 ? updatedProduct.images[0]
                 : null;
-    
+
             const signedUrl = await fetchSignedUrl(firstImage);
-    
+
             const enrichedUpdatedProduct = {
                 ...updatedProduct,
                 signedImageUrl: signedUrl,
             };
-    
+
             setProducts((prevProducts) =>
                 (Array.isArray(prevProducts) ? prevProducts : []).map((product) =>
-                  product.service_id === updatedProduct.service_id
-                    ? enrichedUpdatedProduct
-                    : product
+                    product.service_id === updatedProduct.service_id
+                        ? enrichedUpdatedProduct
+                        : product
                 )
-              );
-              
+            );
+
         };
         const handleProductDeleted = ({ deletedProductId }) => {
             console.log('🗑️ Product deleted:', deletedProductId);
@@ -80,7 +84,7 @@ const MyServices = () => {
                 prevProducts.filter((product) => product.service_id !== deletedProductId)
             );
         };
-    
+
         const createListener = EventRegister.addEventListener('onProductCreated', handleProductCreated);
         const updateListener = EventRegister.addEventListener('onProductUpdated', handleProductUpdated);
         const deleteListener = EventRegister.addEventListener('onProductDeleted', handleProductDeleted);
@@ -88,10 +92,10 @@ const MyServices = () => {
         return () => {
             EventRegister.removeEventListener(createListener);
             EventRegister.removeEventListener(updateListener);
-            EventRegister.removeEventListener(deleteListener);  
+            EventRegister.removeEventListener(deleteListener);
         };
     }, []);
-    
+
 
 
 
@@ -170,12 +174,12 @@ const MyServices = () => {
 
                             console.log(`✅ S3 file deleted: ${fileKey}`, response.data);
                         } catch (err) {
-                           
+
                         }
                     })
                 );
             } else {
-               
+
             }
 
             const deletePayload = {
@@ -190,16 +194,16 @@ const MyServices = () => {
             );
 
             if (response.data.status === "success") {
-                
+
                 EventRegister.emit('onProductDeleted', { deletedProductId: productId });
-                
+
                 showToast("Service deleted", 'success');
             } else {
-               
+
                 throw new Error("Failed to delete");
             }
         } catch (error) {
-         
+
             showToast("Something went wrong", 'error');
         }
     };
@@ -306,47 +310,45 @@ const MyServices = () => {
                         {signedImageUrl ? (
                             <Image source={{ uri: signedImageUrl }} style={styles.image} />
                         ) : (
-                         null
+                            null
                         )}
                     </View>
 
                     <View style={styles.textContainer}>
-                        <Text numberOfLines={1} style={[styles.value,]}>{item.title || "N/A"}</Text>
-                        <Text numberOfLines={1} style={styles.value1}>{item.category || "N/A"}</Text>
-                        <Text numberOfLines={1} style={styles.value1}>{item.description || "N/A"}</Text>
+                        <Text numberOfLines={1} style={[styles.value1,]}>{item.title || "N/A"}</Text>
+                        <Text numberOfLines={1} style={styles.value}>{item.category || "N/A"}</Text>
+                        <Text numberOfLines={1} style={styles.value}>{item.description || "N/A"}</Text>
                         {(item.price ?? '').toString().trim() !== '' ? (
                             <View style={styles.priceRow}>
-                                <Text numberOfLines={1} style={styles.value}>₹ {item.price}</Text>
+                                <Text numberOfLines={1} style={styles.value1}>₹ {item.price}</Text>
                             </View>
                         ) : (
-                            <Text style={styles.value}>₹ Undefined</Text>
+                            <Text style={styles.value1}>₹ N/A</Text>
                         )}
                     </View>
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity onPress={() => handleEditProduct(item)} style={[styles.actionButton, { marginLeft: 10 }]}>
-                        <View style={styles.iconTextContainer}>
-                            <Icon name="pen" size={18} color="#075cab" opacity={1} />
+                    <TouchableOpacity onPress={() => handleEditProduct(item)} style={[styles.actionButton]} activeOpacity={1}>
+                      
                             <Text style={styles.buttonText}>Edit</Text>
-                        </View>
+                      
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={() => handleDeletePress(item.service_id, item.images, item.files)}
-                        style={styles.actionButton}
+                        style={[styles.actionButton,{ marginLeft: 10 }]}
+                        activeOpacity={1}
                     >
-                        <View style={styles.deleteButton}>
-                            <Icon name="delete" size={18} color="red" opacity={1} />
+                       
                             <Text style={styles.deleteButtonText}>Delete</Text>
-                        </View>
+                       
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => handleEnquiry(item)} style={[styles.actionButton, { marginLeft: 10 }]}>
-                        <View style={styles.iconTextContainer}>
-                            <Icon name="message-question" size={18} color="#075cab" opacity={1} />
+                    <TouchableOpacity onPress={() => handleEnquiry(item)} style={[styles.actionButton, { marginLeft: 10 }]} activeOpacity={1}>
+                       
                             <Text style={styles.buttonText}>View Enquiries</Text>
-                        </View>
+                       
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
@@ -361,7 +363,8 @@ const MyServices = () => {
                 <View style={styles.headerContainer}>
 
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
 
                 </View>
@@ -378,10 +381,11 @@ const MyServices = () => {
                 <View style={styles.headerContainer}>
 
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.addProductButton} onPress={handleAddProduct}>
-                    <Icon name="plus-circle-outline" size={18} color="#075cab" />
+                        <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
                         <Text style={styles.addProductText}>Add Service</Text>
                     </TouchableOpacity>
@@ -398,10 +402,12 @@ const MyServices = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.addProductButton} onPress={handleAddProduct}>
-                <Icon name="plus-circle-outline" size={18} color="#075cab" />
+                    <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     <Text style={styles.addProductText}>Add Service</Text>
                 </TouchableOpacity>
 
@@ -452,7 +458,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: 'white',
-           borderBottomWidth: 1,
+        borderBottomWidth: 1,
         borderColor: '#f0f0f0'
     },
     addProductButton: {
@@ -474,52 +480,48 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        // backgroundColor:'red'
+        justifyContent: 'flex-end',
     },
 
     actionButton: {
-        padding: 8,
-        borderRadius: 5,
-    },
-    iconTextContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 8,
-        paddingHorizontal: 8,
+        paddingHorizontal: 12,
         borderRadius: 5,
         backgroundColor: '#ffffff',
-        // elevation: 2,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
+        justifyContent: 'center'
+
+    },
+    iconTextContainer: {
+        flexDirection: 'row',
+        // alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+        borderRadius: 5,
+        backgroundColor: '#fff',
+        elevation: 2,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 1 },
     },
     buttonText: {
-        marginLeft: 5,
         fontSize: 15,
-        fontWeight:'500',
+        fontWeight: '500',
         color: "#075cab",
     },
     deleteButtonText: {
         color: "#FF0000",
-        fontSize: 12
+        fontSize: 15,
+        fontWeight: '500'
     },
-    deleteButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 5,
-        marginLeft: 10,
-        backgroundColor: '#ffffff',
-        // elevation: 2,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 1 },
 
-    },
     backButton: {
         alignSelf: 'flex-start',
         padding: 10
@@ -579,21 +581,22 @@ const styles = StyleSheet.create({
 
     productCard: {
         flexDirection: 'row',
-        marginHorizontal: 10,
+        marginHorizontal: 5,
         backgroundColor: 'white',
         padding: 5,
 
     },
     productCard1: {
         marginBottom: 10,
-        marginHorizontal: 10,
-        top: 10,
+        marginHorizontal: 5,
+        top: 5,
         backgroundColor: 'white',
         borderRadius: 10,
         borderWidth: 0.5,
         borderColor: '#ddd',
         borderWidth: 0.5,
         shadowColor: '#000',
+        padding: 10
 
     },
     imageContainer: {
@@ -649,9 +652,9 @@ const styles = StyleSheet.create({
     value: {
         flex: 2, // Take the remaining space
         flexShrink: 1,
-        color: 'black',
-        fontWeight: '500',
-        fontSize: 15,
+        fontSize: 14,
+        fontWeight: '400',
+        color: colors.text_secondary,
         textAlign: 'left', // Align text to the left
         alignSelf: 'flex-start',
         padding: 5,
@@ -659,9 +662,9 @@ const styles = StyleSheet.create({
     value1: {
         flex: 2, // Take the remaining space
         flexShrink: 1,
-        color: '#777',
-      
-        fontSize: 15,
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text_primary,
         textAlign: 'left', // Align text to the left
         alignSelf: 'flex-start',
         padding: 5,

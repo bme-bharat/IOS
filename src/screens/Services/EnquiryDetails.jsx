@@ -1,9 +1,9 @@
 
 
-import { StyleSheet, Text, View, Button, TouchableOpacity, Linking, SafeAreaView, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Button, TouchableOpacity, Linking, ActivityIndicator, ScrollView } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,11 +11,16 @@ import axios from 'axios';
 import maleImage from '../../images/homepage/dummy.png';
 import femaleImage from '../../images/homepage/female.jpg';
 import companyImage from '../../images/homepage/buliding.jpg';
-import VideoPlayer from 'react-native-video-controls';
 import ParsedText from 'react-native-parsed-text';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { getTimeDisplay } from '../helperComponents/signedUrls';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { useSelector } from 'react-redux';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const EnquiryDetails = () => {
     const route = useRoute();
@@ -27,9 +32,8 @@ const EnquiryDetails = () => {
     const [loadingMedia, setLoadingMedia] = useState(false);
     const [isVideoPlaying, setIsVideoPlaying] = useState(false);
     const [thumbnailUrl, setThumbnailUrl] = useState(null);
-  const { myId, myData } = useNetwork();
-
-
+    const { myId, myData } = useNetwork();
+    const profile = useSelector(state => state.CompanyProfile.profile);
 
     const [expandedPosts, setExpandedPosts] = useState({});
 
@@ -65,7 +69,7 @@ const EnquiryDetails = () => {
                 if (res.data.status === 'success' && res.data.response.length > 0) {
                     setPostData(res.data.response[0]);
                 } else {
-                
+
                     setPostData(null);
                 }
 
@@ -81,7 +85,7 @@ const EnquiryDetails = () => {
                 }
             }
         } catch (error) {
-     
+
         } finally {
             setLoading(false)
         }
@@ -91,7 +95,7 @@ const EnquiryDetails = () => {
         if (!enquiryID) return;
 
         fetchResourceDetails();
-    }, [ enquiryID]);
+    }, [enquiryID]);
 
 
 
@@ -141,7 +145,7 @@ const EnquiryDetails = () => {
 
 
     const handleNavigate = (item) => {
-        console.log('item',item)
+        console.log('item', item)
         const userType = item.enquired_user_type || item.user_type;
 
         if (userType === "company") {
@@ -175,7 +179,7 @@ const EnquiryDetails = () => {
                 setThumbnailUrl(mediaData);
             }
         } catch (error) {
-     
+
         } finally {
             setLoadingMedia(false);
         }
@@ -208,13 +212,14 @@ const EnquiryDetails = () => {
 
     return (
 
-        <SafeAreaView style={styles.mainContainer}>
+        <View style={styles.mainContainer}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
 
             </View>
@@ -222,24 +227,26 @@ const EnquiryDetails = () => {
 
             {postData && Object.keys(postData).length > 0 ? (
                 <ScrollView
-                    contentContainerStyle={{ paddingBottom: "20%", paddingHorizontal: 10 }}
+                    contentContainerStyle={{ paddingBottom: "20%" }}
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.container}>
                         {/* Author section */}
                         <View style={styles.authorContainer}>
-                            {authorImageUrl ? (
+                            {profile?.imageUrl ? (
                                 <FastImage
-                                    source={{ uri: authorImageUrl }}
+                                    source={{ uri: profile?.imageUrl, }}
+
                                     style={styles.authorImage}
-                                    resizeMode="cover"
+                                    resizeMode='contain'
+                                    onError={() => { }}
                                 />
                             ) : (
-                                <FastImage
-                                    source={authorImage}
-                                    style={styles.authorImage}
-                                    resizeMode="cover"
-                                />
+                                <View style={[styles.authorImage, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+                                    <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+                                        {profile?.companyAvatar?.initials}
+                                    </Text>
+                                </View>
                             )}
                             <View style={styles.authorInfo}>
                                 <View style={styles.authorNameRow}>
@@ -254,51 +261,25 @@ const EnquiryDetails = () => {
                         </View>
 
                         {/* Content section */}
-                        <Text style={styles.title}>{postData?.service_title}</Text>
+                        <Text style={commonStyles.label}>{postData?.service_title}</Text>
 
-                        <Text style={styles.title}>{postData?.enquiry_description}</Text>
-
-                        <TouchableOpacity onPress={() => toggleFullText(postData?.enquiry_id)} activeOpacity={1} style={styles.textContainer}>
-                            <Text style={styles.body}>
-                                <ParsedText
-                                    style={{ color: 'black' }}
-                                    parse={[
-                                        {
-                                            pattern: /(?:https?:\/\/[^\s/$.?#].[^\s]*|www\.[^\s]+)/g,
-                                            style: { color: '#075cab', textDecorationLine: 'underline' },
-                                            onPress: handleUrlPress,
-                                            renderText: (matchingString) =>
-                                                matchingString.startsWith(' ') ? matchingString : ` ${matchingString}`,
-                                        },
-                                    ]}
-                                >
-                                    {getText1((postData?.resource_body || '').trimStart().trimEnd(), postData?.enquiry_id)}
-                                </ParsedText>
-                                {postData?.resource_body?.length > 200 && !expandedPosts[postData?.enquiry_id] && (
-                                    <Text style={styles.readMore}> Read More</Text>
-                                )}
-                            </Text>
-                        </TouchableOpacity>
-
+                        <Text style={[commonStyles.value,{marginTop:10}]}>{postData?.enquiry_description}</Text>
 
 
                         {loadingMedia ? (
                             <ActivityIndicator size="small" color="#075cab" />
                         ) : mediaUrl && fileExtension ? (
-                            <View style={styles.fileContainer}>
+                            <>
                                 {(fileExtension === 'pdf' || fileTypeMap[fileExtension]) ? (
                                     <TouchableOpacity onPress={() => Linking.openURL(mediaUrl)} style={styles.pdfButton}>
-                                        <Icon
-                                            name={fileTypeMap[fileExtension]?.icon || 'file-download'}
-                                            size={50}
-                                            color={fileTypeMap[fileExtension]?.color || '#075cab'}
-                                        />
+                                        <Pdf width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.primary} />
+
                                         <Text style={styles.pdfText}>View/download</Text>
                                     </TouchableOpacity>
                                 ) : (
                                     <Text>Unsupported file type</Text>
                                 )}
-                            </View>
+                            </>
 
                         ) : null}
 
@@ -311,7 +292,7 @@ const EnquiryDetails = () => {
                 </Text>
             ) : null}
 
-        </SafeAreaView>
+        </View>
 
     );
 };
@@ -331,22 +312,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: 'white',
-          borderBottomWidth: 1,
+        borderBottomWidth: 1,
         borderColor: '#f0f0f0'
-    
-      },
+
+    },
     pdfButton: {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 10,
-
-        borderRadius: 5,
         marginTop: 10,
     },
 
     scrollContainer: {
-
         paddingBottom: "20%", // Prevent cut off at bottom
     },
 
@@ -375,10 +352,17 @@ const styles = StyleSheet.create({
         // marginVertical: 10,
     },
     authorImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         marginRight: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+       
     },
     authorPlaceholder: {
         backgroundColor: '#f0f0f0',
@@ -395,19 +379,18 @@ const styles = StyleSheet.create({
     },
     authorName: {
         fontSize: 16,
-        color: 'black',
-        fontWeight: '500',
-        maxWidth:'70%'
+        color: colors.text_primary,
+        fontWeight: '600',
+        maxWidth: '70%'
     },
     authorCategory: {
         fontSize: 13,
-        color: 'black',
+        color: colors.text_secondary,
         fontWeight: '300',
     },
     timeText: {
         fontSize: 12,
-        color: '#999',
-        marginTop: 2,
+        color: colors.text_secondary,
     },
     title: {
         fontSize: 15,
@@ -422,7 +405,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         fontWeight: '400',
         alignItems: 'center',
-        lineHeight: 23,
+        lineHeight: 20,
     },
 
     readMore: {
@@ -432,8 +415,8 @@ const styles = StyleSheet.create({
     },
     fileContainer: {
         marginTop: 10,
-        borderRadius: 8,
         overflow: 'hidden',
+
     },
     resourceImage: {
         width: '100%',

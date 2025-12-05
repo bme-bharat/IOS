@@ -11,13 +11,14 @@ import {
   FlatList,
   SafeAreaView,
   Modal, Image, Alert, Platform, Button,
-  Keyboard
+  Keyboard,
+  ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CityType, COLORS, StateType, } from '../../assets/Constants';
 import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import CustomAlertMessage from '../../components/AlertMessage';
+
 import CustomDropdown from '../../components/CustomDropDown';
 import { stateCityData } from '../../assets/Constants';
 import RNFS from 'react-native-fs';
@@ -35,7 +36,20 @@ import apiClient from '../ApiClient';
 import AppStyles from '../AppUtils/AppStyles';
 import { ActionSheetIOS } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import Camera from '../../assets/svgIcons/camera.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Phone from '../../assets/svgIcons/phone.svg';
+import Company from '../../assets/svgIcons/company.svg';
+import Email from '../../assets/svgIcons/mail.svg';
+import Sucess from '../../assets/svgIcons/success.svg';
+import Web from '../../assets/svgIcons/web.svg';
+import Register from '../../assets/svgIcons/register.svg';
+import Location from '../../assets/svgIcons/location.svg';
+import Info from '../../assets/svgIcons/information.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 
 const CompanyUserSignupScreen = () => {
@@ -64,9 +78,6 @@ const CompanyUserSignupScreen = () => {
   const [cityVerify, setCityVerify] = useState(false);
   const [stateVerify, setStateVerify] = useState(false);
 
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertType, setAlertType] = useState('info');
   const [otpTimer, setOtpTimer] = useState(0);
   const [modalVisibleemail, setModalVisibleemail] = useState(false);
   const [otp1, setOtp1] = useState('');
@@ -207,11 +218,11 @@ const CompanyUserSignupScreen = () => {
       showToast("Enter a valid email Id", 'info');
       return;
     }
-  
+
     try {
       setLoading(true);
       console.log("Sending first request to /sendUpdateEmailOtp...");
-  
+
       const checkEmailResponse = await apiClient.post(
         '/sendUpdateEmailOtp',
         {
@@ -220,9 +231,9 @@ const CompanyUserSignupScreen = () => {
           mode: "signup"
         }
       );
-  
+
       console.log("First response (email check):", checkEmailResponse?.data);
-  
+
       if (
         checkEmailResponse?.data?.statusCode === 500 &&
         checkEmailResponse?.data?.status === 'error'
@@ -231,27 +242,28 @@ const CompanyUserSignupScreen = () => {
         setLoading(false);
         return;
       }
-  
+
       console.log("Sending second request to /sendUpdateEmailOtp...");
-  
+
       const response = await apiClient.post(
         '/sendUpdateEmailOtp',
-        { command: 'sendUpdateEmailOtp', 
+        {
+          command: 'sendUpdateEmailOtp',
           email,
           mode: "signup"
-         }
+        }
       );
-  
+
       console.log("Second response (send OTP):", response?.data);
-  
+
       if (response?.data?.statusCode === 200) {
         if (response?.data?.status === 'success') {
           startOtpTimer();
-  
+
           setIsOtpSent(true);
           setEmailVerify(true);
           setModalVisibleemail(true);
-  
+
           showToast(response.data.successMessage, 'success');
         } else {
           showToast(response.data.successMessage, 'error');
@@ -259,7 +271,7 @@ const CompanyUserSignupScreen = () => {
       } else {
         showToast(response.data.errorMessage, 'error');
       }
-  
+
     } catch (error) {
       console.error("Error while sending OTP:", error);
       showToast("Failed to send OTP\nTry again later", 'error');
@@ -267,7 +279,7 @@ const CompanyUserSignupScreen = () => {
       setLoading(false);
     }
   };
-  
+
 
   const [emailVerify1, setEmailVerify1] = useState(false);
 
@@ -845,7 +857,13 @@ const CompanyUserSignupScreen = () => {
           if (companyDetails) {
             await AsyncStorage.setItem('CompanyUserData', JSON.stringify(companyDetails));
 
-            await createUserSession(companyId);
+            const sessionCreated = await createUserSession(companyId);
+
+            if (!sessionCreated) {
+              showToast("Failed to create session. Please try again.", "error");
+              setLoading(false);
+              return;  // ⛔ STOP LOGIN HERE
+            }
 
             navigation.replace('CreateProduct', {
               showSkip: true,
@@ -862,7 +880,7 @@ const CompanyUserSignupScreen = () => {
         showToast(response.data.errorMessage, 'error');
       }
     } catch (err) {
-      console.log('err',err)
+      console.log('err', err)
       showToast("Something went wrong. Check your internet connection", 'error');
     } finally {
       setLoading(false);
@@ -874,43 +892,29 @@ const CompanyUserSignupScreen = () => {
 
   const createUserSession = async (userId) => {
     try {
-      let tokenToSend = fcmToken;
 
-      if (!tokenToSend) {
-        try {
-          const app = getApp();
-          const messaging = getMessaging(app);
-          tokenToSend = await getToken(messaging);
-          console.log("📲 [Fetched FCM Token]:", tokenToSend);
-        } catch (fetchError) {
-          console.error("❌ [FCM Token Fetch Failed]:", fetchError);
-          tokenToSend = "FCM_NOT_AVAILABLE";
-        }
-      }
-
-      const deviceModel = await DeviceInfo.getModel(); // your existing usage
-
+      const [deviceName, model, userAgent, ipAddress] = await Promise.allSettled([
+        DeviceInfo.getDeviceName(),
+        DeviceInfo.getModel(),
+        DeviceInfo.getUserAgent(),
+        DeviceInfo.getIpAddress(),
+      ]);
       const deviceInfo = {
         os: Platform.OS,
-        // osVersion: DeviceInfo.getSystemVersion(),
-        deviceName: await DeviceInfo.getDeviceName(),
-        model: deviceModel,
-        // brand: DeviceInfo.getBrand(),
+        deviceName: deviceName.status === 'fulfilled' ? deviceName.value : 'Unknown',
+        model: model.status === 'fulfilled' ? model.value : 'Unknown',
         appVersion: DeviceInfo.getVersion(),
-        // buildNumber: DeviceInfo.getBuildNumber(),
-        userAgent: await DeviceInfo.getUserAgent(),
-        ipAddress: await DeviceInfo.getIpAddress(),
+        userAgent: userAgent.status === 'fulfilled' ? userAgent.value : 'Unknown',
+        ipAddress: ipAddress.status === 'fulfilled' ? ipAddress.value : '0.0.0.0',
       };
 
       const payload = {
         command: 'createUserSession',
         user_id: userId,
-        fcm_token: tokenToSend,
+        fcm_token: fcmToken,
         deviceInfo: deviceInfo,
 
       };
-
-      console.log("📦 [Payload Sent to API]:", payload);
 
       const response = await axios.post(
         'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev/createUserSession',
@@ -925,14 +929,15 @@ const CompanyUserSignupScreen = () => {
       if (response.data.status === 'success') {
         const sessionId = response.data.data.session_id;
         await AsyncStorage.setItem('userSession', JSON.stringify({ sessionId }));
-        console.log('✅ [User Session Created Successfully]:', response.data);
+        return true;
       } else {
         showToast("Something went wrong", 'error');
-
+        return false;
       }
     } catch (error) {
 
       showToast("Session creation failed", 'error');
+      return false;
     }
   };
 
@@ -944,10 +949,11 @@ const CompanyUserSignupScreen = () => {
   }, [navigation]);
 
   return (
-    <SafeAreaView style={{ backgroundColor: COLORS.white, flex: 1 }}>
+    <View style={{ backgroundColor: COLORS.white, flex: 1 }}>
 
       <TouchableOpacity onPress={() => navigation.replace("ProfileType")} style={styles.backButton}>
-        <Icon name="arrow-left" size={24} color="#075cab" />
+        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: '20%' }} showsVerticalScrollIndicator={false}>
@@ -958,13 +964,14 @@ const CompanyUserSignupScreen = () => {
           ) : (<Image source={require('../../images/homepage/buliding.jpg')} style={styles.image} />
           )}
           <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
-            <Icon name="camera-enhance" size={22} color="#333" />
+            <Camera width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
           </TouchableOpacity>
         </TouchableOpacity>
 
-        <Text style={styles.heading} >Company name <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={styles.heading} >Company name<Text style={{ color: 'red' }}>*</Text></Text>
         <View style={styles.inputbox}>
-          <Icon name='account-outline' size={25} color="gray" />
+          <Company width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
 
           <TextInput
             style={styles.inputText}
@@ -980,9 +987,10 @@ const CompanyUserSignupScreen = () => {
           </Text>
         )}
 
-        <Text style={styles.heading} >CIN / Business registration number <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={styles.heading} >CIN / Business registration number<Text style={{ color: 'red' }}>*</Text></Text>
         <View style={styles.inputbox}>
-          <Icon name="card-account-details-outline" size={25} color="gray" />
+          <Register width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
           <TextInput
             style={styles.inputText}
             placeholderTextColor="gray"
@@ -992,9 +1000,10 @@ const CompanyUserSignupScreen = () => {
         </View>
 
 
-        <Text style={styles.heading}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={styles.heading}>Email ID<Text style={{ color: 'red' }}>*</Text></Text>
         <View style={styles.inputbox}>
-          <Icon name="email-outline" size={20} color="gray" />
+          <Email width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
           <TextInput
             style={styles.inputText}
             placeholderTextColor="gray"
@@ -1003,7 +1012,7 @@ const CompanyUserSignupScreen = () => {
           />
 
           {emailVerify1 ? (
-            <Icon name="check-circle" color="green" size={14} style={{ marginLeft: 5 }} />
+            <Sucess width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.success} />
 
           ) : email.length > 0 ? (
             <TouchableOpacity style={styles.button1} onPress={sendEmailOtp} disabled={loading}>
@@ -1036,7 +1045,7 @@ const CompanyUserSignupScreen = () => {
                 style={styles.closeButton}
                 onPress={() => setModalVisibleemail(false)}
               >
-                <Icon name="close" size={24} color="black" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
 
               </TouchableOpacity>
 
@@ -1072,9 +1081,10 @@ const CompanyUserSignupScreen = () => {
         </Modal>
 
 
-        <Text style={styles.heading} >Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={styles.heading} >Business phone no.<Text style={{ color: 'red' }}>*</Text></Text>
         <View style={styles.inputbox}>
-          <Icon name="phone" size={22} color="gray" />
+          <Phone width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
           <TextInput
             style={styles.inputText}
             value={fullPhoneNumber}
@@ -1084,7 +1094,7 @@ const CompanyUserSignupScreen = () => {
         </View>
 
 
-        <Text style={[styles.heading,]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={[styles.heading,]}>State<Text style={{ color: 'red' }}>*</Text></Text>
         <CustomDropdown
           label="State"
           data={states}
@@ -1098,7 +1108,7 @@ const CompanyUserSignupScreen = () => {
 
         />
 
-        <Text style={[styles.heading,]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+        <Text style={[styles.heading,]}>City<Text style={{ color: 'red' }}>*</Text></Text>
         <CustomDropdown
           label="City"
           data={cities}
@@ -1111,9 +1121,10 @@ const CompanyUserSignupScreen = () => {
 
 
 
-        <Text style={styles.heading}  >Website:</Text>
+        <Text style={styles.heading}  >Website</Text>
         <View style={styles.inputbox}>
-          <Icon name="link" size={25} color="gray" />
+          <Web width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
           <TextInput
             style={styles.inputText}
             placeholderTextColor="gray"
@@ -1129,7 +1140,7 @@ const CompanyUserSignupScreen = () => {
         )}
 
 
-        <Text style={styles.heading}>Company address:</Text>
+        <Text style={styles.heading}>Company address</Text>
         <View style={[styles.inputbox]}>
           <Icon name='map-marker' size={20} color="gray" />
           <TextInput
@@ -1146,7 +1157,7 @@ const CompanyUserSignupScreen = () => {
   </Text>
 )} */}
 
-        <Text style={styles.heading}>Company description:</Text>
+        <Text style={styles.heading}>Company description</Text>
         <View style={[styles.inputbox]}>
           <Icon name='note-text-outline' size={20} color="gray" />
           <TextInput
@@ -1208,65 +1219,16 @@ const CompanyUserSignupScreen = () => {
           onPress={UserSubmit}
           disabled={loading}
         >
-          <Text style={AppStyles.PostbtnText}>
-            Next
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={AppStyles.PostbtnText}>Next</Text>
+          )}
         </TouchableOpacity>
-
-
-        <Modal
-          visible={modalVisible === 'city'}
-          transparent={true}
-          animationType='slide'
-        >
-          <View style={styles.modalView}>
-            <FlatList
-              data={CityType}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.modalItem}
-                  onPress={() => handleCitySelection(item.label)}
-                >
-                  <Text style={styles.modalItemText}>{item.label}</Text>
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.value}
-            />
-          </View>
-        </Modal>
-
-        <Modal
-          visible={modalVisible === 'state'}
-          transparent={true}
-          animationType='slide'
-        >
-          <View style={styles.modalView}>
-            <FlatList
-              data={StateType}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.modalItem}
-                  onPress={() => handleStateSelection(item.label)}
-                >
-                  <Text style={styles.modalItemText}>{item.label}</Text>
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.value}
-            />
-          </View>
-        </Modal>
 
       </ScrollView>
 
-      <CustomAlertMessage
-        visible={alertVisible}
-        onClose={() => setAlertVisible(false)}
-        onConfirm={() => setAlertVisible(false)}
-        message={alertMessage}
-        imageType={alertType}
-      />
-      <Toast />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1347,7 +1309,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     marginBottom: 15,
-
+    elevation: 2
   },
   buttoncontainer1: {
     alignSelf: 'center',
@@ -1405,11 +1367,13 @@ const styles = StyleSheet.create({
   inputText: {
     flex: 1,
     paddingHorizontal: 10,
-    fontSize: 16,
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text_primary,
+    flex: 1,
+    padding: 5,
     textAlignVertical: 'top',
-    color: 'black',
-    textAlign: 'justify',
-    minHeight: 50,
+    minHeight: 40,
     maxHeight: 200,
   },
   button: {
@@ -1436,7 +1400,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'green',
   },
   heading: {
-    color: "black",
+    color: colors.text_primary,
     fontSize: 15,
     fontWeight: "500",
     marginBottom: 10,
@@ -1610,7 +1574,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
@@ -1627,9 +1591,11 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text_primary,
     flex: 1,
+    padding: 5
   },
 
 });

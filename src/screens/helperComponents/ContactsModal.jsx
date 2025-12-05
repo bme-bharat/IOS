@@ -14,6 +14,7 @@ import apiClient from '../ApiClient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
+import { colors } from '../../assets/theme';
 
 const ContactSupplierModal = ({ visible, onClose, company_id }) => {
     const { myId, myData } = useNetwork();
@@ -157,13 +158,13 @@ const styles = StyleSheet.create({
     contentContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12, 
+        gap: 12,
     },
 
     companyName: {
         fontWeight: '600',
         fontSize: 16,
-        color: '#000',
+        color: colors.text_primary,
         textAlign: 'center',
     },
 
@@ -177,15 +178,13 @@ const styles = StyleSheet.create({
     },
 
     actionButtonText: {
-        color: '#075cab',
+        color: colors.primary,
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: 16,
     },
 
     successMessageRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
         marginTop: 12,
     },
 
@@ -194,11 +193,10 @@ const styles = StyleSheet.create({
     },
 
     contactModalMessage: {
-        fontSize: 12,
-        color: '#888',
+        fontSize: 13,
+        color: colors.text_secondary,
         textAlign: 'center',
         fontWeight: '500',
-        lineHeight: 16,
     },
 
     contactModalLoading: {

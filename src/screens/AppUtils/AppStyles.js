@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
+import { colors } from '../../assets/theme';
 
 const headerHeight = 60;
 const bottomHeight = 60;
@@ -9,6 +10,10 @@ export default AppStyle = StyleSheet.create({
     paddingTop: headerHeight,
     paddingBottom: bottomHeight,
 
+
+  },
+  menuContainer: {
+    padding: 10
   },
   bottom: {
     height: 60,
@@ -68,7 +73,7 @@ export default AppStyle = StyleSheet.create({
     justifyContent: 'center',
     borderColor: '#075cab',
     borderWidth: 1,
-    marginTop: 20,
+    marginVertical: 20,
   },
 
   PostbtnSkip: {
@@ -98,7 +103,7 @@ export default AppStyle = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'whitesmoke',
+    backgroundColor: colors.background,
     position: "absolute",
     top: 0,
     left: 0,
@@ -173,8 +178,9 @@ export default AppStyle = StyleSheet.create({
     fontSize: 14,
     backgroundColor: "whitesmoke",
     paddingHorizontal: 15,
-    borderRadius: 10,
-    height: 30,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
+    color: '#000'
   },
 
   searchIconButton: {
@@ -210,7 +216,7 @@ export default AppStyle = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
+    padding: 6,
     borderRadius: 8,
 
   },
@@ -221,11 +227,15 @@ export default AppStyle = StyleSheet.create({
 
   },
   dotsContainer: {
+    marginTop: 12,
+    gap: 8,
+    position: 'absolute',
+    bottom: 20, // move higher or lower as needed
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
-    gap: 8,
   },
 
   dot: {
@@ -240,9 +250,9 @@ export default AppStyle = StyleSheet.create({
   },
 
   cardImage1: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -285,16 +295,11 @@ export const styles = StyleSheet.create({
   card5: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 8,
     padding: 10,
     marginHorizontal: 4,
     borderWidth: 0.5,
     borderColor: '#ddd',
-  },
-
-  cardContent4: {
-    marginVertical: 10,
-    gap: 6,
   },
 
   companyImage: {
@@ -311,27 +316,27 @@ export const styles = StyleSheet.create({
   eduCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    marginHorizontal: 6,
+    // marginHorizontal: 6,
     marginBottom: 5,
-    borderRadius: 8,
+    // borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 0.5,
     borderColor: '#ddd',
-    height: 100,
+    height: 110,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
-  
+
   },
 
   eduCardLeft: {
-    width: 100,
-    height: 100,
+    width: 110,
+    height: 110,
     backgroundColor: '#f9f9f9',
     borderRightWidth: 0.5,
     borderColor: '#eee',
-    padding: 5
+    padding: 5,
   },
 
   eduImage: {
@@ -339,6 +344,7 @@ export const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 8,
     resizeMode: 'contain',
+    alignSelf: 'center'
   },
 
   eduCardRight: {
@@ -346,26 +352,30 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     justifyContent: 'center',
+    minWidth: 0,              // ✅ allows flex children to shrink instead of overflowing
+    // lineHeight:20
   },
 
   eduTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text_primary,
+    marginBottom: 5
+
   },
 
   eduSubText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '400',
-    color: '#000',
-    marginTop: 4,
+    color: colors.text_primary,
+    lineHeight: 20
   },
 
+
   label: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.text_primary,
   },
 
   jobMetaRow: {
@@ -378,9 +388,20 @@ export const styles = StyleSheet.create({
   // --- Enhancements (Additions Only) ---
   cardTitleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'center',   // ✅ centers icon + text vertically
+    marginVertical: 4,
+    flexShrink: 1,
   },
+
+  rowText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text_primary,
+    marginLeft: 6,
+    flexShrink: 1,     // allow text to shrink
+    minWidth: 0,          // ✅ space between icon and text
+  },
+
 
   priceRow: {
     marginTop: 6,
@@ -390,8 +411,8 @@ export const styles = StyleSheet.create({
 
   modelText: {
     fontSize: 15,
-    color: '#777'
-
+    color: '#777',
+    alignItems: 'flex-start'
   },
 
   descriptionText: {
@@ -417,7 +438,7 @@ export const styles = StyleSheet.create({
 
   columnWrapper: {
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 5,
   },
 
   heroCard: {
@@ -541,19 +562,19 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#ffffff',
-    paddingLeft: 15,
     borderBottomWidth: 1,
-    borderColor: '#f0f0f0'
+    borderColor: '#f0f0f0',
+    paddingHorizontal: 10
   },
-
+  searchBar: { height: 80, width: '50%' },
   rightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 10,
   },
 
   notificationContainer: {
-    padding: 6,
+    padding: 8,
   },
 
   notificationBadge: {
@@ -576,18 +597,15 @@ export const styles = StyleSheet.create({
   },
 
   profileContainer: {
-    padding: 6,
-  },
 
-  detailImageWrapper: {
     width: 36,
     height: 36,
     borderRadius: 80,
-    backgroundColor: '#e0e0e0',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
+
 
   detailImage: {
     width: '100%',
@@ -601,23 +619,36 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  headingWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+  },
+
+  headingText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#075cab',
+    padding: 10,
+  },
+
   heading: {
     fontSize: 15,
     fontWeight: '500',
     color: "#075cab",
     padding: 10,
+    alignItems: 'center',
   },
 
   cards: {
-    marginTop: 10,
-    marginHorizontal: 2,
+    // marginHorizontal: 2,
   },
 
   seeAllText: {
     fontSize: 14,
     color: "#075cab",
     fontWeight: '600',
-    paddingHorizontal: 10,
+    padding: 10,
   },
 
   tabScrollWrapper: {
@@ -674,18 +705,18 @@ export const styles = StyleSheet.create({
   },
 
   articleCard: {
-    padding: 12,
+    padding: 6,
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 0.5,
     borderColor: '#ddd',
     marginHorizontal: 6,
-    marginBottom: 10,
+    marginBottom: 5,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
-  
+
   },
   articleCardHeader: {
     flexDirection: 'row',
@@ -696,8 +727,6 @@ export const styles = StyleSheet.create({
   },
   authorRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
 
   },
   authorSection: {
@@ -713,15 +742,15 @@ export const styles = StyleSheet.create({
   badgeText: {
     fontSize: 13,
     fontWeight: '300',
-    color: '#000',
+    color: colors.text_secondary,
 
   },
   authorImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 25,
-    backgroundColor: '#ddd',
-    marginHorizontal: 12
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    marginRight: 12,
+    marginTop: 5
   },
   authorName: {
     fontSize: 15,
@@ -737,19 +766,16 @@ export const styles = StyleSheet.create({
     marginLeft: 12,
   },
   articleTime: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "300",
-    color: '#666',
+    color: colors.text_secondary,
+    marginTop: 2
   },
-  articleExcerpt: {
-    marginTop: 6,
-    fontSize: 15,
-    color: '#000',
-  },
+
   PostedLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    paddingHorizontal: 10
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.text_primary,
 
   },
   cardImage1: {
@@ -791,15 +817,72 @@ export const styles = StyleSheet.create({
   }
 });
 
-export const appUtilStyles = StyleSheet.create({
-  appHeader: {
+export const commonStyles = StyleSheet.create({
+  title: {
+    flexDirection: 'row',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_primary,
+    marginBottom: 5,
+    alignSelf: 'center'
+  },
+
+  labValContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'white',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 5,
+  },
+  valContainer: {
+    flex: 1,
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderColor: '#ddd'
-  }
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    marginHorizontal: 10
+  },
+  label: {
+    flex: 1,
+    color: colors.text_primary,
+    fontWeight: '500',
+    fontSize: 14,
+    textAlign: 'left',
+    alignSelf: 'flex-start',
+
+  },
+
+  colon: {
+    width: 15,
+
+  },
+  value: {
+    flex: 2, // Take the remaining space
+    flexShrink: 1,
+    color: colors.text_secondary,
+    fontWeight: '500',
+    fontSize: 14,
+    textAlign: 'left', // Align text to the left
+    alignSelf: 'flex-start',
+    letterSpacing: 0.2
+  },
+  avatarContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 80,
+  },
+  avatarText: {
+    fontSize: 50,
+    fontWeight: 'bold',
+  },
 })

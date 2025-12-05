@@ -1,21 +1,29 @@
 
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Modal, Linking, Platform, Share, RefreshControl, Alert, SafeAreaView, Animated, FlatList, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Modal, Linking, Platform, Share, RefreshControl, Alert, Animated, FlatList, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { useNavigation, useFocusEffect, useScrollToTop } from '@react-navigation/native';
 import { COLORS } from '../../assets/Constants';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import default_image from '../../images/homepage/buliding.jpg'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../ApiClient';
-import Fuse from 'fuse.js';
+
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents/signedUrls';
-import AppStyles from '../AppUtils/AppStyles';
+import AppStyles, { commonStyles } from '../AppUtils/AppStyles';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import Search from '../../assets/svgIcons/search.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Company from '../../assets/svgIcons/company.svg';
+import Category from '../../assets/svgIcons/category.svg';
+import Location from '../../assets/svgIcons/location.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 
 const defaultImage = Image.resolveAssetSource(default_image).uri;
@@ -254,7 +262,7 @@ const CompanyListScreen = () => {
 
 
   const navigateToDetails = (company) => {
-    navigation.navigate('CompanyDetails', { userId: company.company_id, profile : company});
+    navigation.navigate('CompanyDetails', { userId: company.company_id, profile: company });
   };
 
 
@@ -265,108 +273,104 @@ const CompanyListScreen = () => {
     const resizeMode = imageUrl?.includes('buliding.jpg') ? 'cover' : 'contain';
 
     return (
-   
-        <TouchableOpacity style={styles.card} activeOpacity={1} onPress={() => navigateToDetails(item)} >
 
-          <TouchableOpacity style={AppStyles.cardImage1} onPress={() => navigateToDetails(item)} activeOpacity={0.8} >
-      
-            {imageUrl ? (
-              <FastImage
-                source={{ uri: imageUrl, priority: FastImage.priority.normal }}
-                cache="immutable"
-                style={AppStyles.cardImage}
-                resizeMode={resizeMode}
-                onError={() => { }}
-              />
-            ) : (
-              <View style={[AppStyles.avatarContainer, { backgroundColor: item.companyAvatar?.backgroundColor }]}>
-                <Text style={[AppStyles.avatarText, { color: item.companyAvatar?.textColor }]}>
-                  {item.companyAvatar?.initials}
-                </Text>
-              </View>
-            )}
-     
-          </TouchableOpacity>
-          <View style={styles.textContainer}>
-            {/* {myId === item.company_id && (
-              <TouchableOpacity style={styles.createPostButton}>
-                <Icon
-                  onPress={() => navigation.navigate('CompanyProfile')}
-                  name="pencil"
-                  size={25}
-                  color="#075cab"
-                />
-              </TouchableOpacity>
-            )} */}
+      <TouchableOpacity style={styles.card} activeOpacity={1} onPress={() => navigateToDetails(item)} >
 
-            <View style={styles.row}>
-              <View style={styles.labelAndIconContainer}>
-                <Icon name='office-building-marker-outline' size={20} marginRight={5} color={'black'} />
-                <Text style={styles.label}>Company </Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
+        <View style={AppStyles.cardImage1} >
 
-              <Text style={styles.value}>
-                <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(item?.company_name || '', searchQuery)}</Text>
+          {imageUrl ? (
+            <FastImage
+              source={{ uri: imageUrl, }}
 
+              style={AppStyles.cardImage}
+              resizeMode={resizeMode}
+              onError={() => { }}
+            />
+          ) : (
+            <View style={[AppStyles.avatarContainer, { backgroundColor: item.companyAvatar?.backgroundColor }]}>
+              <Text style={[commonStyles.avatarText, { color: item.companyAvatar?.textColor }]}>
+                {item.companyAvatar?.initials}
               </Text>
             </View>
-            <View style={styles.row}>
-              <View style={styles.labelAndIconContainer}>
-                <Icon name="domain" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>Category </Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
+          )}
 
-              <Text numberOfLines={1} style={styles.value}>
-                {highlightMatch(item?.category || '', searchQuery)}
-              </Text>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.labelAndIconContainer}>
-                <Icon name="map-marker" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>City          </Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
+        </View>
+        <View style={styles.textContainer}>
 
-              <Text style={styles.value}>
-                {highlightMatch(item?.company_located_city || '', searchQuery)}
-              </Text>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.labelAndIconContainer}>
-                <Icon name="map-marker" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>State       </Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
+          <View style={styles.row}>
+            <View style={styles.labelAndIconContainer}>
+              <Company width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
 
-              <Text style={styles.value}>
-                {highlightMatch(item?.company_located_state || '', searchQuery)}
-              </Text>
+              <Text style={commonStyles.label}> Company </Text>
             </View>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigateToDetails(item)}>
-                <Text style={styles.viewMore}>See more...</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => shareJob(item)} style={styles.shareButton}>
-                <Icon name="share" size={24} color="#075cab" />
-              </TouchableOpacity>
-            </View>
+            <Text style={commonStyles.colon}>:</Text>
 
+            <Text style={commonStyles.value}>
+              <Text numberOfLines={1} style={styles.companyName}>{highlightMatch(item?.company_name || '', searchQuery)}</Text>
+
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.labelAndIconContainer}>
+              <Category width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
+              <Text style={commonStyles.label}> Category </Text>
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+
+            <Text numberOfLines={1} style={commonStyles.value}>
+              {highlightMatch(item?.category || '', searchQuery)}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.labelAndIconContainer}>
+              <Location width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
+              <Text style={commonStyles.label}> City          </Text>
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+
+            <Text style={commonStyles.value}>
+              {highlightMatch(item?.company_located_city || '', searchQuery)}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <View style={styles.labelAndIconContainer}>
+              <Location width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
+              <Text style={commonStyles.label}> State       </Text>
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+
+            <Text style={commonStyles.value}>
+              {highlightMatch(item?.company_located_state || '', searchQuery)}
+            </Text>
+          </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigateToDetails(item)}>
+              <Text style={styles.viewMore}>See more...</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => shareJob(item)} style={styles.shareButton}>
+              <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+            </TouchableOpacity>
           </View>
 
-        </TouchableOpacity>
-   
+        </View>
+
+      </TouchableOpacity>
+
     );
   };
 
   return (
-    <View style={styles.container1}>
+
       <View style={styles.container} >
         {/* Search and Refresh */}
         <View style={styles.headerContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
           <View style={styles.searchContainer}>
             <View style={styles.inputContainer}>
@@ -390,13 +394,15 @@ const CompanyListScreen = () => {
                   }}
                   style={AppStyles.iconButton}
                 >
-                  <Icon name="close-circle" size={20} color="gray" />
+                  <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
                   style={AppStyles.searchIconButton}
                 >
-                  <Icon name="magnify" size={20} color="#075cab" />
+                  <Search width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
 
               )}
@@ -422,7 +428,7 @@ const CompanyListScreen = () => {
                   fetchCompanies(lastEvaluatedKey);
                 }
               }}
-              contentContainerStyle={{ paddingBottom: '20%' }}
+              contentContainerStyle={{ paddingBottom: '20%', backgroundColor:colors.app_background }}
               onEndReachedThreshold={0.5}
               showsVerticalScrollIndicator={false}
               onViewableItemsChanged={onViewableItemsChanged}
@@ -444,7 +450,7 @@ const CompanyListScreen = () => {
                   {searchTriggered && (
                     <>
                       <Text style={styles.companyCount}>
-                        {searchTriggered && `${searchResults.length} companies found` }
+                        {searchTriggered && `${searchResults.length} companies found`}
                       </Text>
 
                       {searchTriggered && searchResults.length > 0 && (
@@ -483,7 +489,7 @@ const CompanyListScreen = () => {
 
         </TouchableWithoutFeedback>
       </View>
-    </View>
+
   )
 
 };
@@ -491,15 +497,10 @@ const CompanyListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'whitesmoke',
+    backgroundColor: colors.app_background
 
   },
 
-  container1: {
-    flex: 1,
-    backgroundColor: 'whitesmoke',
-
-  },
   loaderContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -521,7 +522,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'whitesmoke',
+    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderColor: '#f0f0f0',
 
@@ -557,7 +558,6 @@ const styles = StyleSheet.create({
     backgroundColor: "whitesmoke",
     paddingHorizontal: 15,
     borderRadius: 10,
-    height: 30,
   },
 
   shareButton: {
@@ -657,13 +657,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   card: {
+    top:5,
     marginBottom: 5,
     backgroundColor: "white",
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginHorizontal:10
+    marginHorizontal: 5
   },
+  
   cardImage: {
     width: '100%',
     height: '100%',

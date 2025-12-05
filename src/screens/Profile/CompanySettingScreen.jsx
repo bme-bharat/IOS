@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, Animated } from 'react-native';
+import { View, Text, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import DeviceInfo from 'react-native-device-info';
@@ -14,6 +14,20 @@ import DrawerNavigationList from './DrawerNavigationList';
 import { settingStyles as styles } from '../Styles/settingStyles';
 import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
 
+import Enquire from '../../assets/svgIcons/enquire.svg';
+import Graduation from '../../assets/svgIcons/graduation.svg';
+import Policy from '../../assets/svgIcons/shield.svg';
+import Vip from '../../assets/svgIcons/vip.svg';
+import Grid from '../../assets/svgIcons/latest.svg';
+import Information from '../../assets/svgIcons/information.svg';
+import Restrict from '../../assets/svgIcons/user-forbid.svg';
+import Seeker from '../../assets/svgIcons/seekers.svg';
+import Product from '../../assets/svgIcons/products.svg';
+import Service from '../../assets/svgIcons/services.svg';
+
+
+
+
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
 const JobListScreen = React.lazy(() => import('../Job/JobListScreen'));
 const CompanyHomeScreen = React.lazy(() => import('../CompanyHomeScreen'));
@@ -23,7 +37,7 @@ const AllPosts = React.lazy(() => import('../Forum/Feed'));
 const tabNameMap = {
   CompanyJobList: "Jobs",
   Home: 'Home3',
-  CompanySetting: 'Settings',
+  Settings: 'Settings',
   ProductsList: 'Products'
 };
 
@@ -107,12 +121,12 @@ const CompanySettingScreen = () => {
   const navigateTo = screen => () => navigation.navigate(screen);
 
   const DrawerList = [
-    { icon: 'shopping', label: 'My products', onPress: navigateTo('MyProducts') },
-    { icon: 'tools', label: 'My services', onPress: navigateTo('MyServices') },
-    { icon: 'briefcase', label: 'My jobs', onPress: navigateTo('PostedJob') },
-    { icon: 'account-tie', label: 'Job seekers', onPress: navigateTo('CompanyListJobCandiates') },
+    { icon: Product, label: 'My products', onPress: navigateTo('MyProducts') },
+    { icon: Service, label: 'My services', onPress: navigateTo('MyServices') },
+    { icon: Graduation, label: 'My jobs', onPress: navigateTo('PostedJob') },
+    { icon: Seeker, label: 'Job seekers', onPress: navigateTo('CompanyListJobCandiates') },
     {
-      icon: 'rss',
+      icon: Grid,
       label: 'My posts',
       onPress: () => handleToggle('My posts'),
       subItems: [
@@ -120,17 +134,17 @@ const CompanySettingScreen = () => {
         { label: 'Resources', onPress: navigateTo('Resourcesposted') },
       ],
     },
-    { icon: 'chat-question', label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
-    { icon: 'account-cancel', label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
-    { icon: 'card-account-details', label: 'Subscription', onPress: navigateTo('CompanySubscription') },
+    { icon: Enquire, label: 'My enquiries', onPress: navigateTo('MyEnqueries') },
+    { icon: Restrict, label: 'Blocked users', onPress: navigateTo('BlockedUsers') },
+    { icon: Vip, label: 'Subscription', onPress: navigateTo('CompanySubscription') },
     hasSubscription && transactions.length > 0 && {
-      icon: 'card-account-details',
+      icon: Graduation,
       label: 'My Subscriptions',
       onPress: navigateTo('YourSubscriptionList'),
     },
-    { icon: 'information', label: 'About us', onPress: navigateTo('AboutUs') },
+    { icon: Information, label: 'About us', onPress: navigateTo('AboutUs') },
     {
-      icon: 'shield-lock',
+      icon: Policy,
       label: 'Policies',
       onPress: () => handleToggle('Policies'),
       subItems: [
@@ -154,7 +168,7 @@ const CompanySettingScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container1} >
+    <View style={styles.container1} >
 
 
       <Animated.ScrollView contentContainerStyle={[styles.container, { paddingBottom: '20%', }]}
@@ -178,7 +192,7 @@ const CompanySettingScreen = () => {
           isConnected={isConnected}
           styles={styles}
         />
-  
+
 
         <NotificationSettings />
 
@@ -192,9 +206,10 @@ const CompanySettingScreen = () => {
         tabs={tabConfig}
         currentRouteName={currentRouteName}
         navigation={navigation}
+        tabNameMap={tabNameMap}
       />
 
-    </SafeAreaView>
+    </View>
 
   );
 };

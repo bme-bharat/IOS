@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, StyleSheet, ActivityIndicator, Button,
-  SafeAreaView, TouchableOpacity, ToastAndroid
+  TouchableOpacity, ToastAndroid
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,8 @@ import { useNavigation } from '@react-navigation/native';
 import apiClient from '../ApiClient';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
-
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
 const BlockedUsers = () => {
   const { myId, myData } = useNetwork();
   const [blockedUsers, setBlockedUsers] = useState([]);
@@ -99,36 +100,38 @@ const BlockedUsers = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
 
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="small" color="#075cab" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (blockedUsers?.removed_by_author) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>No blocked accounts</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -136,7 +139,8 @@ const BlockedUsers = () => {
     <View style={styles.container1}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.container} activeOpacity={1}>
@@ -157,7 +161,6 @@ const BlockedUsers = () => {
                 style={styles.unblockButton}
                 onPress={() => handleUnblockUser(item.blocked_by_user_id, item.blocked_user_id)}
               >
-                <Icon name="account-cancel" size={20} color="#ff3333" style={styles.unblockIcon} />
                 <Text style={styles.unblockButtonText}>Unblock</Text>
               </TouchableOpacity>
             </View>
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-      borderBottomWidth: 1,
+    borderBottomWidth: 1,
     borderColor: '#f0f0f0'
 
   },
@@ -240,10 +243,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: '#ff3333',
+    backgroundColor: '#fff',
     borderRadius: 4,
     paddingVertical: 8,
     marginTop: 12,
+    elevation:2
   },
   unblockIcon: {
     marginRight: 8,

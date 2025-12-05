@@ -2,28 +2,29 @@ import React from 'react';
 import { Modal, Text, TouchableOpacity, View, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
+import Sucess from '../assets/svgIcons/success.svg';
+import Warning from '../assets/svgIcons/warning.svg';
+import Info from '../assets/svgIcons/information.svg';
+import Graduation from '../assets/svgIcons/graduation.svg';
+import ArrowLeftIcon from '../assets/svgIcons/back.svg';
+
+import { colors, dimensions } from '../assets/theme.jsx';
 const { width } = Dimensions.get('window');
 
 const Message1 = ({ visible, onClose, onOk, title, message, iconType }) => {
   const getIcon = () => {
-    const iconProps = {
-      size: 50,
-      style: styles.icon
-    };
 
     switch (iconType) {
       case 'success':
-        return <Icon name="check-circle" {...iconProps} color="#4CAF50" />;
+        return <Sucess width={dimensions.icon.small} height={dimensions.icon.small} color={colors.success} />
       case 'warning':
-        return <Icon name="alert-circle" {...iconProps} color="#FF9800" />;
+        return <Warning width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.warning} />
       case 'info':
-        return <Icon name="information" {...iconProps} color="#2196F3" />;
+        return <Info width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.primary} />
       case 'congratulations':
-        return <Icon name="trophy-award" {...iconProps} color="#FFC107" />;
-      case 'logout':
-        return <Icon name="logout" {...iconProps} color="#F44336" />;
+        return <Sucess width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.success} />
       default:
-        return <Icon name="help-circle" {...iconProps} color="#9E9E9E" />;
+        return <Info width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.gray} />
     }
   };
 
@@ -49,8 +50,8 @@ const Message1 = ({ visible, onClose, onOk, title, message, iconType }) => {
 
           {/* Button Container */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              onPress={onOk} 
+            <TouchableOpacity
+              onPress={onOk}
               style={[styles.button, styles.okButton]}
               activeOpacity={0.8}
             >

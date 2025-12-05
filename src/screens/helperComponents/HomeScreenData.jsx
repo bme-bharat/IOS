@@ -152,7 +152,7 @@ const useFetchData = ({ shouldFetch = false }) => {
         const trendingData = response.data.response || [];
 
         const enrichedPostsPromises = trendingData.map(async (post) => {
-          let mediaUrl = defaultLogo;
+          let mediaUrl = null;
           let authorImage = null;
           let avatar = null;
           const isVideo = post?.extraData?.type?.startsWith("video");
@@ -224,7 +224,7 @@ const useFetchData = ({ shouldFetch = false }) => {
         const latestData = response.data.response || [];
 
         const enrichedPostsPromises = latestData.map(async (post) => {
-          let mediaUrl = defaultLogo;
+          let mediaUrl = null;
           let authorImage = null;
           let avatar = null;
 

@@ -2,8 +2,19 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import { settingStyles as styles } from '../Styles/settingStyles';
+import User from '../../assets/svgIcons/user.svg';
+import Company from '../../assets/svgIcons/company.svg';
+
+import Phone from '../../assets/svgIcons/phone.svg';
+import Email from '../../assets/svgIcons/mail.svg';
+import Register from '../../assets/svgIcons/register.svg';
+import School from '../../assets/svgIcons/school.svg';
+
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 
 const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
@@ -18,15 +29,15 @@ const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
       <TouchableOpacity activeOpacity={1} onPress={onNavigate} style={styles.imageContainer}>
         {profile?.imageUrl ? (
           <FastImage
-            source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-            cache="immutable"
+            source={{ uri: profile?.imageUrl, }}
+
             style={styles.detailImage}
             resizeMode="contain"
             onError={() => { }}
           />
         ) : (
-          <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-            <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+          <View style={[commonStyles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+            <Text style={[commonStyles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
               {profile?.companyAvatar?.initials}
             </Text>
           </View>
@@ -37,25 +48,29 @@ const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
         {isCompany ? (
           <>
             <View style={styles.title1}>
-              <Icon1 name="business" size={20} color="#075cab" />
+              <Company width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>{profile?.company_name?.trim()}</Text>
             </View>
 
             <View style={styles.title1}>
-              <Icon1 name="phone" size={20} color="#075cab" />
+              <Phone width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>{(profile?.company_contact_number || '').trim()}</Text>
             </View>
 
             <View style={styles.title1}>
-              <Icon1 name="email" size={20} color="#075cab" />
+              <Email width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>{profile?.company_email_id || ''}</Text>
             </View>
 
             <View style={styles.title1}>
-              <Icon1 name="badge" size={20} color="#075cab" />
+              <Register width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>
                 {(profile?.business_registration_number || '').trim()}
@@ -66,7 +81,8 @@ const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
         ) : (
           <>
             <View style={styles.title1}>
-              <Icon1 name="person" size={20} color="#075cab" />
+              <User width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>
                 {(profile?.first_name || '').trim()} {(profile?.last_name || '').trim()}
@@ -74,20 +90,23 @@ const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
             </View>
 
             <View style={styles.title1}>
-              <Icon1 name="phone" size={20} color="#075cab" />
+              <Phone width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>{(profile?.user_phone_number || '').trim()}</Text>
             </View>
 
             <View style={styles.title1}>
-              <Icon1 name="email" size={20} color="#075cab" />
+              <Email width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.colon}>|</Text>
               <Text style={styles.value}>{profile?.user_email_id || ''}</Text>
             </View>
 
             {!!profile?.college?.trim() && (
               <View style={styles.title1}>
-                <Icon1 name="school" size={20} color="#075cab" />
+                <School width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 <Text style={styles.colon}>|</Text>
                 <Text style={styles.value}>{profile.college.trim()}</Text>
               </View>
@@ -96,7 +115,7 @@ const UserProfileCard = ({ profile, onEdit, onNavigate }) => {
         )}
       </View>
 
-      <Icon name="gesture-tap" size={18} color="#888" style={{ alignSelf: 'flex-end' }} />
+
     </TouchableOpacity>
   );
 };

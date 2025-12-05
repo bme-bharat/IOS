@@ -10,7 +10,7 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
+
   Linking,
   Share,
   Keyboard,
@@ -22,7 +22,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Video from 'react-native-video';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import { BackHandler } from 'react-native';
 import apiClient from '../ApiClient';
 import { showToast } from '../AppUtils/CustomToast';
@@ -38,7 +38,13 @@ import ReactionSheet from '../helperComponents/ReactionUserSheet';
 import { ForumBody, normalizeHtml } from './forumBody';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import useForumReactions, { fetchForumReactionsRaw } from './useForumReactions';
+import ArrowleftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import Comment from '../../assets/svgIcons/comment.svg';
+import Thumb from '../../assets/svgIcons/thumb.svg';
 
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const screenHeight = Dimensions.get('window').height;
 const { width } = Dimensions.get('window');
@@ -46,7 +52,7 @@ const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 
 const CommentScreen = ({ route }) => {
   const { highlightId, highlightReactId, forum_id, url } = route.params;
-  
+
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
   const { openSheet, closeSheet } = useBottomSheet();
@@ -115,31 +121,35 @@ const CommentScreen = ({ route }) => {
   const [showReactions, setShowReactions] = useState(false);
 
   const openCommentsSheet = () => {
+    if (!post) return;
     openSheet(
       <View style={{ flex: 1, backgroundColor: 'white' }}>
-        <CommentsSection
-          forum_id={forum_id}
-          currentUserId={myId}
-          ref={commentSectionRef}
-          highlightCommentId={highlightId}
-        />
-
-        <InputAccessoryView backgroundColor="#f2f2f2">
-          <CommentInputBar
-            storedUserId={myId}
+        {/* Container with column layout */}
+        <View style={{ flex: 1 }}>
+          {/* Comments list fills space above input */}
+          <CommentsSection
             forum_id={forum_id}
-            item={post}
-            onCommentAdded={(newCommentData) => {
-              commentSectionRef.current?.handleCommentAdded(newCommentData);
-            }}
-            onEditComplete={(updatedComment) => {
-              commentSectionRef.current?.handleEditComplete(updatedComment);
-            }}
-
+            currentUserId={myId}
+            ref={commentSectionRef}
+            highlightCommentId={highlightId}
           />
-        </InputAccessoryView>
+        </View>
+
+        <CommentInputBar
+          storedUserId={myId}
+          forum_id={forum_id}
+          item={post}
+          onCommentAdded={(newCommentData) => {
+            commentSectionRef.current?.handleCommentAdded(newCommentData);
+          }}
+          onEditComplete={(updatedComment) => {
+            commentSectionRef.current?.handleEditComplete(updatedComment);
+          }}
+        />
+        {/* Fixed input bar at bottom */}
+
       </View>,
-      -screenHeight * 0.9
+      -screenHeight 
     );
   };
 
@@ -356,7 +366,7 @@ const CommentScreen = ({ route }) => {
   if (loading) {
     // Post is not loaded yet or null
     return (
-      <SafeAreaView style={styles.outerContainer}>
+      <View style={styles.outerContainer}>
 
         <View style={styles.headerContainer1}>
 
@@ -370,20 +380,21 @@ const CommentScreen = ({ route }) => {
               }
             }}
           >
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowleftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size='small' color='#075cab' />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={styles.outerContainer}>
+      <View style={styles.outerContainer}>
         <View style={styles.headerContainer1}>
 
           <TouchableOpacity
@@ -396,14 +407,15 @@ const CommentScreen = ({ route }) => {
               }
             }}
           >
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowleftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>{errorMessage}</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -419,7 +431,6 @@ const CommentScreen = ({ route }) => {
     height = deviceWidth;
   }
 
-  console.log('post', post)
   return (
     <View style={styles.outerContainer}>
       <View style={styles.headerContainer1}>
@@ -434,7 +445,8 @@ const CommentScreen = ({ route }) => {
             }
           }}
         >
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowleftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
 
       </View>
@@ -494,8 +506,6 @@ const CommentScreen = ({ route }) => {
             </View>
           </View>
 
-
-          <View style={{ marginHorizontal: 10, }}>
             <ForumBody
               html={normalizeHtml(post?.forum_body, '')}
               forumId={post?.forum_id}
@@ -503,8 +513,7 @@ const CommentScreen = ({ route }) => {
               toggleFullText={toggleFullText}
               ignoredDomTags={['font']}
             />
-          </View>
-
+       
           {mediaUrl ? (
             isVideo ? (
 
@@ -517,7 +526,7 @@ const CommentScreen = ({ route }) => {
                 controls
                 repeat={true}
                 paused={false}
-                resizeMode="cover"
+                resizeMode="contain"
                 poster={url ? { uri: url } : undefined} // ✅ ensure poster is an object
                 posterResizeMode="cover"
               />
@@ -578,7 +587,7 @@ const CommentScreen = ({ route }) => {
 
                 activeOpacity={0.7}
                 style={{
-                  paddingHorizontal: 10,
+                  
                   padding: 4,
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -587,13 +596,14 @@ const CommentScreen = ({ route }) => {
               >
                 {selectedReaction ? (
                   <>
-                    <Text style={{ fontSize: 18 }}>{selectedReaction.emoji} </Text>
-                    <Text style={{ fontSize: 12, color: '#777' }}>{selectedReaction.label}</Text>
+                    <Text style={{ fontSize: 16 }}>{selectedReaction.emoji} </Text>
+                    {/* <Text style={{ fontSize: 12, color: '#777' }}>{selectedReaction.label}</Text> */}
                   </>
                 ) : (
                   <>
                     {/* <Text style={{ fontSize: 12, color: '#777', marginRight: 6 }}>React: </Text> */}
-                    <Icon name="thumb-up-outline" size={20} color="#999" />
+                    <Thumb width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                   </>
                 )}
                 {reaction?.totalReactions > 0 && (
@@ -697,7 +707,8 @@ const CommentScreen = ({ route }) => {
                 openCommentsSheet();
               }}
             >
-              <Icon name="comment-outline" size={18} color="#075cab" />
+              <Comment width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.iconText}>
                 Comments{count > 0 ? ` ${count}` : ''}
               </Text>
@@ -705,7 +716,8 @@ const CommentScreen = ({ route }) => {
 
 
             <TouchableOpacity onPress={() => shareJob(post)} style={styles.dropdownItem}>
-              <Icon name="share-variant" size={18} color="#075cab" style={styles.icon} />
+              <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               <Text style={styles.dropdownText}>Share</Text>
             </TouchableOpacity>
           </View>
@@ -725,6 +737,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
 
+  },
+  inputBar: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
   },
   inputRow: {
     flexDirection: 'row',
@@ -763,11 +781,10 @@ const styles = StyleSheet.create({
   },
 
   scrollViewContent: {
-
-    top: 20,
+    top: 10,
     flexGrow: 1,
     paddingBottom: '20%',
-
+paddingHorizontal:5
   },
 
   headerContainer: {
@@ -775,7 +792,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 5,
-    marginHorizontal: 10,
 
   },
   headerContainer1: {
@@ -810,9 +826,9 @@ const styles = StyleSheet.create({
 
   // Author styling
   author: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
-    alignSelf: 'flex-start',
+    color:colors.text_primary,
     color: 'black'
   },
 
@@ -853,7 +869,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between', // Space out the icons
     paddingVertical: 10,
-    marginHorizontal: 10,
 
   },
 

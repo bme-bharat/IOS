@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Modal, FlatList, Linking, Pressable, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Modal, FlatList, Linking, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -9,7 +9,7 @@ import axios from 'axios';
 import RNRestart from 'react-native-restart';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import Message from '../../components/Message';
 import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../AppUtils/CustomToast';
@@ -20,6 +20,18 @@ import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { updateLastSeen } from '../AppUtils/LastSeen';
 import { OtpInput } from "react-native-otp-entry";
 import { openLink } from '../AppUtils/openLinks';
+import EditIcon from '../../assets/svgIcons/edit.svg';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Logout from '../../assets/svgIcons/logout.svg';
+import Account from '../../assets/svgIcons/account.svg';
+import Add from '../../assets/svgIcons/add.svg';
+import Sucess from '../../assets/svgIcons/success.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Warning from '../../assets/svgIcons/warning.svg';
+import defaultImage from '../../images/homepage/buliding.jpg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const CompanyProfileScreen = ({ route }) => {
   const navigation = useNavigation();
@@ -387,31 +399,32 @@ const CompanyProfileScreen = ({ route }) => {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton}
           activeOpacity={1}
           onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+
         </TouchableOpacity>
         <TouchableOpacity style={styles.circle}
           onPress={handleUpdate} activeOpacity={0.8}>
-          <MaterialCommunityIcons name="account-edit" size={20} color="#075cab" />
+          <EditIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           <Text style={styles.shareText}>Edit profile</Text>
         </TouchableOpacity>
       </View>
 
 
-      <ScrollView showsVerticalScrollIndicator={false} >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '20%', paddingHorizontal:5 }}>
 
         <TouchableOpacity activeOpacity={1} onPress={() => openMediaViewer([{ type: 'image', url: profile?.imageUrl }])}
-          style={styles.imageContainer}
-        >
+          style={styles.imageContainer} >
 
           {profile?.imageUrl ? (
             <FastImage
-              source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-              cache="immutable"
+              source={{ uri: profile?.imageUrl || defaultImage }}
               style={styles.detailImage}
               resizeMode='contain'
               onError={() => { }}
@@ -427,69 +440,70 @@ const CompanyProfileScreen = ({ route }) => {
 
         <View style={styles.detailsContainer}>
           {/* Profile Details */}
-          <View style={styles.title1}>
-            <Text style={styles.label}>Company name   </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>Company name   </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{(profile?.company_name || "").trimStart().trimEnd()}</Text>
+            <Text style={commonStyles.value}>{(profile?.company_name || "").trimStart().trimEnd()}</Text>
 
           </View>
-          <View style={styles.title1}>
-            <Text style={styles.label}>Business phone no. </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>Business phone no. </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{(profile?.company_contact_number || "").trimStart().trimEnd()}</Text>
+            <Text style={commonStyles.value}>{(profile?.company_contact_number || "").trimStart().trimEnd()}</Text>
           </View>
-          <View style={styles.title1}>
-            <Text style={styles.label}>Email ID     </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>Email ID     </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.company_email_id || ""} <Text >{profile.is_email_verified && (
-                <Ionicons name="checkmark-circle" size={12} color="green" />
-              )}</Text>
+            <Text style={commonStyles.value}>{profile?.company_email_id || ""} <Text >{profile.is_email_verified && (
+              <Sucess width={dimensions.icon.small} height={dimensions.icon.small} color={colors.success} />
+
+            )}</Text>
             </Text>
           </View>
-          <View style={styles.title1}>
-            <Text style={styles.label}>CIN / Business registration number </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>CIN / Business registration number </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{(profile?.business_registration_number || "").trimStart().trimEnd()}</Text>
+            <Text style={commonStyles.value}>{(profile?.business_registration_number || "").trimStart().trimEnd()}</Text>
           </View>
 
           {/* select_your_profile */}
-          <View style={styles.title1}>
-            <Text style={styles.label}>Profile type      </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>Profile type      </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.select_your_profile || ""}</Text>
+            <Text style={commonStyles.value}>{profile?.select_your_profile || ""}</Text>
           </View>
-          <View style={styles.title1}>
-            <Text style={styles.label}>Category      </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>Category      </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.category || ""}</Text>
+            <Text style={commonStyles.value}>{profile?.category || ""}</Text>
           </View>
 
-          <View style={styles.title1}>
-            <Text style={styles.label}>State            </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>State            </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.company_located_state || ""}</Text>
+            <Text style={commonStyles.value}>{profile?.company_located_state || ""}</Text>
           </View>
-          <View style={styles.title1}>
-            <Text style={styles.label}>City              </Text>
-            <Text style={styles.colon}>:</Text>
+          <View style={commonStyles.labValContainer}>
+            <Text style={commonStyles.label}>City              </Text>
+            <Text style={commonStyles.colon}>:</Text>
 
-            <Text style={styles.value}>{profile?.company_located_city || ""}</Text>
+            <Text style={commonStyles.value}>{profile?.company_located_city || ""}</Text>
           </View>
 
           {(profile?.Website?.trimStart().trimEnd()) ? (
-            <View style={styles.title1}>
-              <Text style={styles.label}>Website</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Website</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>
                 <TouchableOpacity onPress={() => openLink(profile.Website)}>
-                  <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+                  <Text style={[commonStyles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
                     {profile.Website.trim()}
                   </Text>
                 </TouchableOpacity>
@@ -498,18 +512,18 @@ const CompanyProfileScreen = ({ route }) => {
           ) : null}
 
           {(profile?.company_address?.trimStart().trimEnd()) ? (
-            <View style={styles.title1}>
-              <Text style={styles.label}>Company address</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{profile.company_address.trimStart().trimEnd()}</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Company address</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{profile.company_address.trimStart().trimEnd()}</Text>
             </View>
           ) : null}
 
           {(profile?.company_description?.trimStart().trimEnd()) ? (
-            <View style={[styles.title1, { textAlign: 'justify' }]}>
-              <Text style={styles.label}>Company description</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={[styles.value, { textAlign: 'justify' }]}>
+            <View style={[commonStyles.labValContainer, { textAlign: 'justify' }]}>
+              <Text style={commonStyles.label}>Company description</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={[commonStyles.value, { textAlign: 'justify' }]}>
                 {profile.company_description.trimStart().trimEnd()}
               </Text>
             </View>
@@ -577,7 +591,8 @@ const CompanyProfileScreen = ({ route }) => {
 
                     {/* Add Product Button */}
                     <TouchableOpacity style={styles.addProductButton} onPress={handleAddProduct}>
-                      <Ionicons name="add-circle-outline" size={24} color="#075cab" />
+                      <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                       <Text style={styles.addProductText}>Add Product</Text>
                     </TouchableOpacity>
                   </>
@@ -621,7 +636,8 @@ const CompanyProfileScreen = ({ route }) => {
 
                     {/* Add Service Button */}
                     <TouchableOpacity style={styles.addProductButton} onPress={handleAddService}>
-                      <Ionicons name="add-circle-outline" size={24} color="#075cab" />
+                      <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                       <Text style={styles.addProductText}>Add Service</Text>
                     </TouchableOpacity>
                   </>
@@ -635,13 +651,15 @@ const CompanyProfileScreen = ({ route }) => {
           style={styles.signOutButton}
           onPress={handleLogout} // Opens modal
         >
-          <Icon name="exit-to-app" size={20} color="#075cab" />
+          <Logout width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           <Text style={styles.signOutButtonText}>Logout</Text>
         </TouchableOpacity>
 
 
         <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteClick}>
-          <Icon name="account-remove-outline" size={24} color="red" style={styles.icon} />
+          <Account width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.danger} />
+
           <Text style={styles.deleteAccountButtonText} >Delete account</Text>
         </TouchableOpacity>
 
@@ -665,7 +683,7 @@ const CompanyProfileScreen = ({ route }) => {
         visible={isModalVisible}
         onRequestClose={() => setIsModalVisible(false)}
         transparent={true}
-        animationType="fade"
+        animationType="slide"
       >
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer1}>
@@ -674,13 +692,16 @@ const CompanyProfileScreen = ({ route }) => {
               setOTP('');
               setTimer(null);
             }} style={styles.closeIconContainer}>
-              <Text style={styles.closeText}>✕</Text>
+              <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
+
             </TouchableOpacity>
             {step === 1 ? (
 
               <>
                 <View style={styles.warningContainer}>
-                  <Ionicons name="warning" size={30} color="orange" />
+                  <Warning width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.warning} />
+
                 </View>
                 <Text style={styles.modalTitle}>Confirm Deletion</Text>
                 <Text style={styles.deletionText}>
@@ -776,7 +797,7 @@ const CompanyProfileScreen = ({ route }) => {
         </View>
       </Modal>
 
-    </SafeAreaView >
+    </View >
 
   );
 };
@@ -902,7 +923,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginVertical: 5,
-    marginHorizontal: 10
+    marginHorizontal: 10,
+    elevation: 3
   },
   colon: {
     width: 20, // Fixed width for the colon
@@ -986,7 +1008,7 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
   deleteAccountButtonText: {
-    color: "red",
+    color: colors.danger,
     fontSize: 15,
     fontWeight: '500',
     marginLeft: 5,
@@ -1100,10 +1122,9 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     zIndex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.background,
     borderRadius: 20,
-    width: 25,
-    height: 25,
+    padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

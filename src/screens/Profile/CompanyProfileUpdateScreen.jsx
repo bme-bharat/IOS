@@ -24,7 +24,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { stateCityData } from '../../assets/Constants';
 import Toast from 'react-native-toast-message';
 
-import CustomDropdown1 from '../../components/userSignupdropdown';
+import CustomDropdown1 from '../../components/DropDownMenu';
 import RNFS from 'react-native-fs';
 import DocumentPicker from 'react-native-document-picker';
 
@@ -42,6 +42,13 @@ import AppStyles from '../AppUtils/AppStyles';
 import apiClient from '../ApiClient';
 import FastImage from 'react-native-fast-image';
 import CustomDropdown from '../../components/CustomDropDown';
+
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Camera from '../../assets/svgIcons/camera.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Success from '../../assets/svgIcons/success.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const resolvedDefaultImage = Image.resolveAssetSource(default_image).uri;
 
@@ -73,10 +80,7 @@ const CompanyUserSignupScreen = () => {
   const [otpSent, setOtpSent] = useState(false); // Track OTP sent status
   const [timer, setTimer] = useState(30);  // Timer state (30 seconds)
   const [isResendEnabled, setIsResendEnabled] = useState(true);
-  const states = Object.keys(stateCityData).map((state) => state);
-  const cities = selectedState && stateCityData[selectedState]
-    ? stateCityData[selectedState]
-    : [];
+
 
   const [otpTimer, setOtpTimer] = useState(30); // Time left for resend OTP
   const [isOtpSent, setIsOtpSent] = useState(false); // Track if OTP is sent
@@ -89,21 +93,24 @@ const CompanyUserSignupScreen = () => {
   const [selectedProfile, setSelectedProfile] = useState(profile?.select_your_profile || "");
   const [selectedCategory, setSelectedCategory] = useState(profile?.category || "");
 
-  useEffect(() => {
-    if (!selectedProfile) return;
 
-    const categories = [
-      ...(ProfileSelect.normalProfiles[selectedProfile] || []),
-      ...(ProfileSelect.companyProfiles[selectedProfile] || []),
-    ];
+  const [postData, setPostData] = useState({
 
-    // Reset category if it's not valid for the current profile
-    if (selectedCategory && !categories.includes(selectedCategory)) {
-      setSelectedCategory("");
-    }
-  }, [selectedProfile, selectedCategory, ProfileSelect]);
+    company_name: profile.company_name || "",
+    business_registration_number: profile.business_registration_number || "",
+    company_contact_number: profile.company_contact_number || "",
+    company_email_id: profile.company_email_id || "",
+    company_located_city: profile.company_located_city || "",
+    company_located_state: profile.company_located_state || "",
+    Website: profile.Website || '',
+    company_address: profile.company_address || "",
+    company_description: profile.company_description || "",
+    fileKey: profile.fileKey || null,
+    brochureKey: profile.brochureKey || "",
+    select_your_profile: profile.select_your_profile,
+    category: profile.category,
 
-
+  });
 
   const inputRefs = useRef([]);
   // Generic focus function for any field
@@ -113,27 +120,74 @@ const CompanyUserSignupScreen = () => {
     }
   };
 
+  const states = Object.keys(stateCityData).map((state) => ({
+    label: state,
+    key: state,
+  }));
+
+  const cities = postData.company_located_state && stateCityData[postData.company_located_state]
+      ? stateCityData[postData.company_located_state].map((city) => ({
+        label: city,
+        key: city,
+      }))
+      : [];
 
   const handleStateSelect = (item) => {
-
-    if (selectedState !== item) {
-      setSelectedState(item);
-      setIsStateChanged(true);
-      setIsCityChanged(false);
-      setSelectedCity('');
-      handleInputChange('company_located_state', item);
-    }
+    setPostData({
+      ...postData,
+      company_located_state: item.label,
+      company_located_city: "", // reset city when state changes
+    });
+    showToast('Select a city too', 'info');
   };
 
-  // Handle city selection
   const handleCitySelect = (item) => {
-
-    setIsCityChanged(true);
-    setSelectedCity(item);
-    handleInputChange('company_located_city', item);
+    setPostData({
+      ...postData,
+      company_located_city: item.label,
+    });
   };
 
+  const [availableCategories, setAvailableCategories] = useState([]);
 
+  useEffect(() => {
+    if (selectedProfile) {
+      const categories =
+        ProfileSelect.normalProfiles[selectedProfile] ||
+        ProfileSelect.companyProfiles[selectedProfile] ||
+        [];
+      setAvailableCategories(categories);
+
+      // Reset category if it's not valid for the new profile
+      if (!categories.includes(selectedCategory)) {
+
+        setSelectedCategory("");
+      } else {
+
+      }
+    }
+  }, [selectedProfile]);
+
+  const handleProfileSelect = (item) => {
+    setPostData({
+      ...postData,
+      select_your_profile: item.label,
+    });
+    setSelectedProfile(item.label);
+    showToast('Select category too','info')
+    setHasChanges(true);
+  };
+  
+
+  const handleCategorySelect = (item) => {
+    setPostData({
+      ...postData,
+      category: item.label,
+    });
+    setSelectedCategory(item.label);
+    setHasChanges(true);
+  };
+  
 
   const sendOTPHandle = () => {
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
@@ -341,32 +395,6 @@ const CompanyUserSignupScreen = () => {
     return profile?.is_email_verified && postData?.company_email_id ? postData.company_email_id : '';
   });
 
-
-  const [postData, setPostData] = useState({
-
-    company_name: profile.company_name || "",
-    business_registration_number: profile.business_registration_number || "",
-    company_contact_number: profile.company_contact_number || "",
-    company_email_id: profile.company_email_id || "",
-    company_located_city: profile.company_located_city || "",
-    company_located_state: profile.company_located_state || "",
-    Website: profile.Website || '',
-    company_address: profile.company_address || "",
-    company_description: profile.company_description || "",
-    fileKey: profile.fileKey || null,
-    brochureKey: profile.brochureKey || "",
-    select_your_profile: profile.select_your_profile,
-    category: profile.category,
-
-  });
-
-  useEffect(() => {
-    setPostData((prev) => ({
-      ...prev,
-      select_your_profile: selectedProfile || prev.select_your_profile,
-      category: selectedCategory || prev.category,
-    }));
-  }, [selectedProfile, selectedCategory]);
 
 
 
@@ -1046,7 +1074,7 @@ const CompanyUserSignupScreen = () => {
     }
 
     if (selectedProfile && !selectedCategory) {
-      showToast("Please select category too", 'info');
+      showToast("Please select category", 'info');
       setIsLoading(false);
       return;
     }
@@ -1057,14 +1085,8 @@ const CompanyUserSignupScreen = () => {
       return;
     }
 
-    if (isStateChanged && !isCityChanged) {
+    if (!postData.company_located_city.trim()) {
       showToast("Select a city", 'info');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!postData.company_located_state.trim()) {
-      showToast("Select a state", 'info');
       setIsLoading(false);
       return;
     }
@@ -1115,8 +1137,8 @@ const CompanyUserSignupScreen = () => {
         company_description: postData.company_description?.trimStart().trimEnd(),
         fileKey: imageFileKey || null,
         brochureKey: documentFileKey,
-        select_your_profile: selectedProfile,
-        category: selectedCategory,
+        select_your_profile: postData.select_your_profile,
+        category: postData.category,
 
         // dark_mode: { android: false, ios: false, web: false }, 
       };
@@ -1254,11 +1276,9 @@ const CompanyUserSignupScreen = () => {
     <SafeAreaView style={{ backgroundColor: 'whitesmoke', flex: 1 }}>
 
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#075cab" />
+      <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
       </TouchableOpacity>
-
-
-
 
       <FlatList
         showsVerticalScrollIndicator={false}
@@ -1293,7 +1313,8 @@ const CompanyUserSignupScreen = () => {
                     />
 
                     <TouchableOpacity style={styles.cameraIconContainer} onPress={handleImageSelection}>
-                      <Icon name="camera-enhance" size={22} color="#333" />
+                    <Camera width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
                   </TouchableOpacity>
                 </>
@@ -1337,93 +1358,87 @@ const CompanyUserSignupScreen = () => {
                       <Text style={styles.label}>
                         {input.placeholder} {input.required && <Text style={{ color: 'red' }}>*</Text>}
                       </Text>
-                      <View style={styles.inputContainer}>
-                        <TouchableOpacity style={styles.inputbox} onPress={() => focusInput(index)} >
-                          <TextInput
-                            ref={(el) => (inputRefs.current[index] = el)}
-                            style={[styles.inputText, input.multiline]}
-                            value={input.value}
-                            onChangeText={input.onChange}
-                            keyboardType={input.keyboardType || 'default'}
-                            multiline={input.multiline}
-                            placeholderTextColor="gray"
-                          />
-                          <Icon name="edit" size={18} color="#888" style={styles.inputIcon} onPress={() => focusInput(index)} />
-                        </TouchableOpacity>
-                      </View>
+
+                      <TextInput
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        style={[styles.inputText, input.multiline]}
+                        value={input.value}
+                        onChangeText={input.onChange}
+                        keyboardType={input.keyboardType || 'default'}
+                        multiline={input.multiline}
+                        placeholderTextColor="gray"
+                      />
 
                     </View>
                   ))}
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
-                  <View style={styles.inputContainer}>
-                    <View style={styles.inputWithButton}>
-                      <TextInput
-                        style={styles.inputemail1}
-                        value={postData.company_email_id || ''}
-                        onChangeText={(value) => handleInputChange('company_email_id', value)}
-                        placeholder="Email"
-                        editable={!postData.is_email_verified}
+                  <Text style={[styles.label]}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
 
-                      />
+                  <View style={styles.inputWithButton}>
+                    <TextInput
+                      style={styles.inputText}
+                      value={postData.company_email_id || ''}
+                      onChangeText={(value) => handleInputChange('company_email_id', value)}
+                      placeholder="Email"
+                      editable={!postData.is_email_verified}
 
-                      {!postData.is_email_verified && postData.company_email_id !== verifiedEmail && (
-                        < TouchableOpacity style={styles.buttonemailmain} onPress={handleOtpEmail}>
-                          <Text style={styles.buttonTextemailtext}>{loading ? 'Sending' : 'Verify'}</Text>
-                        </TouchableOpacity>
-                      )}
+                    />
 
-                      {profile.is_email_verified && postData.company_email_id === verifiedEmail && (
-                        <MaterialIcon name="check-circle" size={14} color="green" style={styles.verifiedIcon} />
-                      )}
-                    </View>
+                    {!postData.is_email_verified && postData.company_email_id !== verifiedEmail && (
+                      < TouchableOpacity style={styles.buttonemailmain} onPress={handleOtpEmail}>
+                        <Text style={styles.buttonTextemailtext}>{loading ? 'Sending' : 'Verify'}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {profile.is_email_verified && postData.company_email_id === verifiedEmail && (
+                          <Success width={dimensions.icon.small} height={dimensions.icon.small} color={colors.success}/>
+
+                    )}
                   </View>
 
 
 
-                  <Text style={styles.label}>Profile type</Text>
 
-                  <CustomDropdown
-                    label="Profile Type"
-                    data={Object.keys(ProfileSelect.companyProfiles)}
-                    onSelect={(item) => {
-                      setSelectedProfile(item);
-                      if (item !== selectedProfile) {
-                        setSelectedCategory(""); // reset only when profile changes
-                      }
-                    }}
-                    selectedItem={selectedProfile}   // 👈 this comes from profile initially
-                    setSelectedItem={setSelectedProfile}
-                    placeholder="Select profile type"   // 👈 keep it generic
-                    buttonStyle={styles.dropdownButton}
-                    buttonTextStyle={styles.dropdownButtonText}
-                    placeholderTextColor="gray"
-                  />
-
-                  {selectedProfile && (
-                    <>
-                      <Text style={styles.label}>
-                        Category <Text style={{ color: 'red' }}>*</Text>
-                      </Text>
-
-                      <CustomDropdown
-                        label="Category"
-                        data={ProfileSelect.companyProfiles[selectedProfile] || []}
-                        onSelect={setSelectedCategory}
-                        selectedItem={selectedCategory}   // 👈 initialized from profile
-                        setSelectedItem={setSelectedCategory}
-                        placeholder="Select category"     // 👈 keep generic, won’t override selected
+                  <View style={styles.inputContainer}>
+                      <Text style={styles.label}>Profile type</Text>
+                      <CustomDropdown1
+                        items={Object.keys({ ...ProfileSelect.companyProfiles }).map(p => ({
+                          label: p,
+                          key: p,
+                        }))}
+                        onSelect={handleProfileSelect}
+                        placeholder={selectedProfile || "Select Profile Type"}
                         buttonStyle={styles.dropdownButton}
                         buttonTextStyle={styles.dropdownButtonText}
                         placeholderTextColor="gray"
-                        disabled={!selectedProfile}
                       />
-                    </>
-                  )}
+                    </View>
+                    {selectedProfile && (
+                      <View style={styles.inputContainer}>
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
+                        <Text style={styles.label}>
+                          Category <Text style={{ color: 'red' }}>*</Text>
+                        </Text>
 
-                  <View style={styles.inputContainer}>
+                        <CustomDropdown1
+                          items={availableCategories.map((cat) => ({
+                            label: cat,
+                            key: cat,
+                          }))}
+                          onSelect={handleCategorySelect}
+                          placeholder={selectedCategory || "Select category"}
+                          buttonStyle={styles.dropdownButton}
+                          buttonTextStyle={styles.dropdownButtonText}
+                          placeholderTextColor="gray"
+                          disabled={!selectedProfile}
+                        />
+                      </View>
+
+                    )}
+
+                  <Text style={[styles.label]}>Business phone no. <Text style={{ color: 'red' }}>*</Text></Text>
+
+              
                     <TouchableOpacity style={styles.inputWrapper} onPress={() => setModalVisiblePhone(true)}>
                       <TextInput
                         onPress={() => setModalVisiblePhone(true)}
@@ -1435,30 +1450,33 @@ const CompanyUserSignupScreen = () => {
                       />
                       <Icon name="edit" size={18} color="#888" style={styles.inputIcon} />
                     </TouchableOpacity>
-                  </View>
+              
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>State <Text style={{ color: 'red' }}>*</Text></Text>
-                  <View style={styles.inputContainer}>
-                    <CustomDropdown1
-                      label="State"
-                      data={states}
-                      onSelect={handleStateSelect}
-                      selectedItem={selectedState}
-                      setSelectedItem={setSelectedState}
-                    />
-                  </View>
+                  <View style={[styles.inputContainer, {}]}>
+                      <Text style={[styles.label]}>State <Text style={{ color: 'red' }}>*</Text></Text>
+                      <CustomDropdown1
+                        items={states}
+                        onSelect={handleStateSelect}
+                        placeholder={postData.company_located_state || "Select State"}
+                        buttonStyle={styles.dropdownButton}
+                        buttonTextStyle={styles.dropdownButtonText}
+                        placeholderTextColor="gray"
 
-                  <Text style={[styles.label, { color: "black", fontWeight: 500, fontSize: 15, }]}>City <Text style={{ color: 'red' }}>*</Text></Text>
-                  <View style={styles.inputContainer}>
-                    <CustomDropdown1
-                      label="City"
-                      data={cities}
-                      onSelect={handleCitySelect}
-                      selectedItem={selectedCity}
-                      setSelectedItem={setSelectedCity}
-                      disabled={!selectedState}
-                    />
-                  </View>
+                      />
+                    </View>
+                    <View style={[styles.inputContainer, {}]}>
+                      <Text style={[styles.label]}>City <Text style={{ color: 'red' }}>*</Text></Text>
+
+                      <CustomDropdown1
+                        items={cities}
+                        onSelect={handleCitySelect}
+                        placeholder={postData.company_located_city || "Select City"}
+                        buttonStyle={styles.dropdownButton}
+                        buttonTextStyle={styles.dropdownButtonText}
+                        placeholderTextColor="gray"
+                        disabled={!postData.state}
+                      />
+                    </View>
 
                   <View style={{ marginVertical: 20 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -1468,7 +1486,7 @@ const CompanyUserSignupScreen = () => {
 
                       {postData?.brochureKey && (
                         <TouchableOpacity onPress={handleDeleteBrochure} style={{ marginLeft: 10 }}>
-                          <MaterialIcon name="close" size={24} color="black" />
+                           <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
 
                         </TouchableOpacity>
                       )}
@@ -1548,7 +1566,8 @@ const CompanyUserSignupScreen = () => {
               }}
 
             >
-              <Icon name="close" size={24} color="black" />
+              <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
             </TouchableOpacity>
             <View style={styles.inputrow}>
               <View style={[styles.code, { width: "25%", }]}>
@@ -1655,7 +1674,8 @@ const CompanyUserSignupScreen = () => {
                 setOtp1(['', '', '', '', '', '']);
               }}
             >
-              <MaterialIcon name="close" size={24} color="black" />
+            <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
             </TouchableOpacity>
 
             <Text style={styles.modalTitleemail}></Text>
@@ -1736,6 +1756,17 @@ const styles = StyleSheet.create({
     marginVertical: 10,
 
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
   avatarContainer: {
     width: '100%',
     height: '100%',
@@ -1772,18 +1803,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     position: 'relative',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    height: 50,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#222',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#ddd'
+
   },
 
   inputIcon: {
@@ -1816,39 +1836,50 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
     elevation: 2,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#ddd'
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
     flex: 1,
+    padding: 5
   },
   inputText: {
-    color: 'black',
-    minHeight: 50,
-    maxHeight: 200,
-    padding: 10,
-    fontSize: 15
+    flex:1,
+    height: 40,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    paddingHorizontal: 10,
 
   },
   closeButton: {
     position: 'absolute',
     top: 10,
-    left: 300,
+    right: 10,
     // padding: 15,
     // marginBottom:15,
     // backgroundColor: '#E0E0E0',
@@ -1983,36 +2014,14 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   inputContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#222',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    minHeight: 50,
-    maxHeight: 150,
     marginBottom: 10,
 
   },
   inputWithButton: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 50,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#222',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#ddd'
+    justifyContent: 'space-between',
   },
+
   modalTitleemail: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -2069,19 +2078,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    fontSize: 15,
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text_secondary
 
   },
   buttonemailmain: {
-    borderRadius: 5,
-
+    backgroundColor: '#fff',
+    // paddingVertical: 13,
+    // paddingHorizontal: 15,
+    borderRadius: 8,
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   buttonTextemailtext: {
     color: '#075cab',
     fontSize: 14,
     fontWeight: '600',
     padding: 10,
-
   },
 
   verifiedIcon: {
@@ -2100,9 +2115,11 @@ const styles = StyleSheet.create({
 
   },
   label: {
-    marginBottom: 10,
+    color: colors.text_primary,
     fontSize: 15,
     fontWeight: '500',
+    marginBottom:5,
+    marginTop: 10,
   },
 
   dropdownItemText: {
@@ -2142,7 +2159,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
-    elevation: 5,
+    elevation: 2,
   },
   modalTitle: {
     fontSize: 22,
@@ -2153,7 +2170,7 @@ const styles = StyleSheet.create({
   },
   inputPhoneNumber: {
     width: '100%',
-    height: 50,
+    height: 40,
     borderRadius: 8,
     // paddingHorizontal: 15,
     fontSize: 16,

@@ -26,9 +26,10 @@ import AppStyles from '../AppUtils/AppStyles';
 import Message1 from '../../components/Message1';
 import apiClient from '../ApiClient';
 import { useMediaPicker } from '../helperComponents/MediaPicker';
-
-const MAX_IMAGE_SIZE_MB = 5;
-const MAX_VIDEO_SIZE_MB = 10;
+import { colors, dimensions } from '../../assets/theme';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import Close from '../../assets/svgIcons/close.svg';
 
 
 
@@ -122,7 +123,7 @@ const CreateProduct = () => {
   } = useMediaPicker({
     onMediaSelected: (file, meta, previewThumbnail) => {
       if (!file || !file.type) return;
-  
+
       // Route based on file type
       if (file.type.startsWith('image/')) {
         setSelectedImages((prev) => {
@@ -145,7 +146,7 @@ const CreateProduct = () => {
     maxImageSizeMB: 5,
     maxVideoSizeMB: 10,
   });
-  
+
 
 
 
@@ -522,7 +523,7 @@ const CreateProduct = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.searchContainer}>
         {fromSignup ? (
           <TouchableOpacity
@@ -542,7 +543,7 @@ const CreateProduct = () => {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -551,7 +552,7 @@ const CreateProduct = () => {
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         onScrollBeginDrag={() => Keyboard.dismiss()}
-        contentContainerStyle={{ paddingBottom: '20%', top: 15, paddingHorizontal: 10, }} showsVerticalScrollIndicator={false}>
+        contentContainerStyle={{ paddingBottom: '20%',  paddingHorizontal: 5, }} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Add a product</Text>
         <TouchableOpacity activeOpacity={1}>
           <View style={styles.inputContainer}>
@@ -874,7 +875,8 @@ const CreateProduct = () => {
               <View key={index} style={styles.mediaWrapper}>
                 <Image source={{ uri: img.uri }} style={styles.mediaPreview} />
                 <TouchableOpacity style={styles.closeIcon} onPress={() => removeMedia('image', index)}>
-                  <Icon name="close" size={20} color="gray" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                 </TouchableOpacity>
               </View>
             ))}
@@ -898,7 +900,8 @@ const CreateProduct = () => {
               <View key={index} style={styles.mediaWrapper}>
                 <Video source={{ uri: vid.uri }} muted style={styles.mediaPreview} />
                 <TouchableOpacity style={styles.closeIcon} onPress={() => removeMedia('video', index)}>
-                  <Icon name="close" size={20} color="gray" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                 </TouchableOpacity>
                 {/* <Text style={styles.sizeText}>{vid.size} MB</Text> */}
               </View>
@@ -919,12 +922,13 @@ const CreateProduct = () => {
           <View style={styles.mediaContainer}>
             {selectedPDF && (
               <View style={[styles.mediaWrapper, { padding: 15, }]}>
-                <Icon name="file-document-outline" size={50} color="black" />
+                 <Pdf width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.danger} />
 
                 <Text numberOfLines={1} style={[styles.documentName, { marginTop: 5, }]}>{selectedPDF.name}</Text>
 
                 <TouchableOpacity style={styles.closeIcon} onPress={() => removeMedia('document')}>
-                  <Icon name="close" size={20} color="gray" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                 </TouchableOpacity>
               </View>
             )}
@@ -998,9 +1002,8 @@ const CreateProduct = () => {
         message="Your updates will be lost if you leave this page. This action cannot be undone."
         iconType="warning"  // You can change this to any appropriate icon type
       />
-      <Toast />
 
-    </SafeAreaView>
+    </View>
 
   );
 };
@@ -1021,7 +1024,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
     shadowOpacity: 0.1,  // shadow opacity for iOS
     shadowRadius: 2,  // shadow radius for iOS
-
+ borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -1035,28 +1039,25 @@ const styles = StyleSheet.create({
     color: '#222',
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 10,
 
   },
   label: {
     fontSize: 15,
     fontWeight: '500',
-    marginBottom: 10,
-    color: '#444',
+    marginBottom: 5,
+    color: colors.text_primary,
   },
 
   input: {
-    minHeight: 50,
+    minHeight: 40,
     maxHeight: 150,
     backgroundColor: '#fff',
     paddingHorizontal: 15,
     borderRadius: 8,
-    fontSize: 15,
-    color: '#222',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_primary,
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd'
@@ -1081,12 +1082,11 @@ const styles = StyleSheet.create({
 
   addMediaButton: {
     // width: "100%",
-    padding: 12,
+    paddingHorizontal: 5,
     // backgroundColor: "#e0e0e0",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 8,
     // borderWidth: 1,
     // borderColor: "#ccc",
     alignSelf: 'flex-start'
@@ -1112,30 +1112,29 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start'
   },
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd'
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_primary,
     flex: 1,
+    padding: 5
+
   },
   mediaContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical: 10,
+    marginBottom: 10,
   },
   mediaWrapper: {
     position: 'relative',

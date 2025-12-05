@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Image, StyleSheet, TextInput, Text, TouchableOpacity, Modal, ScrollView, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Image, StyleSheet, TextInput, Text, TouchableOpacity, Modal, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import defaultImage from '../../images/homepage/dummy.png';
 
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Message from '../../components/Message';
 
@@ -16,11 +16,19 @@ import { useSelector } from 'react-redux';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-import useLastActivityTracker from '../AppUtils/LastSeenProvider';
 import { updateLastSeen } from '../AppUtils/LastSeen';
 import { OtpInput } from "react-native-otp-entry";
 import { openMediaViewer } from '../helperComponents/mediaViewer';
-import GamificationSection from './GamificationSection';
+import EditIcon from '../../assets/svgIcons/edit.svg';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Logout from '../../assets/svgIcons/logout.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import Warning from '../../assets/svgIcons/warning.svg';
+import Account from '../../assets/svgIcons/account.svg';
+import Sucess from '../../assets/svgIcons/success.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 
 const UserProfileScreen = () => {
@@ -280,17 +288,20 @@ const UserProfileScreen = () => {
         <TouchableOpacity style={styles.backButton}
           activeOpacity={1}
           onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+
         </TouchableOpacity>
         <TouchableOpacity style={styles.circle}
           onPress={handleUpdate} activeOpacity={0.8}>
-          <MaterialCommunityIcons name="account-edit" size={20} color="#075cab" />
+          <EditIcon width={24} height={24} color={'#075cab'} />
+
           <Text style={styles.shareText}>Update</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} 
-      showsVerticalScrollIndicator={false}  contentContainerStyle={{paddingBottom:'20%'}}>
+      <ScrollView keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: '20%', paddingHorizontal:5 }}>
 
 
         <TouchableOpacity activeOpacity={1} onPress={() => openMediaViewer([{ type: 'image', url: profile?.imageUrl }])}
@@ -299,15 +310,15 @@ const UserProfileScreen = () => {
 
           {profile?.imageUrl ? (
             <FastImage
-              source={{ uri: profile?.imageUrl, priority: FastImage.priority.normal }}
-              cache="immutable"
+              source={{ uri: profile?.imageUrl || defaultImage }}
+
               style={styles.detailImage}
               resizeMode='contain'
               onError={() => { }}
             />
           ) : (
-            <View style={[styles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
-              <Text style={[styles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
+            <View style={[commonStyles.avatarContainer, { backgroundColor: profile?.companyAvatar?.backgroundColor }]}>
+              <Text style={[commonStyles.avatarText, { color: profile?.companyAvatar?.textColor }]}>
                 {profile?.companyAvatar?.initials}
               </Text>
             </View>
@@ -317,71 +328,72 @@ const UserProfileScreen = () => {
 
         <View style={styles.profileBox}>
 
-          <Text style={[styles.title1, { textAlign: 'center', marginBottom: 20 }]}>
+          <Text style={[commonStyles.title, { textAlign: 'center', marginBottom: 20 }]}>
             {`${(profile?.first_name || '').trim()} ${(profile?.last_name || '').trim()}`}
           </Text>
 
           <View style={styles.textContainer}>
-            <View style={styles.title}>
-              <Text style={styles.label}>Email ID   </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Email ID   </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{(profile?.user_email_id || "").trimStart().trimEnd()}
+              <Text style={commonStyles.value}>{(profile?.user_email_id || "").trimStart().trimEnd()}
                 <Text>{profile.is_email_verified && (
-                  <Ionicons name="checkmark-circle" size={12} color="green" />
+                  <Sucess width={dimensions.icon.small} height={dimensions.icon.small} color={colors.success} />
+
                 )}</Text>
               </Text>
 
             </View>
 
-            <View style={styles.title}>
-              <Text style={styles.label}>Phone no.        </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Phone no.        </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.user_phone_number || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.user_phone_number || ""}</Text>
             </View>
 
-            <View style={styles.title}>
-              <Text style={styles.label}>Profile           </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Profile</Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.select_your_profile || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.select_your_profile || ""}</Text>
             </View>
-            <View style={styles.title}>
-              <Text style={styles.label}>Category         </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Category         </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.category || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.category || ""}</Text>
             </View>
-            <View style={styles.title}>
-              <Text style={styles.label}>State               </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>State               </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.state || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.state || ""}</Text>
             </View>
-            <View style={styles.title}>
-              <Text style={styles.label}>City          </Text>
-              <Text style={styles.colon}>:</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>City          </Text>
+              <Text style={commonStyles.colon}>:</Text>
 
-              <Text style={styles.value}>{profile?.city || ""}</Text>
+              <Text style={commonStyles.value}>{profile?.city || ""}</Text>
             </View>
-            <View style={styles.title}>
-              <Text style={styles.label}>Gender</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{profile?.gender || ""}</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Gender</Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{profile?.gender || ""}</Text>
             </View>
 
-            <View style={styles.title}>
-              <Text style={styles.label}>Date of birth </Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{profile?.date_of_birth ? (profile?.date_of_birth) : ""}</Text>
+            <View style={commonStyles.labValContainer}>
+              <Text style={commonStyles.label}>Date of birth </Text>
+              <Text style={commonStyles.colon}>:</Text>
+              <Text style={commonStyles.value}>{profile?.date_of_birth ? (profile?.date_of_birth) : ""}</Text>
             </View>
 
             {(profile?.college?.trimStart().trimEnd()) ? (
-              <View style={styles.title}>
-                <Text style={styles.label}>Institute / Company</Text>
-                <Text style={styles.colon}>:</Text>
-                <Text style={styles.value}>{profile?.college.trimStart().trimEnd()}</Text>
+              <View style={commonStyles.labValContainer}>
+                <Text style={commonStyles.label}>Institute / Company</Text>
+                <Text style={commonStyles.colon}>:</Text>
+                <Text style={commonStyles.value}>{profile?.college.trimStart().trimEnd()}</Text>
               </View>
             ) : null}
 
@@ -389,13 +401,17 @@ const UserProfileScreen = () => {
 
 
           <TouchableOpacity style={styles.signOutButton} onPress={handleLogout}>
-            <Icon name="exit-to-app" size={20} color="#075cab" />
+            <Logout width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
             <Text style={styles.signOutButtonText}>Logout</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteClick} >
-            <Icon name="account-remove-outline" size={24} color="red" style={styles.icon} />
-            <Text style={styles.deleteAccountButtonText} >Delete account</Text>
+            <Account width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.danger} />
+            <Text style={[styles.deleteAccountButtonText, { color: colors.danger }]}>
+              Delete account
+            </Text>
+
           </TouchableOpacity>
 
           {messageVisible && (
@@ -413,7 +429,7 @@ const UserProfileScreen = () => {
             visible={isModalVisible}
             onRequestClose={() => setIsModalVisible(false)}
             transparent={true}
-            animationType="slidein"
+            animationType="slide"
           >
             <View style={styles.modalBackground}>
               <View style={styles.modalContainer1}>
@@ -422,13 +438,15 @@ const UserProfileScreen = () => {
                   setOTP('');
                   setTimer(null);
                 }} style={styles.closeIconContainer}>
-                  <Text style={styles.closeText}>✕</Text>
+                  <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
                 </TouchableOpacity>
                 {step === 1 ? (
 
                   <>
                     <View style={styles.warningContainer}>
-                      <Ionicons name="warning" size={30} color="orange" />
+                      <Warning width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.warning} />
+
                     </View>
                     <Text style={styles.modalTitle}>Confirm Deletion</Text>
                     <Text style={styles.deletionText}>
@@ -577,7 +595,7 @@ const styles = StyleSheet.create({
   profileBox: {
     justifyContent: 'flex-start',
     backgroundColor: 'white',
-    paddingHorizontal: 5
+
   },
   imageContainer: {
     width: 140,
@@ -596,64 +614,12 @@ const styles = StyleSheet.create({
     borderRadius: 80,
 
   },
-  title1: {
-    flexDirection: 'row',
-    fontSize: 15,
-    fontWeight: '500',
-    color: 'black',
-    marginBottom: 5,
-  },
+
   textContainer: {
     flex: 1,
     justifyContent: 'space-between',
     // marginLeft:0,
 
-  },
-
-  title: {
-    flex: 1,
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 10
-  },
-  label: {
-    flex: 1,
-    color: 'black',
-    fontWeight: '500',
-    fontSize: 15,
-    textAlign: 'left',
-    alignSelf: 'flex-start',
-
-  },
-
-  colon: {
-    width: 20,
-    textAlign: 'center',
-    color: 'black',
-    fontWeight: '500',
-    fontSize: 15,
-    alignSelf: 'flex-start',
-
-  },
-
-
-  value: {
-    flex: 2, // Take the remaining space
-    flexShrink: 1,
-    color: 'black',
-    fontWeight: '400',
-    fontSize: 15,
-    textAlign: 'left', // Align text to the left
-    alignSelf: 'flex-start',
   },
 
   createPostButton: {
@@ -668,8 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#075cab"
   },
   signOutButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    padding:10,
     justifyContent: "center",
     alignItems: 'center',
     flexDirection: 'row',
@@ -683,7 +648,6 @@ const styles = StyleSheet.create({
     color: "#075cab",
     fontSize: 16,
     fontWeight: '600',
-    padding: 5,
     alignSelf: 'center'
 
   },
@@ -692,10 +656,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     borderRadius: 5,
-    marginTop: 10,
+    padding: 10,
     alignSelf: 'center',
     minWidth: 120,
     maxWidth: 200,
+    marginTop:5,
   },
   deleteAccountButtonText: {
     color: "red",
@@ -781,10 +746,9 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     zIndex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.background,
     borderRadius: 20,
-    width: 25,
-    height: 25,
+    padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -900,7 +864,7 @@ const styles = StyleSheet.create({
     fontSize: 50,
     fontWeight: 'bold',
   },
-  
+
 });
 
 export default UserProfileScreen

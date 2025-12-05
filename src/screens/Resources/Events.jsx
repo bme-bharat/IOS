@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Linking, Image, SafeAreaView, Keyboard, ScrollView, RefreshControl, useWindowDimensions, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Linking, Image, Keyboard, ScrollView, RefreshControl, useWindowDimensions, Dimensions } from 'react-native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 import { COLORS } from '../../assets/Constants';
 import dayjs from 'dayjs';
-import Fuse from 'fuse.js';
-import apiClient from '../ApiClient';
-import AppStyles from '../AppUtils/AppStyles';
-import { highlightMatch } from '../helperComponents/signedUrls';
 
+import apiClient from '../ApiClient';
+import AppStyles, { commonStyles } from '../AppUtils/AppStyles';
+import { highlightMatch } from '../helperComponents/signedUrls';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Search from '../../assets/svgIcons/search.svg';
+import Close from '../../assets/svgIcons/close.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const AllEvents = () => {
   const [events, setEvents] = useState([]);
@@ -216,34 +220,26 @@ const AllEvents = () => {
         </Text>
 
         <View style={styles.detailsContainer}>
-          <View style={styles.detailItem}>
-            <View style={styles.lableIconContainer}>
-              <Icon name="calendar" size={18} color="black" style={styles.icon} />
-              <Text style={[styles.label, isExpired && styles.expiredText]}>Date</Text>
-            </View>
-            <Text style={[styles.colon, isExpired && styles.expiredText]}>:</Text>
-            <Text style={[styles.details, isExpired && styles.expiredText]}>
+          <View style={commonStyles.valContainer}>
+
+            <Text style={[commonStyles.label, isExpired && styles.expiredText]}>Date</Text>
+            <Text style={[commonStyles.colon, isExpired && styles.expiredText]}>:</Text>
+            <Text style={[commonStyles.value, isExpired && styles.expiredText]}>
               {dayjs(item.start_date).format("DD")} to {dayjs(item.end_date).format("DD MMM YYYY")}
             </Text>
           </View>
 
-          <View style={styles.detailItem}>
-            <View style={styles.lableIconContainer}>
-              <Icon name="map-marker" size={18} color="black" style={styles.icon} />
-              <Text style={[styles.label, isExpired && styles.expiredText]}>Location</Text>
-            </View>
-            <Text style={[styles.colon, isExpired && styles.expiredText]}>:</Text>
-            <Text style={[styles.details, isExpired && styles.expiredText]}>{highlightMatch(item.location, searchQuery)}</Text>
-
+          <View style={commonStyles.valContainer}>
+            <Text style={[commonStyles.label, isExpired && styles.expiredText]}>Location</Text>
+            <Text style={[commonStyles.colon, isExpired && styles.expiredText]}>:</Text>
+            <Text style={[commonStyles.value, isExpired && styles.expiredText]}>{highlightMatch(item.location, searchQuery)}</Text>
           </View>
 
-          <View style={styles.detailItem}>
-            <View style={styles.lableIconContainer}>
-              <Icon name="clock" size={18} color="black" style={styles.icon} />
-              <Text style={[styles.label, isExpired && styles.expiredText]}>Time</Text>
-            </View>
-            <Text style={[styles.colon, isExpired && styles.expiredText]}>:</Text>
-            <Text style={[styles.details, isExpired && styles.expiredText]}>{highlightMatch(item.time)}</Text>
+          <View style={[commonStyles.valContainer,isExpired && styles.expiredText]}>
+
+            <Text style={[commonStyles.label, isExpired && styles.expiredText]}>Time</Text>
+            <Text style={[commonStyles.colon, isExpired && styles.expiredText]}>:</Text>
+            <Text style={[commonStyles.value, isExpired && styles.expiredText]}>{highlightMatch(item.time)}</Text>
           </View>
         </View>
 
@@ -271,9 +267,10 @@ const AllEvents = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <View style={AppStyles.headerContainer}>
+      <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
         <View style={AppStyles.searchContainer}>
           <View style={AppStyles.inputContainer}>
@@ -295,13 +292,15 @@ const AllEvents = () => {
                 }}
                 style={AppStyles.iconButton}
               >
-                <Icon name="close-circle" size={20} color="gray" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={AppStyles.searchIconButton}
               >
-                <Icon name="magnify" size={20} color="#075cab" />
+                <Search width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               </TouchableOpacity>
 
             )}
@@ -316,7 +315,7 @@ const AllEvents = () => {
         renderItem={renderItem}
         keyExtractor={(item, index) => `${item.event_id}-${index}`}
         onScrollBeginDrag={() => Keyboard.dismiss()}
-        contentContainerStyle={[AppStyles.scrollView,{paddingHorizontal:10, }]}
+        contentContainerStyle={{ paddingBottom: '20%', backgroundColor: colors.app_background, paddingHorizontal:5, }}
         onEndReached={() => {
           if (hasMore && !loadingMore) fetchEvents(lastKey);
         }}
@@ -360,10 +359,22 @@ const styles = StyleSheet.create({
 
   expiredEventContainer: {
     backgroundColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 8,
+    padding: 8,
+    paddingBottom: 5,
+    borderWidth: 0.5,
+    borderRadius:8,
+    borderColor: '#ddd',
   },
 
   expiredText: {
     color: '#888',
+    backgroundColor:'#e0e0e0',
   },
 
   expiredImage: {
@@ -377,20 +388,28 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: 'whitesmoke',
+    backgroundColor: colors.app_background
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0',
   },
   eventContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 5,
     padding: 8,
-    paddingBottom: 15,
+    paddingBottom: 5,
     borderWidth: 0.5,
+    borderRadius:8,
     borderColor: '#ddd',
   },
   events: {
@@ -429,7 +448,6 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     marginBottom: 15,
-    paddingHorizontal: 10
   },
   detailItem: {
     flexDirection: 'row',

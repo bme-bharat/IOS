@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, Image, ActivityIndicator, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  View, Text, Image, ActivityIndicator, StyleSheet, ScrollView, TouchableOpacity,
   Modal, Share,
   TouchableWithoutFeedback,
   Linking,
@@ -21,6 +21,10 @@ import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import AppStyles from '../AppUtils/AppStyles';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+
+import { colors, dimensions } from '../../assets/theme';
 
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
@@ -384,7 +388,7 @@ const ServiceDetails = () => {
     }
   };
 
-  const handleGoBack = () => { navigation.goBack()};
+  const handleGoBack = () => { navigation.goBack() };
 
   const toggleFullText = () => {
     setShowFullText((prev) => !prev);
@@ -414,20 +418,11 @@ const ServiceDetails = () => {
     : [];
 
 
-  let isNavigating = false;
-
   const handleAddProduct = (product) => {
-    if (isNavigating) return;
-    isNavigating = true;
 
-    navigation.navigate('RelatedServicesDetails', { service_id: product.service_id, company_id: product.company_id });
+    navigation.push('ServiceDetails', { service_id: product.service_id, company_id: product.company_id });
 
-    setTimeout(() => {
-      isNavigating = false;
-    }, 300);
   };
-
-
 
   const handleNavigate = (company_id) => {
     // console.log('Navigating to CompanyDetailsPage with company_id:', company_id);
@@ -439,36 +434,38 @@ const ServiceDetails = () => {
   if (!product) {
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
 
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="small" color="#075cab" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (product?.removed_by_author) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>This post was removed by the author</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
   return (
@@ -476,10 +473,12 @@ const ServiceDetails = () => {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
         <TouchableOpacity onPress={() => shareProduct(product)} style={styles.circle}>
-          <Icon name="share" size={20} color="#075cab" />
+          <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
 
           <Text style={styles.shareText}>Share</Text>
         </TouchableOpacity>
@@ -491,11 +490,11 @@ const ServiceDetails = () => {
         </View>
       ) : (
         <>
-          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} contentContainerStyle={{paddingBottom:'20%'}}>
+          <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef} contentContainerStyle={{ paddingBottom: '20%' }}>
             <TouchableOpacity activeOpacity={1}>
               <Text style={styles.title}>{product.title}</Text>
               <Text style={styles.category}>{product.category}</Text>
-              <TouchableOpacity onPress={toggleFullText} activeOpacity={1}>
+              <TouchableOpacity onPress={toggleFullText} activeOpacity={1} >
                 <Text style={styles.description}>
                   {showFullText ? product.description.trim() : getText1(product.description.trimStart().trimEnd().slice(0, 200))}
                   {product.description.length > 200 && !showFullText && (
@@ -507,7 +506,7 @@ const ServiceDetails = () => {
               <View style={{
                 width: width,
                 height: width,
-                marginBottom: 20,
+                marginBottom: 10,
                 overflow: 'hidden',
                 alignSelf: 'center'
               }}>
@@ -601,11 +600,14 @@ const ServiceDetails = () => {
                 <Text style={styles.company} >{product.company_name}</Text>
               </TouchableOpacity>
 
-              <View style={styles.priceRow}>
-                {typeof product.price === 'string' && product.price.trim() && (
-                  <Text style={styles.price}>₹ {product.price.trim()}</Text>
-                )}
-              </View>
+
+              {product?.price?.trim() && (
+                // <Text style={styles.price}>₹ {product?.price}</Text>
+
+                <Text style={styles.priceLabel}>₹ {product?.price}</Text>
+
+              )}
+
 
               {specifications
                 .filter(spec => spec.value)
@@ -616,7 +618,6 @@ const ServiceDetails = () => {
                     <Text style={styles.value}>{spec.value}</Text>
                   </View>
                 ))}
-
 
 
               {myId !== product.company_id && (
@@ -697,7 +698,7 @@ const ServiceDetails = () => {
                 <View style={styles.relatedProductsContainer}>
                   <View style={styles.divider}></View>
 
-                  <Text style={styles.relatedTitle}>Related Products </Text>
+                  <Text style={styles.relatedTitle}>Related Services </Text>
                   <FlatList
                     data={relatedProducts}
                     horizontal
@@ -754,7 +755,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-        borderBottomWidth: 1,
+    borderBottomWidth: 1,
     borderColor: '#f0f0f0'
 
   },
@@ -772,7 +773,7 @@ const styles = StyleSheet.create({
     color: '#075cab',
     fontSize: 16,
     fontWeight: '600',
-    paddingHorizontal: 10
+    padding: 10
 
   },
   imageContainer: {
@@ -879,36 +880,38 @@ const styles = StyleSheet.create({
 
   category: {
     fontSize: 13,
-    color: '#777',
-    fontWeight:'300',
+    color: colors.text_secondary,
+    fontWeight: '300',
     paddingHorizontal: 10
 
   },
 
   title: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_primary,
     marginTop: 10,
-    letterSpacing: 0.8,
+    letterSpacing: 0.2,
     paddingHorizontal: 10
   },
 
   description: {
-    color: 'black',
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.text_secondary,
+    letterSpacing: 0.2,
     lineHeight: 20,
-    marginBottom: 18,
-    textAlign: 'justify',
+    marginVertical: 5,
     paddingHorizontal: 10
 
   },
   productDescription: {
-    color: '#000',
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.text_primary,
+    letterSpacing: 0.2,
     lineHeight: 20,
     // marginTop: 5,
-    textAlign: 'justify',
 
   },
   description1: {
@@ -916,12 +919,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 24,
     marginTop: 5,
-    textAlign: 'justify',
     paddingHorizontal: 10
 
   },
   readMore: {
-    color: 'gray',
+    color: '#075cab',
     fontWeight: '300',
     fontSize: 12,
   },
@@ -1022,7 +1024,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10
 
   },
-
+  priceLabel: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '600',
+    paddingHorizontal: 10,
+    marginBottom: 10
+  },
   specLabel: {
     flex: 1, // Take up available space
     color: 'black',
@@ -1137,7 +1145,7 @@ const styles = StyleSheet.create({
   },
   contact: {
     fontSize: 15,
-    fontWeight:'500',
+    fontWeight: '500',
     color: '#075cab',
     textDecorationLine: 'underline',
     padding: 10,
@@ -1145,7 +1153,7 @@ const styles = StyleSheet.create({
   },
   contact1: {
     fontSize: 15,
-    fontWeight:'500',
+    fontWeight: '500',
     color: '#075cab',
     textAlign: 'center',
     padding: 10,

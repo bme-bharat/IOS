@@ -120,7 +120,7 @@ const CompanyGetAppliedJobsScreen = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: "20%" }}
             keyExtractor={(item) => item.user_id}
-            bounces={false}
+            
             renderItem={({ item }) => {
               // Determine image URL based on fileKey or gender
               let imageUrl = defaultImageUri;

@@ -28,7 +28,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const UserJobProfileUpdateScreen = () => {
   const navigation = useNavigation();
@@ -226,7 +228,7 @@ const UserJobProfileUpdateScreen = () => {
             borderRadius: 18
           }}
         >
-          <Text style={{ marginRight: 8, fontSize: 12 }}>{item}</Text>
+          <Text style={{ marginRight: 8, fontSize: 12, color: colors.text_secondary }}>{item}</Text>
           <TouchableOpacity
             onPress={() => onRemove(item)}
             style={{
@@ -460,11 +462,12 @@ const UserJobProfileUpdateScreen = () => {
 
   return (
 
-    <SafeAreaView style={styles.container1}>
-       <View style={styles.headerContainer}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#075cab" />
-      </TouchableOpacity>
+    <View style={styles.container1}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+        </TouchableOpacity>
       </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -478,8 +481,8 @@ const UserJobProfileUpdateScreen = () => {
           extraScrollHeight={20}
           style={styles.container}
         >
-                    <Text style={styles.header}>Update job profile</Text>
-          
+          <Text style={styles.header}>Update job profile</Text>
+
           <View style={styles.inputContainer}>
             <Text style={[styles.title]}>Industry Type <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropDownMenu
@@ -509,8 +512,8 @@ const UserJobProfileUpdateScreen = () => {
           </View>
 
           <View style={styles.inputContainer}>
-          <Text style={styles.title}>Domain Strength <Text style={{ color: 'red' }}>*</Text></Text>
-        
+            <Text style={styles.title}>Domain Strength <Text style={{ color: 'red' }}>*</Text></Text>
+
             <CustomDropDownMenu
               items={DomainStrengthType}
               onSelect={(item) => handleInputChange('domain_strength', item.label)}
@@ -524,7 +527,7 @@ const UserJobProfileUpdateScreen = () => {
 
           <View style={styles.inputContainer}>
 
-          <Text style={styles.title}>Execpted Salary <Text style={{ color: 'red' }}>*</Text></Text>
+            <Text style={styles.title}>Execpted Salary <Text style={{ color: 'red' }}>*</Text></Text>
             <CustomDropDownMenu
               items={SalaryType}
               onSelect={(item) => handleInputChange('expected_salary', item.label)}
@@ -535,8 +538,8 @@ const UserJobProfileUpdateScreen = () => {
             />
           </View>
           <View style={styles.inputContainer}>
-          <Text style={styles.title}>Work Experience <Text style={{ color: 'red' }}>*</Text></Text>
-   
+            <Text style={styles.title}>Work Experience <Text style={{ color: 'red' }}>*</Text></Text>
+
             <CustomDropDownMenu
               items={ExperienceType}
               onSelect={(item) => handleInputChange('work_experience', item.label)}
@@ -566,7 +569,7 @@ const UserJobProfileUpdateScreen = () => {
           <TouchableOpacity style={styles.inputWrapper} activeOpacity={0.8} onPress={focusEduInput}>
 
             <TextInput
-              style={[styles.input, { minHeight: 50,maxHeight:350 }]}
+              style={[styles.input]}
               value={postData.education_qualifications}
               ref={eduRef}
               multiline
@@ -583,7 +586,7 @@ const UserJobProfileUpdateScreen = () => {
           <TouchableOpacity style={styles.inputWrapper} activeOpacity={0.8} onPress={focusLanguagesInput}>
 
             <TextInput
-              style={[styles.input, { minHeight: 50,maxHeight:350 }]}
+              style={[styles.input]}
               ref={langRef}
               value={postData.languages}
               multiline
@@ -595,17 +598,16 @@ const UserJobProfileUpdateScreen = () => {
           </TouchableOpacity>
 
 
-          <TouchableOpacity style={styles.button} onPress={handleFileUpload}>
+          <TouchableOpacity style={styles.button} onPress={handleFileUpload} activeOpacity={1}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={styles.buttonText}>
-                {postData.resume_key ? postData.resume_key : 'No Resume Selected'}
-              </Text>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Pdf width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.primary} />
+              <Text style={[styles.buttonText, { color: '#777' }]}>{postData.resume_key ? postData.resume_key : 'No Resume Selected'}</Text>
+            </View>
 
             </View>
             <Text style={styles.buttonText}> Upload CV</Text>
           </TouchableOpacity>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-
 
             <TouchableOpacity
               style={[
@@ -629,7 +631,7 @@ const UserJobProfileUpdateScreen = () => {
               )}
             </TouchableOpacity>
 
-          </View>
+       
 
 
 
@@ -642,12 +644,12 @@ const UserJobProfileUpdateScreen = () => {
             message="Your updates will be lost if you leave this page. This action cannot be undone."
             iconType="warning"  // You can change this to any appropriate icon type
           />
-          <Toast />
+         
         </KeyboardAwareScrollView>
       </KeyboardAvoidingView>
 
-      <Toast />
-    </SafeAreaView>
+
+    </View>
 
   );
 };
@@ -684,7 +686,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     marginBottom: 10,
-    marginTop:15,
+    marginTop: 15,
   },
   title1: {
     color: 'black',
@@ -708,8 +710,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 15,
     borderRadius: 8,
-    fontSize: 16,
-    color: '#222',
+    color: colors.text_secondary,
+    fontWeight: '500',
+    fontSize: 14,
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
@@ -733,7 +736,8 @@ const styles = StyleSheet.create({
     color: '#075cab',
     textAlign: 'center',
     fontWeight: 'bold',
-    fontSize: 13
+    fontSize: 13,
+    paddingVertical: 10
   },
 
 
@@ -747,6 +751,7 @@ const styles = StyleSheet.create({
     borderColor: '#075cab',
     borderWidth: 1,
     marginVertical: 20,
+    marginBottom:40
   },
   buttonUpadteText: {
     color: '#075cab',
@@ -763,7 +768,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
@@ -779,8 +784,9 @@ const styles = StyleSheet.create({
     borderColor: '#ddd'
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    color: colors.text_secondary,
+    fontWeight: '500',
+    fontSize: 14,
     flex: 1,
   },
   dropdownItem: {

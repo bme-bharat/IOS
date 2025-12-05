@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import ArrowDown from '../assets/svgIcons/arrow-down.svg';
+import ArrowUp from '../assets/svgIcons/arrow-up.svg';
+import { colors, dimensions } from '../assets/theme.jsx';
 
-
-const CustomDropdown = ({ label, data, onSelect, selectedItem, setSelectedItem,style }) => {
+const CustomDropdown = ({ label, data, onSelect, selectedItem, setSelectedItem, style }) => {
     const [visible, setVisible] = useState(false);
 
     // Sync selectedItem with the parent component's state
@@ -25,10 +27,22 @@ const CustomDropdown = ({ label, data, onSelect, selectedItem, setSelectedItem,s
     };
 
     return (
-        <View style={[styles.dropdownContainer,style]}>
+        <View style={[styles.dropdownContainer, style]}>
             <TouchableOpacity style={styles.dropdown} onPress={toggleDropdown}>
                 <Text style={styles.selectedText}>{selectedItem || `Select ${label}`}</Text>
-                <Icon name="arrow-drop-down" size={24} color="gray" />
+                {visible ? (
+                    <ArrowUp
+                        width={dimensions.icon.medium}
+                        height={dimensions.icon.medium}
+                        color={colors.gray}
+                    />
+                ) : (
+                    <ArrowDown
+                        width={dimensions.icon.medium}
+                        height={dimensions.icon.medium}
+                        color={colors.gray}
+                    />
+                )}
             </TouchableOpacity>
             <Modal
                 visible={visible}

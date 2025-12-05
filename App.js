@@ -206,7 +206,6 @@ const App = () => {
   }, []);
 
 
-
   const checkUserSession = async () => {
 
     try {

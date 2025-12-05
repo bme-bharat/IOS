@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, Image, ActivityIndicator, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  View, Text, Image, ActivityIndicator, StyleSheet, ScrollView, TouchableOpacity,
   Modal, Share,
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -15,6 +15,12 @@ import { useFileOpener } from '../helperComponents/fileViewer';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import AppStyles from '../AppUtils/AppStyles';
+
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import Company from '../../assets/svgIcons/company.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const { width } = Dimensions.get('window');
 
@@ -404,12 +410,9 @@ const ProductDetails = () => {
     : [];
 
 
-  let isNavigating = false;
 
   const handleAddProduct = (product) => {
-    if (isNavigating) return;
-    isNavigating = true;
-    navigation.navigate('RelatedProductDetails', { product_id: product.product_id, company_id: product.company_id });
+    navigation.push('ProductDetails', { product_id: product.product_id, company_id: product.company_id });
 
   };
 
@@ -423,36 +426,38 @@ const ProductDetails = () => {
   if (!product) {
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
 
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="small" color="#075cab" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (product?.removed_by_author) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
 
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>This post was removed by the author</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -461,10 +466,12 @@ const ProductDetails = () => {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
         <TouchableOpacity onPress={() => shareProduct(product)} style={styles.circle}>
-          <Icon name="share" size={20} color="#075cab" />
+          <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
 
           <Text style={styles.shareText}>Share</Text>
         </TouchableOpacity>
@@ -476,12 +483,12 @@ const ProductDetails = () => {
         </View>
       ) :
         <>
-          <ScrollView contentContainerStyle={{paddingBottom:'20%'}}
+          <ScrollView contentContainerStyle={{ paddingBottom: '20%' }}
             showsVerticalScrollIndicator={false} ref={scrollViewRef} >
-            <TouchableOpacity activeOpacity={1}>
+            <TouchableOpacity activeOpacity={1} >
               <Text style={styles.title}>{product?.title}</Text>
               <Text style={styles.category}>{product?.category}</Text>
-              <TouchableOpacity onPress={toggleFullText} activeOpacity={1}>
+              <TouchableOpacity onPress={toggleFullText} activeOpacity={1} >
                 <Text style={styles.description}>
                   {showFullText ? product?.description.trim() : getText1(product?.description.trimStart().trimEnd().slice(0, 200))}
                   {product?.description.length > 200 && !showFullText && (
@@ -493,7 +500,7 @@ const ProductDetails = () => {
               <View style={{
                 width: width,
                 height: width,
-                marginBottom: 20,
+                marginBottom: 10,
                 overflow: 'hidden',
                 alignSelf: 'center'
               }}>
@@ -583,15 +590,19 @@ const ProductDetails = () => {
 
               </View>
 
+
               <TouchableOpacity activeOpacity={0.8} style={styles.headerRow} onPress={() => handleNavigate(product.company_id)}>
-                <Text style={styles.company} >{product.company_name}</Text>
+                <Company width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} /><Text style={styles.company} >{product.company_name}</Text>
               </TouchableOpacity>
 
-              <View style={styles.priceRow}>
-                {product?.price?.trim() && (
-                  <Text style={styles.price}>₹ {product?.price}</Text>
-                )}
-              </View>
+
+              {product?.price?.trim() && (
+                // <Text style={styles.price}>₹ {product?.price}</Text>
+
+                <Text style={styles.priceLabel}>₹ {product?.price}</Text>
+
+              )}
+
 
               <Text style={styles.specTitle}>Specifications </Text>
 
@@ -686,7 +697,7 @@ const ProductDetails = () => {
                         <Text numberOfLines={1} style={styles.price1}>
                           {item.price && item.price.trim() !== '' ? `₹ ${item?.price}` : '₹ Contact Seller'}
                         </Text>
-                        <Text numberOfLines={1} style={styles.productDescription}>{item?.description}</Text>
+                        <Text numberOfLines={2} style={styles.productDescription}>{item?.description}</Text>
                       </TouchableOpacity>
                     )}
                     onEndReached={() => lastEvaluatedKey && fetchRelatedProducts(product, lastEvaluatedKey)}
@@ -728,7 +739,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'white',
-        borderBottomWidth: 1,
+    borderBottomWidth: 1,
     borderColor: '#f0f0f0'
 
   },
@@ -744,9 +755,9 @@ const styles = StyleSheet.create({
   },
   shareText: {
     color: '#075cab',
-    fontSize: 15,
-    fontWeight: '500',
-    paddingHorizontal: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    padding: 10
 
   },
   imageContainer: {
@@ -763,8 +774,9 @@ const styles = StyleSheet.create({
   mainProductImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'contain',
-    alignSelf: 'center',
+    resizeMode: 'contain', // Ensures the image fills the container nicely
+    alignSelf: 'center'
+
   },
 
   productVideo: {
@@ -795,17 +807,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
+
   playButton: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -25 }, { translateY: -25 }], // center the 40px icon
+    transform: [{ translateX: -25 }, { translateY: -25 }],
     zIndex: 2,
+    // backgroundColor: 'white', 
     borderRadius: 50,
-    alignSelf: 'center',
-    padding: 8, // optional: adds breathing space around icon
+    // padding: 1,
+    alignSelf: 'center'
   },
-
 
   headerRow: {
     flexDirection: 'row',
@@ -844,6 +857,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#000',
+    flexWrap: 'wrap',
+    flexShrink: 1,
     // letterSpacing: 1.2,
     // textTransform: 'uppercase',
     // marginBottom: 3,
@@ -851,34 +866,44 @@ const styles = StyleSheet.create({
 
   category: {
     fontSize: 13,
+    color: colors.text_secondary,
     fontWeight: '300',
-    color: '#777',
     paddingHorizontal: 10
 
   },
 
   title: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text_primary,
     marginTop: 10,
-
+    letterSpacing: 0.2,
     paddingHorizontal: 10
   },
 
   description: {
-    color: 'black',
-    fontSize: 15,
+    color: colors.text_secondary,
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 0.2,
     lineHeight: 20,
-    textAlign: 'justify',
-    paddingHorizontal: 10
+    marginVertical: 5,
+    paddingHorizontal: 10,
+
   },
-  productDescription: {
-    color: '#000',
+  priceLabel: {
+    color: colors.primary,
     fontSize: 15,
-    // lineHeight: 24,
-    // marginTop: 5,
-    textAlign: 'justify',
+    fontWeight: '600',
+    paddingHorizontal:10,
+    marginBottom:10
+  },
+
+  productDescription: {
+    color: colors.text_primary,
+    fontSize: 14,
+    fontWeight: '400',
+    lineHeight: 20,
 
   },
   description1: {
@@ -886,13 +911,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 24,
     marginTop: 5,
-    textAlign: 'justify',
     paddingHorizontal: 10
 
   },
   readMore: {
-    color: '#075cab', // Blue color for "Read More"
-    fontWeight: '300', // Make it bold if needed
+    color: '#075cab',
+    fontWeight: '300',
     fontSize: 12,
   },
 
@@ -914,7 +938,7 @@ const styles = StyleSheet.create({
 
   price1: {
     fontSize: 15,
-    // fontWeight: 'bold',
+    fontWeight: '500',
     color: '#075cab',
     marginRight: 14,
 
@@ -949,7 +973,7 @@ const styles = StyleSheet.create({
   },
 
   specTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     color: '#333',
     marginBottom: 14,
@@ -1086,11 +1110,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   pdf: {
-    padding: 10,
-    // backgroundColor: '#007bff',
-    // color: 'black',
     borderRadius: 5,
-    marginBottom: 5,
+    marginVertical: 10,
   },
   pdfText: {
     color: 'black',
@@ -1100,24 +1121,31 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   relatedTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#000',
     marginBottom: 14,
-    // textTransform: 'uppercase',
-    // paddingHorizontal: 10
   },
   relatedList: {
     marginBottom: 20,
   },
   contact: {
     fontSize: 15,
-    color: '#075cab',
     fontWeight: '500',
+    color: '#075cab',
     textDecorationLine: 'underline',
-    marginTop: 10,
-    textAlign: 'center'
+    padding: 10,
+    textAlign: 'center',
   },
+  contact1: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#075cab',
+    textAlign: 'center',
+    padding: 10,
+
+  },
+
   productCard: {
     width: 220,
     backgroundColor: '#fff',

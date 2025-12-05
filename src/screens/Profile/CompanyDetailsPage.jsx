@@ -1,19 +1,22 @@
 
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Image, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, SafeAreaView, ActivityIndicator, FlatList, Dimensions, Pressable } from 'react-native';
+import { View, Image, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, ActivityIndicator, FlatList, Dimensions, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import default_image1 from '../../images/homepage/image.jpg'
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import defaultImage from '../../images/homepage/buliding.jpg';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import apiClient from '../ApiClient';
 import { useFileOpener } from '../helperComponents/fileViewer';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { MyPostBody } from '../Forum/forumBody';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import { openLink } from '../AppUtils/openLinks';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const defaultImageCompany = Image.resolveAssetSource(defaultImage).uri;
 const defautImage = Image.resolveAssetSource(default_image1).uri;
@@ -26,7 +29,7 @@ const CompanyDetailsPage = () => {
   const route = useRoute()
   const [isModalVisibleImage, setModalVisibleImage] = useState(false);
   const { userId } = route.params;
-
+  console.log('userId', userId)
   const [loading, setLoading] = useState(false)
   const [forums, setProducts] = useState([]);
   const [products, setProducts1] = useState([]);
@@ -311,7 +314,7 @@ const CompanyDetailsPage = () => {
     const handleProductSelect = (item) => {
 
       setShowProductModal(false);
-      navigation.navigate('ProductDetails', {
+      navigation.push('ProductDetails', {
         product_id: item.product_id,
         company_id: userId,
       });
@@ -320,7 +323,7 @@ const CompanyDetailsPage = () => {
 
     const handleServiceSelect = (item) => {
       setShowServiceModal(false);
-      navigation.navigate('ServiceDetails', {
+      navigation.push('ServiceDetails', {
         service_id: item.service_id,
         company_id: userId,
       });
@@ -521,9 +524,6 @@ const CompanyDetailsPage = () => {
 
   const ProfileHeader = ({ profile, imageUrl, isModalVisibleImage }) => (
     <View style={styles.profileBox}>
-
-
-
       <View style={styles.imageContainerprofile}>
         {typeof imageUrl === 'string' ? (
           <TouchableOpacity onPress={() => openMediaViewer([{ type: 'image', url: imageUrl }])}>
@@ -538,7 +538,7 @@ const CompanyDetailsPage = () => {
           <View
             style={[
               styles.imagerprofile,
-              { backgroundColor: imageUrl?.backgroundColor || '#ccc' },
+              { backgroundColor: imageUrl?.backgroundColor },
             ]}
           >
             <Text style={{ color: imageUrl?.textColor || '#000', fontSize: 50, fontWeight: 'bold' }}>
@@ -550,63 +550,53 @@ const CompanyDetailsPage = () => {
 
       <View style={styles.textContainer}>
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Company </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.company_name || ""}</Text>
+          <Text style={commonStyles.label}>Company </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.company_name || ""}</Text>
         </View>
 
 
-        {/* <View style={styles.title}>
+        {/* <View style={commonStyles.labValContainer}>
           <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Registration </Text>
+            <Text style={commonStyles.label}>Registration </Text>
           </View>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.business_registration_number || ""}</Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.business_registration_number || ""}</Text>
         </View> */}
 
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>Category </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.category || ""}</Text>
+          <Text style={commonStyles.label}>Category </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.category || ""}</Text>
         </View>
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>State </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.company_located_state || ""}</Text>
+          <Text style={commonStyles.label}>State </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.company_located_state || ""}</Text>
         </View>
 
-        <View style={styles.title}>
-          <View style={styles.lableIconContainer}>
-            <Text style={styles.label}>City </Text>
-          </View>
+        <View style={commonStyles.labValContainer}>
 
-          <Text style={styles.colon}>:</Text>
-          <Text style={styles.value}>{profile?.company_located_city || ""}</Text>
+          <Text style={commonStyles.label}>City </Text>
+          <Text style={commonStyles.colon}>:</Text>
+          <Text style={commonStyles.value}>{profile?.company_located_city || ""}</Text>
         </View>
 
         {!!profile?.Website?.trim() && (
-          <View style={styles.title}>
-            <View style={styles.lableIconContainer}>
-              <Text style={styles.label}>Website </Text>
-            </View>
+          <View style={commonStyles.labValContainer}>
 
-            <Text style={styles.colon}>:</Text>
-            <Text style={styles.value}>
-              <TouchableOpacity activeOpacity = {1} onPress={() => openLink(profile.Website)}>
-                <Text style={[styles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
+            <Text style={commonStyles.label}>Website </Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>
+              <TouchableOpacity activeOpacity={1} onPress={() => openLink(profile.Website)}>
+                <Text style={[commonStyles.value, { color: "#075cab", textDecorationLine: "underline" }]}>
                   {profile.Website.trim()}
                 </Text>
               </TouchableOpacity>
@@ -615,24 +605,20 @@ const CompanyDetailsPage = () => {
         )}
 
         {!!profile?.company_description?.trim() && (
-          <View style={[styles.title]}>
+          <View style={[commonStyles.labValContainer]}>
 
-            <View style={styles.lableIconContainer}>
-              <Text style={styles.label}>Description</Text>
-            </View>
-            <Text style={styles.colon}>:</Text>
-            <Text style={[styles.value]}>{profile.company_description.trim()}</Text>
+            <Text style={commonStyles.label}>Description</Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={[commonStyles.value]}>{profile.company_description.trim()}</Text>
           </View>
         )}
 
         {profile?.company_address ? (
-          <View style={styles.title}>
-            <View style={styles.lableIconContainer}>
-              <Text style={styles.label}>Address </Text>
-            </View>
+          <View style={commonStyles.labValContainer}>
 
-            <Text style={styles.colon}>:</Text>
-            <Text style={styles.value}>{profile?.company_address || ""}</Text>
+            <Text style={commonStyles.label}>Address </Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>{profile?.company_address || ""}</Text>
           </View>
         ) : null}
         {
@@ -764,7 +750,7 @@ const CompanyDetailsPage = () => {
             forumId={item?.resource_id}
             numberOfLines={2}
           />
-          <Text style={styles.labelProduct}>{formattedDate || ""}</Text>
+          <Text style={commonStyles.labelProduct}>{formattedDate || ""}</Text>
 
         </View>
       </TouchableOpacity>
@@ -792,7 +778,7 @@ const CompanyDetailsPage = () => {
 
         <View style={styles.imageContainer}>
           {isVideo ? (
-            <TouchableOpacity style={styles.videoContainer} activeOpacity={1} >
+            <TouchableOpacity style={styles.videoContainer} activeOpacity={1} onPress={() => forumDetails(item.forum_id)}>
               <FastImage
                 source={{ uri: thumbnail }} // Use fetched thumbnail
                 style={styles.image}
@@ -819,7 +805,7 @@ const CompanyDetailsPage = () => {
             forumId={item?.forum_id}
             numberOfLines={2}
           />
-          <Text style={styles.labelProduct}>{formattedDate || ""}</Text>
+          <Text style={commonStyles.labelProduct}>{formattedDate || ""}</Text>
         </View>
 
       </TouchableOpacity>
@@ -838,12 +824,13 @@ const CompanyDetailsPage = () => {
           </View>
         ) : (
 
-          <SafeAreaView style={styles.container}>
+          <View style={styles.container}>
+            <View style={styles.headerContainer}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Icon name="arrow-left" size={24} color="#075cab" />
-            </TouchableOpacity>
-
+              </TouchableOpacity>
+            </View>
 
             <FlatList
               data={
@@ -859,7 +846,7 @@ const CompanyDetailsPage = () => {
                 if (activeTab === 'resources') return `resource-${item.resource_id}`;
                 return `unknown-${Math.random().toString()}`;
               }}
-              contentContainerStyle={{ paddingBottom: '20%' }}
+              contentContainerStyle={{ paddingBottom: '20%', paddingHorizontal:5 }}
               ListHeaderComponent={
                 <>
                   <ProfileHeader
@@ -959,7 +946,7 @@ const CompanyDetailsPage = () => {
               }
               showsVerticalScrollIndicator={false}
             />
-          </SafeAreaView>
+          </View>
 
         )}
     </>
@@ -972,7 +959,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
 
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
 
+  },
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 10,
@@ -1094,9 +1089,6 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     padding: 10,
-
-
-
   },
 
 
@@ -1123,7 +1115,7 @@ const styles = StyleSheet.create({
     borderRadius: 75,
     alignSelf: 'center',
     marginBottom: 20,
-
+    marginTop: 5
   },
   imagerprofile: {
     width: '100%',

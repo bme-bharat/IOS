@@ -8,6 +8,15 @@ import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import CustomDrawerContent from '../DrawerContent';
 import HelpCenter from '../../screens/Bme_content/HelpCenter';
+import Company from '../../assets/svgIcons/company.svg';
+import Event from '../../assets/svgIcons/event.svg';
+import Resource from '../../assets/svgIcons/resources.svg';
+import Service from '../../assets/svgIcons/services.svg';
+import Help from '../../assets/svgIcons/customer.svg';
+
+import HomeIconFill from '../../assets/svgIcons/home-fill.svg';
+import { colors, dimensions } from '../../assets/theme';
+
 import { NetworkProvider } from '../../screens/AppUtils/IdProvider';
 
 const Drawer = createDrawerNavigator();
@@ -107,11 +116,11 @@ const UserDrawerNav = () => {
 
         })}
       >
-        <Drawer.Screen
+           <Drawer.Screen
           name="Home "
           component={UserBottomTabNav}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="home" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <HomeIconFill width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
           }}
         />
@@ -119,7 +128,7 @@ const UserDrawerNav = () => {
           name="Companies"
           component={UserCompanyListNav}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="office-building" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <Company width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />,
             unmountOnBlur: true,
           }}
         />
@@ -127,7 +136,7 @@ const UserDrawerNav = () => {
           name="Events"
           component={EventsDrawer}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="calendar" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <Event width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />,
             unmountOnBlur: true,
           }}
         />
@@ -135,7 +144,7 @@ const UserDrawerNav = () => {
           name="Resources"
           component={UserResources}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="book" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <Resource width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />,
             unmountOnBlur: true,
           }}
         />
@@ -143,7 +152,7 @@ const UserDrawerNav = () => {
           name="Services"
           component={CompanyServices}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="tools" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <Service width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />,
             unmountOnBlur: true,
           }}
         />
@@ -151,7 +160,7 @@ const UserDrawerNav = () => {
           name="Help"
           component={HelpCenter}
           options={{
-            drawerIcon: ({ color, size }) => <Icon name="help-circle" size={size} color={color} style={{ fontWeight: 'normal' }} />,
+            drawerIcon: () => <Help width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />,
             unmountOnBlur: true,
           }}
         />

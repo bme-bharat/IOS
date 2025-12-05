@@ -1,19 +1,19 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator, Linking, Modal, RefreshControl, Share, SafeAreaView, Alert, Keyboard, FlatList, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator, Linking, Modal, RefreshControl, Share, Alert, Keyboard, FlatList, TouchableWithoutFeedback } from 'react-native';
 import axios from 'axios';
 import { useFocusEffect, useNavigation, useNavigationState, useScrollToTop } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from '../../assets/Constants';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import apiClient from '../ApiClient';
 
 import { useSelector } from 'react-redux';
-import Fuse from 'fuse.js';
+
 import { useNetwork } from '../AppUtils/IdProvider';
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../AppUtils/AppStyles';
+import AppStyles, { commonStyles } from '../AppUtils/AppStyles';
 import { getSignedUrl, highlightMatch, useLazySignedUrls } from '../helperComponents/signedUrls';
 import buliding from '../../images/homepage/buliding.jpg';
 import { EventRegister } from 'react-native-event-listeners';
@@ -21,8 +21,17 @@ import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import BottomNavigationBar from '../AppUtils/BottomNavigationBar';
 import Animated from "react-native-reanimated";
 import scrollAnimations from '../helperComponents/scrollAnimations';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Search from '../../assets/svgIcons/search.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import Add from '../../assets/svgIcons/add.svg';
+import Company from '../../assets/svgIcons/company.svg';
+import Money from '../../assets/svgIcons/money.svg';
+import Location from '../../assets/svgIcons/location.svg';
 
-const Company = Image.resolveAssetSource(buliding).uri;
+import { colors, dimensions } from '../../assets/theme.jsx';
+
 
 
 const ProductsList = React.lazy(() => import('../Products/ProductsList'));
@@ -88,7 +97,7 @@ const JobListScreen = () => {
 
       try {
         const signedMap = await getSignedUrl(newPost.post_id, newPost.fileKey || '');
-        const imageUrl = signedMap[newPost.post_id] || Company;
+        const imageUrl = signedMap[newPost.post_id];
 
         const jobWithImage = {
           ...newPost,
@@ -110,7 +119,7 @@ const JobListScreen = () => {
 
       try {
         const signedMap = await getSignedUrl(updatedPost.post_id, updatedPost.fileKey || '');
-        const imageUrl = signedMap[updatedPost.post_id] || Company;
+        const imageUrl = signedMap[updatedPost.post_id];
 
         const updatedJobWithImage = {
           ...updatedPost,
@@ -436,7 +445,7 @@ const JobListScreen = () => {
         const baseJob = {
           ...job,
           // Only set imageUrl if fileKey exists and we got a signed URL
-          imageUrl: job.fileKey ? (rawSignedUrlMap[job.post_id] || Company) : null,
+          imageUrl: job.fileKey ? (rawSignedUrlMap[job.post_id]) : null,
         };
 
         // Only generate avatar if no fileKey exists
@@ -521,88 +530,91 @@ const JobListScreen = () => {
 
     return (
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigateToDetails(job)}
-          activeOpacity={1}
-        >
-          <View style={AppStyles.cardImage1}>
-            {imageUrl ? (
-              <FastImage
-                source={{ uri: imageUrl, priority: FastImage.priority.normal }}
-                cache="immutable"
-                style={AppStyles.cardImage}
-                resizeMode={resizeMode}
-                onError={() => { }}
-              />
-            ) : (
-              <View style={[AppStyles.avatarContainer, { backgroundColor: job.companyAvatar?.backgroundColor }]}>
-                <Text style={[AppStyles.avatarText, { color: job.companyAvatar?.textColor }]}>
-                  {job.companyAvatar?.initials}
-                </Text>
-              </View>
-            )}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigateToDetails(job)}
+        activeOpacity={1}
+      >
+        <View style={AppStyles.cardImage1}>
+          {imageUrl ? (
+            <FastImage
+              source={{ uri: imageUrl, }}
+
+              style={AppStyles.cardImage}
+              resizeMode={resizeMode}
+              onError={() => { }}
+            />
+          ) : (
+            <View style={[AppStyles.cardImage1, { backgroundColor: job.companyAvatar?.backgroundColor }]}>
+              <Text style={[AppStyles.avatarText, { color: job.companyAvatar?.textColor }]}>
+                {job.companyAvatar?.initials}
+              </Text>
+            </View>
+          )}
+        </View>
+
+
+
+        <View style={styles.textContainer}>
+          <Text numberOfLines={1} style={styles.title1}>
+            {highlightMatch(job.job_title || '', searchQuery)}
+          </Text>
+
+          <View style={styles.detailContainer}>
+            <View style={styles.lableIconContainer}>
+              <Company width={dimensions.icon.small} height={dimensions.icon.small} color={colors.secondary} />
+
+              <Text style={commonStyles.label}> Company</Text>
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+
+            <Text numberOfLines={1} style={commonStyles.value}>{highlightMatch(job.company_name || '', searchQuery)}</Text>
+
+
           </View>
 
+          <View style={styles.detailContainer}>
+            <View style={styles.lableIconContainer}>
+              <Money width={dimensions.icon.small} height={dimensions.icon.small} color={colors.secondary} />
 
+              <Text style={commonStyles.label}> Package</Text>
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text numberOfLines={1} style={commonStyles.value}>{highlightMatch(job.Package || "", searchQuery)}</Text>
+          </View>
 
-          <View style={styles.textContainer}>
-            <Text numberOfLines={1} style={styles.title1}>
-              {highlightMatch(job.job_title || '', searchQuery)}
+          <View style={styles.detailContainer}>
+            <View style={styles.lableIconContainer}>
+              <Location width={dimensions.icon.small} height={dimensions.icon.small} color={colors.secondary} />
+
+              <Text style={commonStyles.label}> Location</Text>
+
+            </View>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text numberOfLines={1} style={commonStyles.value}>
+              {highlightMatch(
+                `${job.company_located_state || ""}, ${job.company_located_city || ""}`,
+                searchQuery,
+              )}
+
             </Text>
 
-            <View style={styles.detailContainer}>
-              <View style={styles.lableIconContainer}>
-                <Icon name="office-building-marker-outline" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>Company</Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
-
-              <Text numberOfLines={1} style={styles.value}>{highlightMatch(job.company_name || '', searchQuery)}</Text>
-
-
-            </View>
-
-            <View style={styles.detailContainer}>
-              <View style={styles.lableIconContainer}>
-                <Icon name="currency-inr" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>Package</Text>
-              </View>
-              <Text style={styles.colon}>:</Text>
-              <Text numberOfLines={1} style={styles.value}>{highlightMatch(job.Package || "", searchQuery)}</Text>
-            </View>
-
-            <View style={styles.detailContainer}>
-              <View style={styles.lableIconContainer}>
-                <Icon name="map-marker" size={20} color="black" style={styles.icon} />
-                <Text style={styles.label}>Location</Text>
-
-              </View>
-              <Text style={styles.colon}>:</Text>
-              <Text numberOfLines={1} style={styles.value}>
-                {highlightMatch(
-                  `${job.company_located_state || ""}, ${job.company_located_city || ""}`,
-                  searchQuery,
-                )}
-
-              </Text>
-
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigateToDetails(job)}>
-                <Text style={styles.viewMore}> See more...</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => shareJob(job)} style={styles.shareButton}>
-                <Icon name="share" size={24} color="#075cab" />
-              </TouchableOpacity>
-            </View>
           </View>
-        </TouchableOpacity>
-   
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigateToDetails(job)}>
+              <Text style={styles.viewMore}>See more...</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => shareJob(job)} style={styles.shareButton}>
+              <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+
     );
   };
-  
+
 
   return (
     <View style={styles.container1}>
@@ -631,14 +643,16 @@ const JobListScreen = () => {
                   activeOpacity={0.8}
                   style={AppStyles.iconButton}
                 >
-                  <Icon name="close-circle" size={20} color="gray" />
+                  <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
                   activeOpacity={1}
                   style={AppStyles.searchIconButton}
                 >
-                  <Icon name="magnify" size={20} color="#075cab" />
+                  <Search width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
 
               )}
@@ -663,10 +677,9 @@ const JobListScreen = () => {
               }}
               activeOpacity={0.5}
             >
-              <Icon name="plus-circle-outline" size={16} color="#075cab" />
-              <Text style={AppStyles.shareText}>
-                {storeProfile?.user_type === 'company' ? 'Post' : 'Job profile'}
-              </Text>
+              <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+              <Text style={AppStyles.shareText}> {storeProfile?.user_type === 'company' ? 'Post' : 'Job profile'}</Text>
             </TouchableOpacity>
           )}
 
@@ -745,7 +758,7 @@ const JobListScreen = () => {
       </View>
 
 
-      <Animated.View style={[AppStyles.bottom,{flex:1}, bottomStyle]}>
+      <Animated.View style={[AppStyles.bottom, { flex: 1 }, bottomStyle]}>
 
         <BottomNavigationBar
           tabs={tabConfig}
@@ -798,12 +811,12 @@ const styles = StyleSheet.create({
 
   container1: {
     flex: 1,
-    backgroundColor: 'whitesmoke',
+    backgroundColor: colors.app_background
 
   },
   container: {
     flex: 1,
-    backgroundColor: 'whitesmoke',
+    backgroundColor: colors.app_background
 
   },
 
@@ -823,8 +836,8 @@ const styles = StyleSheet.create({
   },
 
   shareButton: {
-    marginTop: 10,
     alignSelf: 'flex-end',
+    padding:10
   },
 
   backButton: {
@@ -835,10 +848,8 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: "white",
-    borderRadius: 10,
-    marginHorizontal:10,
-  marginBottom:5,
-  borderWidth: 0.5,
+    marginBottom: 5,
+    borderWidth: 0.5,
     borderColor: '#ddd',
   },
 
@@ -846,13 +857,12 @@ const styles = StyleSheet.create({
 
   textContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
 
   },
   title1: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: "black",
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text_primary,
     marginBottom: 8,
     // textAlign: 'justify',
   },
@@ -865,30 +875,25 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   viewMoreButton: {
-    marginTop: 10,
     backgroundColor: COLORS.primary,
     borderRadius: 4,
+    padding:10
   },
-  viewMoreText: {
-    color: "#075cab",
-    fontSize: 16,
-    fontWeight: '700',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
+
   buttonContainer: {
     display: 'flex',
     flexDirection: 'row',        // Align buttons in a row
     justifyContent: 'space-between',  // Spread buttons across the row
     // marginTop: 10,               // Add top margin for some space
     alignItems: 'center',        // Vertically center buttons
+    
   },
   viewMore: {
     // padding: 20,
     color: "#075cab",
     textAlign: 'left',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '500',
   },
   createPostButton: {
     position: 'absolute',
@@ -937,9 +942,9 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1, // Take up available space
-    color: 'black',
+    color: colors.text_primary,
     fontWeight: '500',
-    fontSize: 15,
+    fontSize: 13,
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
   },
@@ -950,9 +955,9 @@ const styles = StyleSheet.create({
   colon: {
     width: 20, // Fixed width for the colon
     textAlign: 'center', // Center the colon
-    color: 'black',
-    fontWeight: '500',
-    fontSize: 15,
+    color: colors.text_primary,
+    fontWeight: '400',
+    fontSize: 13,
     alignSelf: 'flex-start',
 
   },
@@ -960,8 +965,9 @@ const styles = StyleSheet.create({
     flex: 2, // Take the remaining space
     flexShrink: 1,
     color: 'black',
-    fontWeight: '400',
-    fontSize: 15,
+    fontWeight: '500',
+    fontSize: 13,
+    color: colors.text_secondary,
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
   },

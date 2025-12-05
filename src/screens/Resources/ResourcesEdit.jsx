@@ -588,7 +588,7 @@ const ResourcesEditScreen = () => {
 
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: '20%', }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: '40%',marginHorizontal:10, }}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         showsVerticalScrollIndicator={false}
@@ -792,14 +792,13 @@ const styles = StyleSheet.create({
     color: 'black',
     textAlign: 'justify',
     backgroundColor: 'white',
-    marginHorizontal: 10,
     minHeight: 300,
     maxHeight: 400,
   },
 
   buttonContainer: {
     width: 80,
-    padding: 10,
+    height: 35,
     borderRadius: 10,
     // backgroundColor: '#075CAB',
     alignItems: 'center',
@@ -809,7 +808,6 @@ const styles = StyleSheet.create({
   profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
     marginTop: 10,
     marginBottom: 20,
   },
@@ -870,7 +868,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },

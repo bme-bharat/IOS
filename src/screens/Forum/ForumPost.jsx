@@ -340,7 +340,7 @@ const ForumPostScreen = () => {
 
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: '20%' }}
+        contentContainerStyle={{ flexGrow: 1,paddingHorizontal:10, paddingBottom: '40%'}}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -487,7 +487,7 @@ const ForumPostScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginHorizontal: 10,
+    
   },
 
   buttonText: {
@@ -539,14 +539,16 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 10
+  },
 
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingBottom: 5,
+    paddingRight: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
 

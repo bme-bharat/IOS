@@ -536,7 +536,7 @@ const ResourcesPost = () => {
           style={{
             minHeight: 250,
             maxHeight: 400,
-            borderRadius: 10,
+            borderRadius: 8,
             borderWidth: 1,
             borderColor: '#ccc',
             overflow: 'hidden',
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 10,
     fontSize: 14,
     textAlignVertical: 'top', // Align text to the top for multiline
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingRight: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
@@ -849,8 +849,7 @@ const styles = StyleSheet.create({
 
   disabledButton: {
     backgroundColor: '#ccc',
-    borderColor: '#ccc',
-    borderWidth: 0.5,
+    
   },
 
   buttonText: {

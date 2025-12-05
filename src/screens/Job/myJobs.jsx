@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, RefreshControl, SafeAreaView, FlatList, ActivityIndicator, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, RefreshControl, FlatList, ActivityIndicator, TextInput } from 'react-native';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,6 +15,11 @@ import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { EventRegister } from 'react-native-event-listeners';
 import { getSignedUrl } from '../helperComponents/signedUrls';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Add from '../../assets/svgIcons/add.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const YourComapanyPostedJob = () => {
   const navigation = useNavigation();
@@ -43,43 +48,43 @@ const YourComapanyPostedJob = () => {
     const onJobCreated = async (data) => {
       const { newPost } = data;
       console.log('newPost', newPost);
-  
+
       // Insert or replace (upsert), newest at the top
       setPosts(prevJobs => {
         const filtered = prevJobs.filter(job => job.post_id !== newPost.post_id);
         return [newPost, ...filtered];
       });
     };
-  
+
     const onJobUpdated = async (data) => {
       const { updatedPost } = data;
-  
+
       setPosts(prevJobs =>
         prevJobs.map(job =>
           job.post_id === updatedPost.post_id ? updatedPost : job
         )
       );
     };
-  
+
     const onJobDeleted = (data) => {
       const { postId } = data;
-  
+
       setPosts(prevJobs =>
         prevJobs.filter(job => job.post_id !== postId)
       );
     };
-  
+
     const createdListener = EventRegister.addEventListener('onJobPostCreated', onJobCreated);
     const updatedListener = EventRegister.addEventListener('onJobUpdated', onJobUpdated);
     const deletedListener = EventRegister.addEventListener('onJobDeleted', onJobDeleted);
-  
+
     return () => {
       EventRegister.removeEventListener(createdListener);
       EventRegister.removeEventListener(updatedListener);
       EventRegister.removeEventListener(deletedListener);
     };
   }, []);
-  
+
 
   const fetchCompanyJobPosts = async (lastEvaluatedKey = null) => {
     if (loading || loadingMore) return;
@@ -201,20 +206,20 @@ const YourComapanyPostedJob = () => {
 
   const handleDelete = async () => {
     if (!postToDelete) return;
-  
+
     try {
       const response = await apiClient.post('/deleteJobPost', {
         command: "deleteJobPost",
         company_id: postToDelete.company_id,
         post_id: postToDelete.post_id,
       });
-  
+
       if (response.data.status === 'success') {
         // ✅ Emit deletion event
         EventRegister.emit('onJobDeleted', {
           postId: postToDelete.post_id,
         });
-  
+
         showToast("Job deleted successfully", 'success');
       } else {
         showToast("Something went wrong", 'error');
@@ -225,68 +230,81 @@ const YourComapanyPostedJob = () => {
       setDeleteAlertVisible(false);
     }
   };
-  
+
 
 
   const renderJob = ({ item: post }) => (
-    <TouchableOpacity activeOpacity={1}>
-      <TouchableOpacity
-        key={post.post_id}
-        activeOpacity={1}
-        style={styles.postContainer}
-        onPress={() => navigation.navigate('JobDetail', { post_id: post.post_id })}
-      >
-        <View style={styles.textContainer}>
-          <View>
-            <View style={styles.detail}>
-              <Text style={styles.label}>Job Title</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{(getSlicedTitle(post.job_title || '')).trimStart().trimEnd()}</Text>
-            </View>
-            <View style={styles.detail}>
-              <Text style={styles.label}>Industry Type</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{(post.industry_type || '').trimStart().trimEnd()}</Text>
-            </View>
-            <View style={styles.detail}>
-              <Text style={styles.label}>Package</Text>
-              <Text style={styles.colon}>:</Text>
-              <Text style={styles.value}>{(post.Package || '').trimStart().trimEnd()}</Text>
-            </View>
+
+    <TouchableOpacity
+      key={post.post_id}
+      activeOpacity={1}
+      style={styles.postContainer}
+      onPress={() => navigation.navigate('JobDetail', { post_id: post.post_id })}
+    >
+      <View style={styles.textContainer}>
+        <View>
+          <View style={commonStyles.valContainer}>
+            <Text style={commonStyles.label}>Job Title</Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>{(getSlicedTitle(post.job_title || '')).trimStart().trimEnd()}</Text>
           </View>
-          <View style={styles.textContainer1}>
-            <View style={{ alignSelf: 'center', }}>
-              <TouchableOpacity onPress={() => navigation.navigate("CompanyAppliedJob", { post })} style={styles.iconContainer}>
-                <Text style={styles.applyButton}>View Applications</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.iconContainer}>
-              <TouchableOpacity style={{ alignSelf: 'flex-start', padding: 10 }} onPress={() => handleEdit(post)}>
-                <Icon name="pencil" size={25} color="#075cab" style={styles.editIcon} />
-              </TouchableOpacity>
-              <TouchableOpacity style={{ alignSelf: 'flex-start', padding: 10 }} onPress={() => confirmDelete(post)}>
-                <Icon name="delete" size={25} color="#FF6347" />
-              </TouchableOpacity>
-            </View>
+          <View style={commonStyles.valContainer}>
+            <Text style={commonStyles.label}>Industry Type</Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>{(post.industry_type || '').trimStart().trimEnd()}</Text>
+          </View>
+          <View style={commonStyles.valContainer}>
+            <Text style={commonStyles.label}>Package</Text>
+            <Text style={commonStyles.colon}>:</Text>
+            <Text style={commonStyles.value}>{(post.Package || '').trimStart().trimEnd()}</Text>
           </View>
         </View>
-      </TouchableOpacity>
+
+
+        <View style={styles.iconContainer}>
+
+          <TouchableOpacity style={[styles.actionButton,]} onPress={() => handleEdit(post)} activeOpacity={1}>
+            <View style={styles.iconTextContainer}>
+
+              <Text style={styles.buttonText}>Edit</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionButton]} onPress={() => confirmDelete(post)} activeOpacity={1}>
+            <View style={styles.iconTextContainer}>
+
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("CompanyAppliedJob", { post })} style={[styles.actionButton]} activeOpacity={1}>
+            <View style={styles.iconTextContainer}>
+              <Text style={styles.buttonText}>View Applications</Text>
+            </View>
+          </TouchableOpacity>
+
+        </View>
+
+
+      </View>
+
     </TouchableOpacity>
+
   );
 
 
   if (!loading && posts.length === 0 || (posts.length === 1 && posts[0]?.removed_by_author)) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.headerContainer}>
 
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
+            <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.circle}
             onPress={() => navigation.navigate("CompanyJobPost")} activeOpacity={0.8}>
-            <Icon name="plus-circle-outline" size={18} color="#075cab" />
+            <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
             <Text style={styles.shareText}>Post a job</Text>
           </TouchableOpacity>
 
@@ -294,77 +312,72 @@ const YourComapanyPostedJob = () => {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 16, color: 'gray' }}>No jobs available</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity activeOpacity={1} style={{flex:1,}}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#075cab" />
-          </TouchableOpacity>
+    <View style={styles.container}>
 
-          <TouchableOpacity style={styles.circle}
-            onPress={() => navigation.navigate("CompanyJobPost")} activeOpacity={0.8}>
-            <Icon name="plus-circle-outline" size={18} color="#075cab" />
-            <Text style={styles.shareText}>Post a job</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
-        <FlatList
-          style={styles.container1}
-          data={posts}
-          renderItem={renderJob}
-          keyExtractor={(item, index) => `${item.post_id}-${index}`}
-          showsVerticalScrollIndicator={false}
-          onEndReached={() => hasMoreJobs && fetchCompanyJobPosts(lastEvaluatedKey)}
-          onEndReachedThreshold={0.5}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
-          ListFooterComponent={() =>
-            loadingMore && (
-              <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#075cab" />
-              </View>
-            )
-          }
-        // ListHeaderComponent={() => (
-        //   <View style={styles.headerContainer}>
-        //     <Text style={styles.headerText}>Your Jobs: {posts.length}</Text>
-        //   </View>
-        // )}
-        // ListEmptyComponent={
-        //   posts.length === 0 ? (
-        //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        //       <Text style={{ fontSize: 16, color: 'gray' }}>No jobs available</Text>
-        //     </View>
-        //   ) : null
-        // }
+        </TouchableOpacity>
 
-        />
+        <TouchableOpacity style={styles.circle}
+          onPress={() => navigation.navigate("CompanyJobPost")} activeOpacity={0.8}>
+          <Add width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
-        < Message
-          visible={isDeleteAlertVisible}
-          onClose={cancelDelete}
-          onCancel={cancelDelete}
-          onOk={() => {
-            setDeleteAlertVisible(false);
-            handleDelete();
-          }}
-          title="Delete Confirmation"
-          message="Are you sure you want to delete this job? deleting it will remove all job applications, this action cannot be undone?"
-          iconType="warning"
-        />
-        {/* Create Post Button */}
-        {/* <TouchableOpacity
-        style={styles.createPostButton}
-        onPress={() => navigation.navigate('CompanyJobPost')}
-      >
-        <Icon name="add" size={30} color="white" />
-      </TouchableOpacity> */}
-      </TouchableOpacity>
-    </SafeAreaView>
+          <Text style={styles.shareText}>Post a job</Text>
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+
+        data={posts}
+        renderItem={renderJob}
+        keyExtractor={(item, index) => `${item.post_id}-${index}`}
+        showsVerticalScrollIndicator={false}
+        onEndReached={() => hasMoreJobs && fetchCompanyJobPosts(lastEvaluatedKey)}
+        onEndReachedThreshold={0.5}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        ListFooterComponent={() =>
+          loadingMore && (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#075cab" />
+            </View>
+          )
+        }
+      // ListHeaderComponent={() => (
+      //   <View style={styles.headerContainer}>
+      //     <Text style={styles.headerText}>Your Jobs: {posts.length}</Text>
+      //   </View>
+      // )}
+      // ListEmptyComponent={
+      //   posts.length === 0 ? (
+      //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      //       <Text style={{ fontSize: 16, color: 'gray' }}>No jobs available</Text>
+      //     </View>
+      //   ) : null
+      // }
+
+      />
+
+      < Message
+        visible={isDeleteAlertVisible}
+        onClose={cancelDelete}
+        onCancel={cancelDelete}
+        onOk={() => {
+          setDeleteAlertVisible(false);
+          handleDelete();
+        }}
+        title="Delete Confirmation"
+        message="Are you sure you want to delete this job? deleting it will remove all job applications, this action cannot be undone?"
+        iconType="warning"
+      />
+
+    </View>
   );
 };
 
@@ -374,7 +387,7 @@ const YourComapanyPostedJob = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: 'whitesmoke',
   },
 
   container1: {
@@ -411,7 +424,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#f0f0f0'
   },
-  
+
   searchContainer: {
     flex: 1,
     padding: 10,
@@ -477,7 +490,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'start',
-
+    marginHorizontal: 5,
+    top: 5
 
   },
   textContainer: {
@@ -533,17 +547,41 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-
+    justifyContent: 'flex-end',
   },
 
+  actionButton: {
+    padding: 8,
+    borderRadius: 5,
+
+  },
+  deleteButtonText: {
+    color: "#FF0000",
+    fontSize: 15
+  },
+  buttonText: {
+    marginLeft: 5,
+    fontSize: 15,
+    fontWeight: '500',
+    color: "#075cab",
+  },
+  iconTextContainer: {
+    flexDirection: 'row',
+    // alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+  },
   applyButton: {
-    // marginTop: 8,
     color: '#075cab',
     fontWeight: '500',
     fontSize: 15,
-    paddingVertical: 10
     // textDecorationLine: 'underline',
   },
   createPostButton: {

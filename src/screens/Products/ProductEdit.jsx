@@ -20,6 +20,10 @@ import { EventRegister } from "react-native-event-listeners";
 import AppStyles from "../AppUtils/AppStyles";
 import apiClient from "../ApiClient";
 import { useMediaPicker } from "../helperComponents/MediaPicker";
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';
@@ -731,9 +735,12 @@ const EditProduct = () => {
     return (
 
         <SafeAreaView style={styles.container} >
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Icon name="arrow-left" size={24} color="#075cab" />
-            </TouchableOpacity>
+            <View style={styles.searchContainer}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+                </TouchableOpacity>
+            </View>
             <KeyboardAwareScrollView
                 contentContainerStyle={{ flexGrow: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 10, }}
                 keyboardShouldPersistTaps="handled"
@@ -996,7 +1003,8 @@ const EditProduct = () => {
                                             style={styles.closeIcon}
                                             onPress={() => handleRemoveMedia("image", index)}
                                         >
-                                            <Icon name="close" size={20} color="gray" />
+                                            <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
                                         </TouchableOpacity>
                                     </View>
                                 );
@@ -1039,7 +1047,8 @@ const EditProduct = () => {
                                                     style={styles.closeIcon}
                                                     onPress={() => handleRemoveMedia("video", index)}
                                                 >
-                                                    <Icon name="close" size={20} color="gray" />
+                                                    <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
                                                 </TouchableOpacity>
                                             </View>
                                         );
@@ -1064,13 +1073,14 @@ const EditProduct = () => {
                                 {[...files, ...newFiles].length > 0 ? (
                                     [...files, ...newFiles].map((file, index) => (
                                         <View key={index} style={[styles.mediaWrapper, { padding: 20 }]}>
-                                            <Icon name="file-document-outline" size={50} color="black" />
+                                            <Pdf width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.danger} />
 
                                             <Text style={[styles.fileName, { marginTop: 5 }]}>{file?.name || "Selected File"}</Text>
 
 
                                             <TouchableOpacity onPress={() => handleRemoveFile(index)} style={styles.closeIcon}>
-                                                <Icon name="close" size={24} color="gray" />
+                                                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.gray} />
+
                                             </TouchableOpacity>
                                         </View>
                                     ))
@@ -1158,9 +1168,23 @@ const styles = StyleSheet.create({
         marginBottom: 15,
 
     },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'white',
+        elevation: 1,  // for Android
+        shadowColor: '#000',  // shadow color for iOS
+        shadowOffset: { width: 0, height: 1 },  // shadow offset for iOS
+        shadowOpacity: 0.1,  // shadow opacity for iOS
+        shadowRadius: 2,  // shadow radius for iOS
+        borderBottomWidth: 1,
+        borderColor: '#f0f0f0'
+    },
     backButton: {
         alignSelf: 'flex-start',
         padding: 10,
+
     },
     headerTitle: {
         fontSize: 18,

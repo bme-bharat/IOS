@@ -21,6 +21,7 @@ import Animated from "react-native-reanimated";
 import { FeedStyles as styles } from "../Styles/FeedStyles";
 import ShimmerSkeleton from "../Skeleton";
 import { searchForumPostsWithEnrichment } from "./useSearch";
+import { colors } from "../../assets/theme";
 
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -253,7 +254,7 @@ const LatestPosts = () => {
 
     return (
         <Profiler id="ForumListCompanylatest" onRender={onRender}>
-            <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+            <View style={{ flex: 1, backgroundColor: colors.app_background, }}>
                 <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                         <Icon name="arrow-left" size={24} color="#075cab" />

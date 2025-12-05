@@ -19,6 +19,9 @@ import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import AppStyles from '../AppUtils/AppStyles';
 import { EventRegister } from 'react-native-event-listeners';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const CompanyJobEditScreen = ({ route }) => {
   const { myId, myData } = useNetwork();
@@ -67,7 +70,7 @@ const CompanyJobEditScreen = ({ route }) => {
 
     }
   }, [post]);
-  
+
   const handleSkillSelect = (selected) => {
     if (!selectedSkills.includes(selected.label)) {
       if (selectedSkills.length >= 3) {
@@ -79,13 +82,13 @@ const CompanyJobEditScreen = ({ route }) => {
       handleChange('required_expertise', updated.join(', '));
     }
   };
-  
+
   const removeSkill = (skill) => {
     const updated = selectedSkills.filter(s => s !== skill);
     setSelectedSkills(updated);
     handleChange('required_expertise', updated.join(', '));
   };
-  
+
   const handleCitySelect = (selected) => {
     if (!selectedCities.includes(selected.label)) {
       if (selectedCities.length >= 5) {
@@ -97,17 +100,17 @@ const CompanyJobEditScreen = ({ route }) => {
       handleChange('working_location', updated.join(', '));
     }
   };
-  
+
   const removeCity = (city) => {
     const updated = selectedCities.filter(c => c !== city);
     setSelectedCities(updated);
     handleChange('working_location', updated.join(', '));
   };
-  
+
   const renderSelectedItems = (items, onRemove) => (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
       {items.map(item => (
-        <View key={item} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', padding: 6, paddingHorizontal: 10, borderRadius: 18 }}>
+        <View key={item} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#eee', padding: 6, paddingHorizontal: 10, borderRadius: 18, marginBottom:10 }}>
           <Text style={{ marginRight: 8, fontSize: 12 }}>{item}</Text>
           <TouchableOpacity
             onPress={() => onRemove(item)}
@@ -119,46 +122,46 @@ const CompanyJobEditScreen = ({ route }) => {
               alignItems: 'center',
               justifyContent: 'center',
               marginLeft: 4,
-            }}
-          >
+              
+            }} >
             <Text style={{ color: '#fff', fontSize: 10 }}>✕</Text>
           </TouchableOpacity>
         </View>
       ))}
     </View>
   );
-  
+
   const handleChange = (key, value) => {
     const trimmedValue = value.replace(/^\s+/, "");
-  
+
     if (value.startsWith(" ")) {
       showToast('Leading spaces are not allowed', 'error');
       return;
     }
-  
+
     if (key === 'industry_type') {
       setJobEditFormData(prevState => ({
         ...prevState,
         [key]: trimmedValue,
       }));
-      
+
       const updatedSkills = [];
       setSelectedSkills(updatedSkills);
       setExpertiseOptions(industrySkills[value] || []);
       handleChange('required_expertise', '');
-  
+
       setHasChanges(true);
       return;
     }
-  
+
     setJobEditFormData(prevState => ({
       ...prevState,
       [key]: trimmedValue,
     }));
-  
+
     setHasChanges(true);
   };
-  
+
 
 
   const JobEditHandle = () => {
@@ -175,23 +178,23 @@ const CompanyJobEditScreen = ({ route }) => {
         required_qualifications: jobEditFormData.required_qualifications?.trim() || "",
         preferred_languages: jobEditFormData.preferred_languages?.trim() || ""
       };
-  
+
       for (const [key, value] of Object.entries(trimmedData)) {
         if (key !== "preferred_languages" && !value) {
           showToast(`${key.replace(/_/g, " ")} is mandatory`, 'info');
           return;
         }
       }
-  
+
       setHasChanges(false);
-  
+
       const existingJob = jobs.find(job => String(job.post_id) === String(post.post_id));
-  
+
       const updatedJobData = {
         ...existingJob,
         ...trimmedData,
       };
-  
+
       apiClient.post("/updateAJobPost", {
         command: "updateJobPost",
         company_id: myId,
@@ -200,7 +203,7 @@ const CompanyJobEditScreen = ({ route }) => {
       })
         .then(() => {
           showToast("Job post updated successfully", 'success');
-  
+
           EventRegister.emit('onJobUpdated', {
             updatedPost: {
               ...updatedJobData,
@@ -208,10 +211,10 @@ const CompanyJobEditScreen = ({ route }) => {
               fileKey: post.fileKey || "",     // ✅ Optional but recommended
             },
           });
-          
-  
+
+
           dispatch(updateJobPost(updatedJobData));
-  
+
           setTimeout(() => {
             navigation.goBack();
           }, 100);
@@ -224,7 +227,7 @@ const CompanyJobEditScreen = ({ route }) => {
       showToast('Something went wrong', 'error');
     }
   };
-  
+
 
 
 
@@ -261,137 +264,126 @@ const CompanyJobEditScreen = ({ route }) => {
 
 
 
-
   return (
     <SafeAreaView style={styles.container5}>
-
+      <View style={styles.headerContainer}>
       <TouchableOpacity style={styles.backButton} activeOpacity={0.8} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color="#075cab" />
-      </TouchableOpacity>
+        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
+      </TouchableOpacity>
+      </View>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10, paddingBottom: '30%' }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 5, paddingBottom: '30%' }}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}  // Adjust for better visibility when keyboard opens
+        showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity activeOpacity={1}>
-          <View style={styles.inputstyle}>
-            <Text style={[styles.title]}>Job title <Text style={{ color: 'red' }}>*</Text></Text>
-            <TextInput
-              style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
-              editable={false}
-              onChangeText={text => handleChange('job_title', text)}
 
-              placeholderTextColor="gray"
-              defaultValue={jobEditFormData.job_title}
-            />
-          </View>
-          <View style={styles.inputstyle}>
-            <Text style={[styles.title]}>Industry type <Text style={{ color: 'red' }}>*</Text></Text>
-            <CustomDropDownMenu
-              items={industryType}
-              onSelect={(item) => handleChange('industry_type', item.label)}
-              buttonStyle={styles.dropdownButton}
-              buttonTextStyle={styles.dropdownButtonText}
-              itemStyle={styles.dropdownItem}
-              itemTextStyle={styles.dropdownItemText}
-              placeholder={jobEditFormData.industry_type || ""} // Show the current value or placeholder
-            />
-          </View>
-          <View style={styles.inputstyle}>
-            <Text style={[styles.title]}> Required qualification <Text style={{ color: 'red' }}>*</Text></Text>
-            <TextInput
-              style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
+          <Text style={[styles.title,{paddingTop:10}]}>Job title <Text style={{ color: 'red' }}>*</Text></Text>
+          <TextInput
+            style={[styles.input]}
+            editable={false}
+            onChangeText={text => handleChange('job_title', text)}
 
-              multiline
-              placeholderTextColor="gray"
-              onChangeText={text => handleChange('required_qualifications', text)}
-              value={jobEditFormData.required_qualifications}
-            />
-          </View>
-          <View style={styles.inputstyle}>
-  <Text style={[styles.title]}> Required expertise <Text style={{ color: 'red' }}>*</Text></Text>
-  <CustomDropDownMenu
-    key={expertiseKey}
-    items={expertiseOptions.map(item => ({ label: item, value: item }))}
-    onSelect={handleSkillSelect}
-    buttonStyle={styles.dropdownButton}
-    buttonTextStyle={styles.dropdownButtonText}
-    placeholder="Select skills"
-    multiSelect
-  />
-  {renderSelectedItems(selectedSkills, removeSkill)}
-</View>
+            placeholderTextColor="gray"
+            defaultValue={jobEditFormData.job_title}
+          />
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.title]}> Required experience <Text style={{ color: 'red' }}>*</Text></Text>
-            <CustomDropDownMenu
-              items={ExperienceType}
-              onSelect={(item) => handleChange('experience_required', item.label)}
-              buttonStyle={styles.dropdownButton}
-              buttonTextStyle={styles.dropdownButtonText}
-              itemStyle={styles.dropdownItem}
-              itemTextStyle={styles.dropdownItemText}
-              placeholder={jobEditFormData.experience_required || ""} // Show the current value or placeholder
-            />
-          </View>
+          <Text style={[styles.title]}>Industry type <Text style={{ color: 'red' }}>*</Text></Text>
+          <CustomDropDownMenu
+            items={industryType}
+            onSelect={(item) => handleChange('industry_type', item.label)}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholder={jobEditFormData.industry_type || ""} // Show the current value or placeholder
+          />
 
-          <View style={styles.inputstyle}>
 
-            <Text style={[styles.title]}> Required speicializations <Text style={{ color: 'red' }}>*</Text></Text>
-            <TextInput
-              style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
+          <Text style={[styles.title]}> Required qualification <Text style={{ color: 'red' }}>*</Text></Text>
+          <TextInput
+            style={[styles.input]}
 
-              placeholderTextColor="gray"
-              multiline
-              onChangeText={text => handleChange('speicializations_required', text)}
-              value={jobEditFormData.speicializations_required}
-            />
-          </View>
+            multiline
+            placeholderTextColor="gray"
+            onChangeText={text => handleChange('required_qualifications', text)}
+            value={jobEditFormData.required_qualifications}
+          />
 
-          <View style={styles.inputstyle}>
-            <Text style={[styles.title]}> Job description <Text style={{ color: 'red' }}>*</Text></Text>
-            <TextInput
-              style={[styles.input, { minHeight: 50, maxHeight: 150 }]}
-              multiline
-              placeholderTextColor="gray"
-              onChangeText={text => handleChange('job_description', text)}
-              value={jobEditFormData.job_description}
-            />
-          </View>
+
+          <Text style={[styles.title]}> Required expertise <Text style={{ color: 'red' }}>*</Text></Text>
+          <CustomDropDownMenu
+            key={expertiseKey}
+            items={expertiseOptions.map(item => ({ label: item, value: item }))}
+            onSelect={handleSkillSelect}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholder="Select skills"
+            multiSelect
+          />
+          {renderSelectedItems(selectedSkills, removeSkill)}
 
 
 
-          <View style={styles.inputstyle}>
-  <Text style={[styles.title]}> Work location <Text style={{ color: 'red' }}>*</Text></Text>
-  <CustomDropDownMenu
-    items={topTierCities.map(city => ({ label: city, value: city }))}
-    onSelect={handleCitySelect}
-    buttonStyle={styles.dropdownButton}
-    buttonTextStyle={styles.dropdownButtonText}
-    placeholder="Select cities"
-    multiSelect
-  />
-  {renderSelectedItems(selectedCities, removeCity)}
-</View>
+          <Text style={[styles.title]}> Required experience <Text style={{ color: 'red' }}>*</Text></Text>
+          <CustomDropDownMenu
+            items={ExperienceType}
+            onSelect={(item) => handleChange('experience_required', item.label)}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.title]}> Salary package <Text style={{ color: 'red' }}>*</Text></Text>
-            <CustomDropDownMenu
-              items={SalaryType}
-              onSelect={(item) => handleChange('Package', item.label)}
-              buttonStyle={styles.dropdownButton}
-              buttonTextStyle={styles.dropdownButtonText}
-              itemStyle={styles.dropdownItem}
-              itemTextStyle={styles.dropdownItemText}
-              placeholder={jobEditFormData.Package || ""}
-            />
-          </View>
+            placeholder={jobEditFormData.experience_required || ""} // Show the current value or placeholder
+          />
+
+          <Text style={[styles.title]}> Required speicializations <Text style={{ color: 'red' }}>*</Text></Text>
+          <TextInput
+            style={[styles.input]}
+
+            placeholderTextColor="gray"
+            multiline
+            onChangeText={text => handleChange('speicializations_required', text)}
+            value={jobEditFormData.speicializations_required}
+          />
+
+
+          <Text style={[styles.title]}> Job description <Text style={{ color: 'red' }}>*</Text></Text>
+          <TextInput
+            style={[styles.input]}
+            multiline
+            placeholderTextColor="gray"
+            onChangeText={text => handleChange('job_description', text)}
+            value={jobEditFormData.job_description}
+          />
+
+
+
+          <Text style={[styles.title]}> Work location <Text style={{ color: 'red' }}>*</Text></Text>
+          <CustomDropDownMenu
+            items={topTierCities.map(city => ({ label: city, value: city }))}
+            onSelect={handleCitySelect}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholder="Select cities"
+            multiSelect
+          />
+          {renderSelectedItems(selectedCities, removeCity)}
+
+
+
+          <Text style={[styles.title]}> Salary package <Text style={{ color: 'red' }}>*</Text></Text>
+          <CustomDropDownMenu
+            items={SalaryType}
+            onSelect={(item) => handleChange('Package', item.label)}
+            buttonStyle={styles.dropdownButton}
+            buttonTextStyle={styles.dropdownButtonText}
+            placeholder={jobEditFormData.Package || ""}
+          />
+
           <View style={styles.inputstyle}>
             <Text style={styles.title}> Required languages </Text>
 
             <TextInput
-              style={[styles.input, { minHeight: 50, maxHeight: 150, textAlignVertical: 'top' }]}  // Use minHeight instead of height
+              style={[styles.input]}  // Use minHeight instead of height
               placeholderTextColor="gray"
               multiline
               onChangeText={text => handleChange('preferred_languages', text)}
@@ -442,6 +434,14 @@ const styles = StyleSheet.create({
     padding: 5,
 
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#f0f0f0'
+  },
   backButton: {
     alignSelf: 'flex-start',
     padding: 10
@@ -472,11 +472,11 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   title: {
-    color: 'black',
+    color: colors.text_primary,
     fontSize: 15,
     fontWeight: '500',
-    marginBottom: 10
-
+    marginVertical: 5,
+    paddingHorizontal: 5,
   },
 
 
@@ -487,18 +487,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  inputstyle: {
-    marginVertical: 10,
-  },
+
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 7,
+    height: 40,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    fontSize: 16,
-    marginBottom: 5,
-    color: 'black',
-    textAlignVertical: 'top'
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 15,
+    marginBottom: 10,
   },
   button: {
     alignSelf: 'center', // Centers the button
@@ -520,28 +524,26 @@ const styles = StyleSheet.create({
   },
 
   dropdownButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
+    height: 40,
     backgroundColor: '#fff',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginBottom:10
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#000',
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text_secondary,
+    flex: 1,
+    paddingVertical: 5,
   },
-  dropdownItem: {
-    backgroundColor: '#fff',
-
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: 'black',
-    // marginLeft: 5,
-    // marginTop: 7,
-    // marginBottom: 2
 
 
-  },
   delete: {
     color: '#FF0000',
     fontWeight: '600',

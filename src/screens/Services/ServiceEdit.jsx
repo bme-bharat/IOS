@@ -19,7 +19,11 @@ import { EventRegister } from "react-native-event-listeners";
 import apiClient from "../ApiClient";
 import AppStyles from "../AppUtils/AppStyles";
 import { useMediaPicker } from "../helperComponents/MediaPicker";
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import Close from '../../assets/svgIcons/close.svg';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
 const BASE_API_URL = 'https://h7l1568kga.execute-api.ap-south-1.amazonaws.com/dev';
 const API_KEY = 'k1xuty5IpZ2oHOEOjgMz57wHfdFT8UQ16DxCFkzk';
 
@@ -594,21 +598,20 @@ const EditService = () => {
 
     return (
 
-        <SafeAreaView style={styles.container} >
+        <View style={styles.container} >
             <View style={styles.headerContainer}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Icon name="arrow-left" size={24} color="#075cab" />
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
+                </TouchableOpacity>
             </View>
-            
+
             <KeyboardAwareScrollView
-                contentContainerStyle={{ flexGrow: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 10, }}
+                contentContainerStyle={{ flexGrow: 1, backgroundColor: "#f8f9fa", paddingHorizontal: 5, }}
                 keyboardShouldPersistTaps="handled"
                 extraScrollHeight={20}
                 onScrollBeginDrag={() => Keyboard.dismiss()}
                 showsVerticalScrollIndicator={false}>
-
-
 
                 <Text style={styles.title}>Edit a service</Text>
                 <View style={styles.inputContainer}>
@@ -722,7 +725,8 @@ const EditService = () => {
                                         style={styles.closeIcon}
                                         onPress={() => handleRemoveMedia("image", index)}
                                     >
-                                        <Icon name="close" size={20} color="gray" />
+                                        <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                                     </TouchableOpacity>
                                 </View>
                             );
@@ -765,7 +769,8 @@ const EditService = () => {
                                                 style={styles.closeIcon}
                                                 onPress={() => handleRemoveMedia("video", index)}
                                             >
-                                                <Icon name="close" size={20} color="gray" />
+                                                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                                             </TouchableOpacity>
                                         </View>
                                     );
@@ -790,14 +795,14 @@ const EditService = () => {
                             {[...files, ...newFiles].length > 0 ? (
                                 [...files, ...newFiles].map((file, index) => (
                                     <View key={index} style={[styles.mediaWrapper, { padding: 20 }]}>
-                                        <Icon name="file-document-outline" size={50} color="black" />
-
+                                        <Pdf width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.danger} />
                                         {/* Display file name if available */}
                                         <Text style={[styles.fileName, { marginTop: 5 }]}>{file?.name || "Selected File"}</Text>
 
                                         {/* Remove button */}
                                         <TouchableOpacity onPress={() => handleRemoveFile(index)} style={styles.closeIcon}>
-                                            <Icon name="close" size={24} color="gray" />
+                                            <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.secondary} />
+
                                         </TouchableOpacity>
                                     </View>
                                 ))
@@ -838,8 +843,8 @@ const EditService = () => {
                 message="Your updates will be lost if you leave this page. This action cannot be undone."
                 iconType="warning"
             />
-            <Toast />
-        </SafeAreaView>
+
+        </View>
 
     );
 };
@@ -862,12 +867,11 @@ const styles = StyleSheet.create({
     },
     addMediaButton: {
         // width: "100%",
-        padding: 12,
+        paddingHorizontal: 5,
         // backgroundColor: "#e0e0e0",
         borderRadius: 10,
         alignItems: "flex-start",
         justifyContent: "flex-start",
-        marginVertical: 8,
         // borderWidth: 1,
         // borderColor: "#ccc",
         alignSelf: 'flex-start'
@@ -877,7 +881,8 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: "#000",
         fontWeight: "500",
-        alignSelf: 'flex-start'
+        alignSelf: 'flex-start',
+        paddingBottom: 5
     },
     inputContainer: {
         marginBottom: 15,
@@ -893,7 +898,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderBottomWidth: 1,
         borderColor: '#f0f0f0'
-      },
+    },
     headerTitle: {
         fontSize: 18,
         fontWeight: "bold",
@@ -912,20 +917,17 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '500',
         marginBottom: 5,
-        color: '#000',
+        color: colors.text_primary,
     },
     input: {
-        minHeight: 50,
+        minHeight: 40,
         maxHeight: 150,
         backgroundColor: '#fff',
         paddingHorizontal: 15,
         borderRadius: 8,
-        fontSize: 16,
-        color: '#222',
-        shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
+        fontSize: 14,
+        fontWeight: '500',
+        color: colors.text_primary,
         elevation: 2,
         borderWidth: 1,
         borderColor: '#ddd'
@@ -937,8 +939,9 @@ const styles = StyleSheet.create({
         color: "#075cab",
     },
     mediaContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 10,
     },
     mediaWrapper: {
         position: "relative",
@@ -1018,7 +1021,7 @@ const styles = StyleSheet.create({
     },
 
     dropdownButton: {
-        height: 50,
+        height: 40,
         backgroundColor: '#fff',
         borderRadius: 8,
         flexDirection: 'row',
@@ -1057,9 +1060,11 @@ const styles = StyleSheet.create({
     },
 
     dropdownButtonText: {
-        fontSize: 16,
-        color: '#333',
+        fontSize: 14,
+        fontWeight: '500',
+        color: colors.text_primary,
         flex: 1,
+        padding: 5
     },
     dropdownItem: {
         paddingVertical: 10,

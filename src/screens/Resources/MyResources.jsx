@@ -21,6 +21,7 @@ import { EventRegister } from 'react-native-event-listeners';
 import { MyPostBody } from '../Forum/forumBody';
 import { deleteS3KeyIfExists } from '../helperComponents/s3Helpers';
 import { getSignedUrl } from '../helperComponents/signedUrls';
+import { colors } from '../../assets/theme';
 
 const defaultLogo = Image.resolveAssetSource(defaultImage).uri;
 
@@ -285,8 +286,9 @@ const YourResourcesList = ({ navigation, route }) => {
         onPress={() =>
           navigation.navigate("ResourceDetails", { resourceID: item.resource_id })
         }
+        style={styles.postContainer}
       >
-        <View style={styles.postContainer}>
+      
           <View style={styles.imageContainer}>
             {isDocument ? (
               <View style={styles.documentContainer}>
@@ -324,25 +326,25 @@ const YourResourcesList = ({ navigation, route }) => {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditPress(item, fileUrl)}
+                style={[styles.editButton, { marginRight: 10 }]}
+                onPress={() => handleEditPress(item, isDefaultImage ? undefined : fileUrl)}
+                activeOpacity={1}
               >
-                <Icon name="pencil" size={20} style={{ color: "#075cab" }} />
+
                 <Text style={styles.editButtonText}>Edit</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={styles.editButton}
                 onPress={() =>
                   handleDelete(item.resource_id, item.fileKey, item.thumbnail_fileKey)
                 }
+                activeOpacity={1}
               >
-                <Icon name="delete" size={20} color="#FF0000" />
                 <Text style={styles.deleteButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
       </TouchableOpacity>
     );
   };
@@ -459,32 +461,25 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: "#075cab"
   },
-  cricle: {
-    marginRight: 10,
-    width: 30, // Set the width of the circle
-    height: 30, // Set the height of the circle
-    borderRadius: 30, // Make it circular
-    backgroundColor: '#075cab', // Background color of the circle
-    alignItems: 'center', // Center the icon horizontally
-    justifyContent: 'center', // Center the icon vertically
-    elevation: 5, // Add shadow for Android
-    shadowColor: '#000', // Shadow color for iOS
-    shadowOffset: { width: 0, height: 2 }, // Shadow offset for iOS
-    shadowOpacity: 0.3, // Shadow opacity for iOS
-    shadowRadius: 4, // Shadow radius for iOS
-  },
+
   postContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
-    marginHorizontal: 10,
+    marginBottom: 5,
+    marginHorizontal: 5,
     backgroundColor: 'white',
     justifyContent: 'center',
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 0.5,
     borderColor: '#ddd',
     shadowColor: '#000',
-    top: 10
-
+    top: 5
+  },
+  imageContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    // backgroundColor:'red',
+    alignItems: 'center',
+    padding: 10,
   },
   noPostsText: {
     color: 'black',
@@ -503,33 +498,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: 10
   },
-  loaderContainer: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  loaderContainer1: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchContainer: {
-    flex: 1,
-    padding: 10,
-    alignSelf: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    backgroundColor: '#f9f9f9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
+
   circle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -547,23 +516,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
 
   },
-  searchInput: {
-    flex: 1,
-    height: 30,
-    marginHorizontal: 10,
-    paddingHorizontal: 10,
-    color: "black",
-    fontSize: 14,
-    paddingTop: 0,
-    paddingBottom: 0,
-    lineHeight: 20,
-  },
 
-  plusicon: {
-    left: -19,
-    color: 'white',
-    backgroundColor: '#075cab',
-  },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -585,16 +538,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-
     backgroundColor: "#075cab"
   },
-  imageContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    // backgroundColor:'red',
-    alignItems: 'center',
-    marginTop: 10
-  },
+
 
   image: {
     width: 100,
@@ -602,12 +548,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain'
   },
 
-  videoContainer: {
-
-    flex: 1,
-    justifyContent: 'center',
-    marginLeft: 5
-  },
   video: {
     width: 100,
     height: 100,
@@ -617,7 +557,6 @@ const styles = StyleSheet.create({
   documentContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0', // Light gray background for contrast
     borderRadius: 10,
     padding: 10,
   },
@@ -633,6 +572,7 @@ const styles = StyleSheet.create({
     flex: 2,
     padding: 15,
     gap: 8,
+
   },
   productDetails: {
     flex: 1, // Take remaining space
@@ -642,8 +582,8 @@ const styles = StyleSheet.create({
   value: {
     flex: 2, // Take the remaining space
     flexShrink: 1,
-    color: 'black',
-    fontWeight: '400',
+    color: colors.text_primary,
+    fontWeight: '500',
     fontSize: 14,
     textAlign: 'left', // Align text to the left
     alignSelf: 'flex-start',
@@ -673,131 +613,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 10,
-
+    backgroundColor: 'white',
   },
   editButton: {
+    justifyContent: 'center',
+    width: 80,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
+    backgroundColor: 'white',
     borderRadius: 5,
-    backgroundColor: '#ffffff',
-    // elevation: 2,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2
+
   },
   editButtonText: {
     marginLeft: 5,
     fontSize: 16,
     color: "#075cab",
+    backgroundColor: 'white',
+
   },
   deleteButtonText: {
     color: "#FF0000",
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    marginLeft: 10,
-    backgroundColor: '#ffffff',
-    // elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 1 },
+    backgroundColor: 'white',
 
   },
-
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    left: 10
-  },
-  shareButtonText: {
-    color: "#075cab",
-  },
-  confirmationContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -150 }, { translateY: -120 }],
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 30,
-    width: 320,
-    alignItems: 'center',
-    zIndex: 999,
-    elevation: 10, // For shadow effect on Android
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  confirmationTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
-    marginBottom: 15,
-  },
-  confirmationText: {
-    fontSize: 15,
-    textAlign: 'center',
-    color: 'black',
-    marginBottom: 25,
-  },
-  confirmationButtons: {
-    flexDirection: 'row',
-
-
-  },
-  confirmButton: {
-    backgroundColor: '#3498db',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  confirmButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    marginLeft: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  iconStyle: {
-    backgroundColor: 'whitesmoke',
-    borderRadius: 25,
-    padding: 10,
-    marginBottom: 20,
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 998,
-  },
-
 
 });
 

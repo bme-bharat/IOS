@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Alert, Linking, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Alert, Linking, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,11 @@ import apiClient from '../ApiClient';
 import Message from '../../components/Message';
 import { showToast } from '../AppUtils/CustomToast';
 import { useNetwork } from '../AppUtils/IdProvider';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Delete from '../../assets/svgIcons/delete.svg';
+
+import { colors, dimensions } from '../../assets/theme.jsx';
+import { commonStyles } from '../AppUtils/AppStyles.js';
 
 const MyEnqueries = () => {
     const { myId, myData } = useNetwork();
@@ -81,7 +86,7 @@ const MyEnqueries = () => {
                     setEnquiredServices({ removed_by_author: true });
                 } else {
                     setEnquiredServices(posts);
- 
+
                     const urlsObject = {};
                     await Promise.all(
                         posts.map(async (post) => {
@@ -173,88 +178,42 @@ const MyEnqueries = () => {
     };
 
     const renderItem = ({ item }) => {
-        const getFileExtension = (enquiry_fileKey) => {
-            if (!enquiry_fileKey) return null;
-            const ext = enquiry_fileKey.split('.').pop(); // Extract file extension
-            return ext ? ext.toLowerCase() : null;
-        };
-
         const formattedDate = new Date(item.enquired_on * 1000).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
         }).replace(/\//g, '-');
 
-        const fileExtension = getFileExtension(item.enquiry_fileKey);
-        const extensionMap = {
-            'vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-            'vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-            'vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-            'application/pdf': 'pdf',
-            'document': 'docx',
-            'application/msword': 'doc',
-            'application/vnd.ms-excel': 'xls',
-            'application/vnd.ms-powerpoint': 'ppt',
-            'text/plain': 'txt',
-            'image/webp': 'webp',
-            'sheet': 'xlsx',
-            'presentation': 'pptx',
-            'msword': 'doc',
-            'ms-excel': 'xls',
-            'plain': 'txt',
-        };
-
         return (
             <TouchableOpacity
                 activeOpacity={1} onPress={() => {
                     ServiceDetails(item?.service_id, item?.company_id);
                 }} >
-                <View style={styles.postContainer}>
-
+           
                     <View style={styles.textContainer}>
 
-                        <View style={styles.title1}>
-                            <Text style={styles.label}>Company name      </Text>
-                            <Text style={styles.colon}>:</Text>
-                            <Text style={styles.value}>{item?.company_name || ""}</Text>
+                        <View style={commonStyles.valContainer}>
+                            <Text style={commonStyles.label}>Company name      </Text>
+                            <Text style={commonStyles.colon}>:</Text>
+                            <Text style={commonStyles.value}>{item?.company_name || ""}</Text>
                         </View>
-                        <View style={styles.title1}>
-                            <Text style={styles.label}>Service name      </Text>
-                            <Text style={styles.colon}>:</Text>
-                            <Text style={styles.value}>{item?.service_title || ""}</Text>
+                        <View style={commonStyles.valContainer}>
+                            <Text style={commonStyles.label}>Service name      </Text>
+                            <Text style={commonStyles.colon}>:</Text>
+                            <Text style={commonStyles.value}>{item?.service_title || ""}</Text>
                         </View>
-                        <View style={styles.title1}>
-                            <Text style={styles.label}>Enquiry description      </Text>
-                            <Text style={styles.colon}>:</Text>
-                            <Text style={styles.value}>{item?.enquiry_description || ""}</Text>
+                        <View style={commonStyles.valContainer}>
+                            <Text style={commonStyles.label}>Enquiry description      </Text>
+                            <Text style={commonStyles.colon}>:</Text>
+                            <Text style={commonStyles.value}>{item?.enquiry_description || ""}</Text>
                         </View>
-                        <View style={styles.title1}>
-                            <Text style={styles.label}>Enquired on      </Text>
-                            <Text style={styles.colon}>:</Text>
-                            <Text style={styles.value}>{formattedDate || ""}</Text>
+                        <View style={commonStyles.valContainer}>
+                            <Text style={commonStyles.label}>Enquired on      </Text>
+                            <Text style={commonStyles.colon}>:</Text>
+                            <Text style={commonStyles.value}>{formattedDate || ""}</Text>
                         </View>
 
-                        {item.enquiry_fileKey ? (
-                            <View style={styles.imageContainer}>
-                                <TouchableOpacity
-                                    style={styles.documentContainer}
-                                    onPress={() => {
-                                        const url = imageUrls[item.service_id];
-                                        if (url) {
-                                            Linking.openURL(url);
-                                        } else {
 
-                                            showToast('File link not available', 'success');
-
-                                        }
-                                    }}
-                                >
-                                    <Icon name="file-document" size={50} color="#075cab" />
-                                    <Text style={styles.docText}>{extensionMap[fileExtension]?.toUpperCase()}</Text>
-                                    <Text style={styles.editButtonText}>View File</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : null}
 
 
                         <View style={styles.buttonContainer}>
@@ -262,7 +221,7 @@ const MyEnqueries = () => {
                                 style={styles.deleteButton}
                                 onPress={() => {
                                     EnquiryDetails(item?.enquiry_id,);
-                                }} >
+                                }} activeOpacity={1}>
                                 <Text style={[styles.deleteButtonText, { color: '#075cab' }]}>
                                     View Enquiry
                                 </Text>
@@ -271,8 +230,8 @@ const MyEnqueries = () => {
                                 style={styles.deleteButton}
                                 onPress={() => handleRevokePress(item.service_id, item.enquiry_fileKey)}
                                 disabled={revokingId === item.service_id}
+                                activeOpacity={1}
                             >
-                                <Icon name="delete" size={20} color="#FF0000" />
                                 <Text style={styles.deleteButtonText}>
                                     {revokingId === item.service_id ? 'Revoke' : 'Revoke'}
                                 </Text>
@@ -280,9 +239,8 @@ const MyEnqueries = () => {
 
                         </View>
 
-
                     </View>
-                </View>
+          
             </TouchableOpacity>
         );
 
@@ -291,41 +249,44 @@ const MyEnqueries = () => {
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
 
                 <View style={styles.headerContainer}>
 
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
 
                 </View>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="small" color="#075cab" />
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
     if (!enquiredServices || enquiredServices.length === 0 || enquiredServices?.removed_by_author) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
                 <View style={styles.headerContainer}>
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <Text style={{ fontSize: 16, color: 'gray' }}>No enquiries available</Text>
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
             </View>
 
@@ -345,7 +306,7 @@ const MyEnqueries = () => {
                     message="Are you sure you want to revoke this enquiry?"
                 />
             )}
-        </SafeAreaView>
+        </View>
     );
 
 };
@@ -361,13 +322,22 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        padding: 10,
         backgroundColor: '#f5f5f5',
     },
     textContainer: {
-        flex: 1,
-        padding: 15,
-        gap: 6,
+        marginBottom: 5,
+        marginHorizontal: 5,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: '#ddd',
+        elevation:3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
+        top: 5
     },
     productDetails: {
         flex: 1,
@@ -375,7 +345,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 10,
+        margin: 10,
 
     },
 
@@ -396,7 +366,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: 'white',
-         borderBottomWidth: 1,
+        borderBottomWidth: 1,
         borderColor: '#f0f0f0'
     },
 
@@ -439,17 +409,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 8,
         paddingHorizontal: 12,
-        borderRadius: 5,
-        marginLeft: 10,
+        borderRadius: 8,
         backgroundColor: '#ffffff',
-        // elevation: 2,
+        elevation: 2,
         shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 2
     },
     deleteButtonText: {
-        color: "#FF0000",
+        color: colors.danger,
     },
     imageContainer: {
         flex: 1,
@@ -468,7 +437,6 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
         shadowColor: '#000',
         top: 5
-
     },
 });
 

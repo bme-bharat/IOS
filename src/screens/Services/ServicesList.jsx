@@ -3,7 +3,7 @@ import {
     View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator,
     TextInput, RefreshControl, StyleSheet,
     Keyboard,
-    SafeAreaView,
+
     TouchableWithoutFeedback,
     ScrollView
 } from 'react-native';
@@ -11,12 +11,17 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
-import Fuse from 'fuse.js';
+
 import { showToast } from '../AppUtils/CustomToast';
 import { useConnection } from '../AppUtils/ConnectionProvider';
 import AppStyles from '../AppUtils/AppStyles';
 import { highlightMatch } from '../helperComponents/signedUrls';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Search from '../../assets/svgIcons/search.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import HomeBanner from '../Banners/homeBanner3.jsx';
 
+import { colors, dimensions } from '../../assets/theme.jsx';
 const ServicesList = () => {
     const { isConnected } = useConnection();
 
@@ -240,40 +245,36 @@ const ServicesList = () => {
     };
 
     const renderItem = ({ item, index }) => (
-        <TouchableOpacity activeOpacity={1} onPress={() => handleAddservice(item)}>
+        <TouchableOpacity activeOpacity={1} onPress={() => handleAddservice(item)} style={styles.card}>
+            <View style={styles.productImageContainer}>
 
-            <View style={styles.card} activeOpacity={1} >
-                <View style={styles.productImageContainer}>
-
-                    {imageUrls[item.service_id] ? (
-                        <Image source={{ uri: imageUrls[item.service_id] }} style={styles.productImage} />
-                    ) : (
-                        <View style={styles.productImagePlaceholder} />
-                    )}
-                </View>
-
-                <View style={styles.cardContent}>
-                    <View>
-                        {/* <Text numberOfLines={1} style={styles.title}>{item.title || ' '}</Text> */}
-                        <Text numberOfLines={1} style={styles.title}>{highlightMatch(item?.title || '', searchQuery)}</Text>
-                        <Text numberOfLines={1} style={styles.description}>{highlightMatch(item?.description || '', searchQuery)}</Text>
-                        <Text numberOfLines={1} style={styles.company}>{highlightMatch(item?.company_name || '', searchQuery)}</Text>
-
-                        {/* <Text numberOfLines={1} style={styles.description}>{item.description || ' '}</Text>
-                        <Text numberOfLines={1} style={styles.company}>{item.company_name || ' '}</Text> */}
-                        <View style={styles.priceRow}>
-                            <Text numberOfLines={1} style={styles.price}>
-                                ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "Undefined"}
-                            </Text>
-                        </View>
-
-                    </View>
-
-                    <TouchableOpacity style={styles.productDetailsContainer} onPress={() => handleAddservice(item)} activeOpacity={1}>
-                        <Text numberOfLines={1} style={styles.productDetailsText}>View details</Text>
-                    </TouchableOpacity>
-                </View>
+                {imageUrls[item.service_id] ? (
+                    <Image source={{ uri: imageUrls[item.service_id] }} style={styles.productImage} />
+                ) : (
+                    <View style={styles.productImagePlaceholder} />
+                )}
             </View>
+
+            <View style={styles.cardContent}>
+
+                {/* <Text numberOfLines={1} style={styles.title}>{item.title || ' '}</Text> */}
+                <Text numberOfLines={1} style={styles.title}>{highlightMatch(item?.title || '', searchQuery)}</Text>
+                <Text numberOfLines={1} style={styles.category}>{highlightMatch(item.category || '', searchQuery)}</Text>
+
+                <Text numberOfLines={2} style={styles.description}>{highlightMatch(item?.description || '', searchQuery)}</Text>
+                <Text numberOfLines={1} style={styles.company}>{highlightMatch(item?.company_name || '', searchQuery)}</Text>
+
+                {/* <Text numberOfLines={1} style={styles.description}>{item.description || ' '}</Text>
+                        <Text numberOfLines={1} style={styles.company}>{item.company_name || ' '}</Text> */}
+
+                <Text numberOfLines={1} style={styles.price}>
+                    ₹ {item.price !== undefined && item.price !== null && item.price !== '' ? item.price : "N/A"}
+                </Text>
+
+                <Text numberOfLines={1} style={styles.productDetailsText}>View details</Text>
+
+            </View>
+
         </TouchableOpacity>
     );
 
@@ -283,9 +284,10 @@ const ServicesList = () => {
 
     return (
         <View style={styles.container}>
-            <View style={AppStyles.headerContainer}>
+            <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
                 <View style={AppStyles.searchContainer}>
                     <View style={AppStyles.inputContainer}>
@@ -308,14 +310,16 @@ const ServicesList = () => {
                                 }}
                                 style={AppStyles.iconButton}
                             >
-                                <Icon name="close-circle" size={20} color="gray" />
+                                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                             </TouchableOpacity>
                         ) : (
                             <TouchableOpacity
 
                                 style={AppStyles.searchIconButton}
                             >
-                                <Icon name="magnify" size={20} color="#075cab" />
+                                <Search width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                             </TouchableOpacity>
 
                         )}
@@ -338,7 +342,7 @@ const ServicesList = () => {
                     keyboardShouldPersistTaps="handled"
                     keyExtractor={(item, index) => `${item.service_id}-${index}`}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={[AppStyles.scrollView, { paddingHorizontal: 10, }]}
+                    contentContainerStyle={{ paddingBottom: '20%' }}
                     onEndReached={() => lastEvaluatedKey && fetchservices(lastEvaluatedKey)}
                     onEndReachedThreshold={0.5}
                     ListEmptyComponent={
@@ -353,6 +357,7 @@ const ServicesList = () => {
                     }
                     ListHeaderComponent={
                         <View>
+                            <HomeBanner bannerId="serviceAd01" />
                             {!loading && searchQuery.trim() !== '' && searchResults.length > 0 && (
                                 <Text style={styles.companyCount}>
                                     {searchResults.length} results found
@@ -408,17 +413,24 @@ const styles = StyleSheet.create({
 
     container: {
         flex: 1,
-        backgroundColor: 'whitesmoke',
+        backgroundColor: colors.app_background
     },
-
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderColor: '#f0f0f0'
+    },
     flatListContainer: {
         paddingBottom: '20%',
 
     },
     company: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '500',
-        color: '#000',
+        color: colors.text_primary,
         textAlign: 'center',
         marginTop: 2,
         alignSelf: 'flex-start',
@@ -431,10 +443,10 @@ const styles = StyleSheet.create({
     },
 
     category: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '500',
-        color: '#000',
-        marginTop: 2,
+        color: colors.text_primary,
+        marginBottom: 5,
     },
 
     discountPrice: {
@@ -481,31 +493,29 @@ const styles = StyleSheet.create({
         padding: 10
     },
 
-
     card: {
         flexDirection: 'row',
         backgroundColor: '#fff',
-        borderRadius: 8,
         marginBottom: 5,
         borderWidth: 1,
         borderColor: '#ddd',
+        top: 5
     },
 
     productImageContainer: {
-        flex: 1.2, // Shares space equally with cardContent
+        flex: 1, // Shares space equally with cardContent
         maxWidth: 140, // Restricts width to avoid overflow
-        alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRightWidth: 0.5,
+        borderColor: '#eee',
 
     },
 
     productImage: {
-        width: 120,
-        height: 140, // Ensures it fills the container
-        backgroundColor: '#fafafa',
+        width: 110,
+        height: 110, // Ensures it fills the container
         resizeMode: 'contain',
-        borderTopLeftRadius: 8,
-        borderBottomLeftRadius: 8,
-        alignSelf: 'center',
 
     },
 
@@ -526,10 +536,11 @@ const styles = StyleSheet.create({
     },
 
     description: {
-        fontSize: 15,
+        color: colors.text_secondary,
+        fontWeight: '500',
+        fontSize: 14,
+        marginTop: 2,
 
-        color: '#777',
-        marginTop: 4,
     },
 
     priceRow: {
@@ -539,9 +550,10 @@ const styles = StyleSheet.create({
     },
     price: {
         fontSize: 15,
-        fontWeight: '500',
-        color: 'black'
+        fontWeight: '600',
+        color: colors.primary
     },
+
     separator: {
 
         margin: 2,
@@ -556,9 +568,11 @@ const styles = StyleSheet.create({
     },
 
     productDetailsText: {
-        fontSize: 15,
+        fontSize: 14,
         color: '#075cab',
-        fontWeight: '500',
+        fontWeight: '400',
+        alignSelf: 'flex-end',
+
     },
     filterContainer: {
         position: 'absolute',

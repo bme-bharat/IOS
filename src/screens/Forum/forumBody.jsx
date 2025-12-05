@@ -2,64 +2,79 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
 import RenderHTML, { defaultHTMLElementModels } from 'react-native-render-html';
 import { decode } from 'html-entities';
-import truncate from 'html-truncate'; 
+import truncate from 'html-truncate';
+import { colors } from '../../assets/theme';
 
 // ========== Clean inline styles ==========
 const stripInlineStyles = (domNode) => {
-  if (domNode.attribs?.style) {
-    domNode.attribs.style = domNode.attribs.style
-      .split(';')
-      .map((s) => s.trim())
-      .filter((s) => {
-        const lower = s.toLowerCase();
-        return (
-          lower.startsWith('font-weight') ||
-          lower.startsWith('font-style') ||
-          lower.startsWith('text-align') ||
-          lower.startsWith('color')
-        );
-      })
-      .join('; ');
+  if (!domNode.attribs?.style) return;
 
-    if (!domNode.attribs.style.trim()) {
-      delete domNode.attribs.style;
-    }
+  const allowedPrefixes = [
+    'margin',
+    'margin-top',
+    'margin-bottom',
+    'margin-left',
+    'margin-right',
+    'padding',
+    'padding-top',
+    'padding-bottom',
+    'padding-left',
+    'padding-right',
+    'line-height'
+  ];
+
+  domNode.attribs.style = domNode.attribs.style
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => {
+      const lower = s.toLowerCase();
+      return allowedPrefixes.some(prefix => lower.startsWith(prefix));
+    })
+    .join('; ');
+
+  if (!domNode.attribs.style.trim()) {
+    delete domNode.attribs.style;
   }
 };
 
 // ========== Shared styling ==========
-const baseStyle = { fontSize: 15 };
+const baseStyle = { fontSize: 14, };
 
 const defaultTextProps = {
-  selectable: true,
+  selectable: false,
   style: {
-    fontSize: 15,
+    fontSize: 14,
     marginTop: 0,
     marginBottom: 0,
     // fontWeight: '400',
-    // lineHeight: 20,
-
+    lineHeight: 20,
+    // color:colors.text_secondary,
+    letterSpacing: 0.2, 
   },
 };
 
 const tagStyles = {
-  p: { marginTop: 0, marginBottom: 5 },
-  'li > p': { marginTop: 0, marginBottom: 0 },
-  div: { marginTop: 0, marginBottom: 0 },
-  br: { marginBottom: 10 },
-  ul: { marginTop: 0, marginBottom: 0 },
-  ol: { marginTop: 0, marginBottom: 0 },
-  li: { marginTop: 0, marginBottom: 0 },
-  span: { marginTop: 0, marginBottom: 0 },
-  h1: { marginTop: 0, marginBottom: 0 },
-  h2: { marginTop: 0, marginBottom: 0 },
-  h3: { marginTop: 0, marginBottom: 0 },
-  h4: { marginTop: 0, marginBottom: 0 },
-  h5: { marginTop: 0, marginBottom: 0 },
-  h6: { marginTop: 0, marginBottom: 0 },
-  b: { fontWeight: 'bold' },
-  strong: { fontWeight: 'bold' },
+  // global paragraph spacing
+  p: { marginBottom: 4 },
 
+  // remove spacing only inside ul / ol
+  'ul p': { marginBottom: 0 },
+  'ol p': { marginBottom: 0 },
+
+  ul: { marginBottom: 12, paddingLeft: 18 },
+  ol: { marginBottom: 12, paddingLeft: 18 },
+
+  h1: { marginBottom: 12, fontWeight: 'bold' },
+  h2: { marginBottom: 10, fontWeight: 'bold' },
+  h3: { marginBottom: 8, fontWeight: 'bold' },
+
+  strong: { fontWeight: 'bold' },
+  b: { fontWeight: 'bold' },
+
+  a: {
+    color: '#075cab',
+    textDecorationLine: 'underline',
+  },
 };
 
 // ========== RenderHTML Wrapper (memoized) ==========
@@ -103,14 +118,14 @@ export const ForumBody = ({ html = '' }) => {
 
   const collapsedHtml = useMemo(() => {
     if (!showReadMore || isExpanded) return html;
-  
+
     const truncated = truncate(html, MAX_CHARS, {
-      ellipsis: '... <span style="color: #999">Read more</span>',
+      ellipsis: '... <span style="color: #075cab">Read more</span>',
     });
-  
+
     return `<p>${truncated}</p>`;
   }, [html, isExpanded, showReadMore]);
-  
+
 
   const handleExpand = () => {
     if (!isExpanded) setIsExpanded(true);
@@ -140,7 +155,7 @@ export const ForumPostBody = ({ html, forumId, numberOfLines }) => {
   }, [html]);
 
   return (
-    <View style={{ paddingHorizontal: 10, marginTop: 5 }}>
+    <View >
       <Text
         {...(numberOfLines ? {
           numberOfLines,
@@ -148,8 +163,8 @@ export const ForumPostBody = ({ html, forumId, numberOfLines }) => {
         } : {})}
         style={{
           fontSize: 14,
-          color: '#333',
-          fontWeight: '600',
+          fontWeight: '400',
+          color: colors.text_primary,
           lineHeight: 20,
         }}
       >
@@ -182,8 +197,7 @@ export const MyPostBody = ({ html, forumId, numberOfLines }) => {
           fontWeight: '400',
           // lineHeight: 20,
         }}
-      >
-        {plainText}
+      >{plainText}
       </Text>
     </View>
   );
@@ -218,8 +232,8 @@ export const cleanForumHtml = (html) => {
     .replace(/\sstyle="\s*"/gi, '')
     // Sanitize anchor tags
     .replace(/<a [^>]*href="([^"]+)"[^>]*>/gi, '<a href="$1">')
-    // DO NOT remove empty b/strong/i/em/u/span tags
-    // Old line (removed): .replace(/<[^\/>][^>]*>\s*<\/[^>]+>/gi, '')
+  // DO NOT remove empty b/strong/i/em/u/span tags
+  // Old line (removed): .replace(/<[^\/>][^>]*>\s*<\/[^>]+>/gi, '')
 };
 
 export const cleanTooltips = (html) => {

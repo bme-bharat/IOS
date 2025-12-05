@@ -1,9 +1,9 @@
 
 
-import { StyleSheet, Text, View, Button, TouchableOpacity, Linking, SafeAreaView, ActivityIndicator, ScrollView, Share } from 'react-native';
+import { StyleSheet, Text, View, Button, TouchableOpacity, Linking, ActivityIndicator, ScrollView, Share } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+import { Image as FastImage } from 'react-native';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import apiClient from '../ApiClient';
@@ -12,6 +12,13 @@ import { getTimeDisplay } from '../helperComponents/signedUrls';
 import { ForumBody } from '../Forum/forumBody';
 import { openMediaViewer } from '../helperComponents/mediaViewer';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
+import ShareIcon from '../../assets/svgIcons/share.svg';
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Pdf from '../../assets/svgIcons/pdf.svg';
+import File from '../../assets/svgIcons/file.svg';
+
+
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const ResourcesDetails = () => {
     const route = useRoute();
@@ -208,40 +215,43 @@ const ResourcesDetails = () => {
     if (!postData) {
         // Post is not loaded yet or null
         return (
-            <SafeAreaView style={styles.mainContainer}>
+            <View style={styles.mainContainer}>
 
                 <View style={styles.headerContainer1}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => navigation.goBack()}
                     >
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
 
                 </View>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text>Loading ...</Text>
+
+                    <ActivityIndicator size={'small'} color={'#075cab'} />
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
     if (postData?.removed_by_author) {
         return (
-            <SafeAreaView style={styles.mainContainer}>
+            <View style={styles.mainContainer}>
                 <View style={styles.headerContainer1}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => navigation.goBack()}
                     >
-                        <Icon name="arrow-left" size={24} color="#075cab" />
+                        <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                     </TouchableOpacity>
 
                 </View>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <Text style={{ fontSize: 16, color: 'gray' }}>This post was removed by the author</Text>
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
     return (
@@ -252,19 +262,19 @@ const ResourcesDetails = () => {
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Icon name="arrow-left" size={24} color="#075cab" />
+                    <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
                 </TouchableOpacity>
 
 
                 <TouchableOpacity onPress={() => handleOptionClick('Share')} style={styles.dropdownItem}>
-                    <Icon name="share-variant" size={17} color="#075cab" style={styles.icon} />
-                    <Text style={styles.dropdownText}>Share</Text>
+                    <ShareIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} /><Text style={styles.dropdownText}> Share</Text>
                 </TouchableOpacity>
             </View>
             <View style={styles.divider} />
 
             <ScrollView
-                contentContainerStyle={{ paddingBottom: "20%", }}
+                contentContainerStyle={{ paddingBottom: "20%", paddingHorizontal: 5 }}
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.container}>
@@ -338,12 +348,14 @@ const ResourcesDetails = () => {
                                 </View>
                             ) : fileExtension === 'pdf' ? (
                                 <TouchableOpacity onPress={() => Linking.openURL(mediaUrl)} style={styles.pdfButton}>
-                                    <Icon name="file-pdf-box" size={30} color="#075cab" />
+                                    <Pdf width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.primary} />
+
                                     <Text style={styles.pdfText}>View/download</Text>
                                 </TouchableOpacity>
                             ) : fileTypeMap[fileExtension] ? (
                                 <TouchableOpacity onPress={() => Linking.openURL(mediaUrl)} style={styles.pdfButton}>
-                                    <Icon name={fileTypeMap[fileExtension].icon} size={50} color={fileTypeMap[fileExtension].color} />
+                                    <File width={dimensions.icon.xl} height={dimensions.icon.xl} color={colors.primary} />
+
                                     <Text style={styles.pdfText}>View/download</Text>
                                 </TouchableOpacity>
                             ) : (
@@ -471,9 +483,9 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '500',
         marginBottom: 10,
-        color: '#000',
+        color: colors.text_primary,
         lineHeight: 21,
 
     },
@@ -511,10 +523,5 @@ const styles = StyleSheet.create({
         transform: [{ translateX: -25 }, { translateY: -25 }],
     },
 });
-
-
-
-
-
 
 export default ResourcesDetails;

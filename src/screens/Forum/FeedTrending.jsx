@@ -25,6 +25,7 @@ import AppStyles from '../AppUtils/AppStyles';
 import Animated from "react-native-reanimated";
 import { FeedStyles as styles } from "../Styles/FeedStyles";
 import ShimmerSkeleton from "../Skeleton";
+import { colors } from "../../assets/theme";
 
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -313,7 +314,7 @@ const TrendingPosts = () => {
 
     return (
         <Profiler id="ForumListCompanylatest" onRender={onRender}>
-            <View style={{ flex: 1, backgroundColor: 'whitesmoke', }}>
+            <View style={{ flex: 1, backgroundColor: colors.app_background, }}>
                
                 <Animated.View style={[AppStyles.headerContainer, headerStyle]}>
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -356,14 +357,6 @@ const TrendingPosts = () => {
 
                         </View>
                     </View>
-
-                    <TouchableOpacity
-                        style={AppStyles.circle}
-                        onPress={() => { navigation.navigate('ForumPost'); }}
-                        activeOpacity={1}
-                    >
-                        <Text style={AppStyles.shareText}>Post</Text>
-                    </TouchableOpacity>
              
                 </Animated.View>
 

@@ -34,6 +34,8 @@ import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
 import AppStyles from '../AppUtils/AppStyles';
 import DeviceInfo from 'react-native-device-info';
+import { colors, dimensions } from '../../assets/theme';
+import ArrowDown from '../../assets/svgIcons/arrow-down.svg';
 
 const UserSignupScreen = () => {
   const navigation = useNavigation();
@@ -766,7 +768,7 @@ const UserSignupScreen = () => {
 
 
   return (
-    <SafeAreaView style={{ backgroundColor: COLORS.white, flex: 1 }}>
+    <View style={{ backgroundColor: COLORS.white, flex: 1 }}>
 
       {/* Back Button */}
       <TouchableOpacity onPress={() => navigation.replace("ProfileType")} style={styles.backButton}>
@@ -812,8 +814,8 @@ const UserSignupScreen = () => {
             />
           </View>
 
-          <Text style={styles.heading}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', }}>
+          <Text style={styles.label}>Email ID <Text style={{ color: 'red' }}>*</Text></Text>
+
             <View style={styles.inputbox1}>
               <MerticalIcon name="email-outline" size={20} color="gray" />
               <TextInput
@@ -833,7 +835,7 @@ const UserSignupScreen = () => {
               ) : null}
             </View>
 
-          </View>
+    
 
           <Text style={styles.label}>Phone no.<Text style={{ color: 'red' }}>*</Text></Text>
           <View style={styles.inputbox}>
@@ -867,7 +869,7 @@ const UserSignupScreen = () => {
             <Text style={styles.dateText}>
               {dateOfBirth ? formatDate(dateOfBirth) : 'Select date of birth'}
             </Text>
-            <Icon name="arrow-drop-down" size={24} color="gray" />
+            <ArrowDown width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
 
           </TouchableOpacity>
 
@@ -1008,7 +1010,7 @@ const UserSignupScreen = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1044,8 +1046,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   dateText: {
-    color: 'black',
-    fontSize: 15,
+    color: colors.text_secondary,
+    fontSize: 14,
+    fontWeight:'500',
     paddingVertical: 12,
     // paddingHorizontal: 20,
     flex: 1,
@@ -1099,11 +1102,11 @@ const styles = StyleSheet.create({
     color: "black",
     fontSize: 15,
     fontWeight: "500",
-    marginBottom: 10,
+    marginBottom: 5,
 
   },
   inputbox: {
-    minHeight: 50,
+    minHeight: 40,
     maxHeight: 150,
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -1158,7 +1161,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   heading: {
-    bottom: -10,
+
     marginHorizontal: 4,
     color: "black",
     fontSize: 15,
@@ -1192,13 +1195,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderWidth: 1,
     borderColor: '#ddd',
-    marginVertical: 20,
+    marginBottom:10
   },
   inputText: {
     paddingHorizontal: 20,
-    height: Platform.OS === 'android' ? 50 : 50,
+    height: 40,
     width: '80%',
-    color: 'black',
+    color: colors.text_secondary,
   },
   modalTitleemail: {
     fontSize: 20,
@@ -1249,25 +1252,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dropdownButton: {
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
     borderWidth: 1,
     borderColor: '#ddd',
     marginBottom: 10
 
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 14,
+    color: colors.text_secondary,
     flex: 1,
   },
 });

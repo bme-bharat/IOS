@@ -12,6 +12,7 @@ import { Keyboard } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { showToast } from '../AppUtils/CustomToast';
 import apiClient from '../ApiClient';
+import { colors } from '../../assets/theme';
 
 const LoginPhoneScreen = () => {
   const navigation = useNavigation();
@@ -39,28 +40,28 @@ const LoginPhoneScreen = () => {
       showToast("Please enter a valid phone number or email Id", 'error');
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       let loginData, otpData;
-  
+
       if (isPhoneLogin) {
         const fullPhoneNumber = `${countryCode}${phone}`;
-  
+
         loginData = await apiClient.post('/loginUser', {
           command: 'loginUser',
           user_phone_number: fullPhoneNumber,
         });
-  
+
         if (loginData.data.status === 'success') {
           const { user_id: userId } = loginData.data.login_user_details;
-  
+
           otpData = await apiClient.post('/sendVerifyOtpMsg91', {
             command: 'sendVerifyOtpMsg91',
             user_phone_number: fullPhoneNumber,
           });
-  
+
           if (otpData.data.type === 'success') {
             showToast("OTP sent", 'success');
             navigation.navigate('LoginVerifyOTP', { fullPhoneNumber, userid: String(userId) });
@@ -70,21 +71,21 @@ const LoginPhoneScreen = () => {
         } else {
           throw new Error('User does not exist with this phone number.');
         }
-  
+
       } else {
         loginData = await apiClient.post('/loginUser', {
           command: 'loginUser',
           email: phone,
         });
-  
+
         if (loginData.data.status === 'success') {
           const { user_id: userId } = loginData.data.login_user_details;
-  
+
           const res = await apiClient.post('/sendEmailOtp', {
             command: 'sendEmailOtp',
             email: phone,
           });
-  
+
           if (res.data.status === 'success') {
             showToast("OTP sent", 'success');
             navigation.navigate('LoginVerifyOTP', { phone, userid: String(userId) });
@@ -103,8 +104,8 @@ const LoginPhoneScreen = () => {
       Keyboard.dismiss();
     }
   };
-  
-  
+
+
 
 
   const handleLoginMethodSwitch = () => {
@@ -124,305 +125,329 @@ const LoginPhoneScreen = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#075cab" barStyle="default" />
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false} onScrollBeginDrag={() => { Keyboard.dismiss() }}>
-        <View style={styles.logoContainer}>
-          <FastImage source={logo_png} style={styles.logo} resizeMode="cover" />
-        </View>
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Login</Text>
+    <View style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-          <View style={styles.phoneInputContainer}>
+      <View style={styles.headerContainer}>
+        <FastImage source={logo_png} style={styles.logo} resizeMode="contain" />
+
+        <Text style={styles.headerTitle}>Welcome Back!</Text>
+        {/* <Text style={styles.headerSubtitle}>Login to continue</Text> */}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Login</Text>
+
+          {/* Input Section */}
+          <View style={styles.inputWrapper}>
             {isPhoneLogin && (
-              <View style={styles.countryCodeContainer}>
-                <TouchableOpacity style={styles.countrySelector} onPress={() => setModalVisible(true)}>
-                  <Text style={styles.countryCodeText}>
-                    {selectedCountry} <MerticalIcon name="chevron-down" size={20} color="black" />
-
-                  </Text>
-                </TouchableOpacity>
-                <Modal
-                  transparent={true}
-                  visible={modalVisible}
-                  animationType="slide"
-                  onRequestClose={() => setModalVisible(false)}
-                >
-                  <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-                    <View style={styles.modalBackground}>
-                      <View style={styles.modalContainer}>
-                        <FlatList
-                          data={CountryCodes}
-                          keyExtractor={(item, index) => `${item.label}-${item.value}-${index}`}
-                          renderItem={({ item }) => (
-                            <TouchableOpacity
-                              style={{ padding: 10, borderBottomWidth: 1, borderColor: '#ccc' }}
-                              onPress={() => handleCountrySelection(item)}
-                            >
-                              <Text style={styles.countryItemText}>{item.label} ({item.value})</Text>
-                            </TouchableOpacity>
-                          )}
-                        />
-                      </View>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </Modal>
-              </View>
+              <TouchableOpacity
+                style={styles.countrySelector}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.countryCodeText}>{selectedCountry}</Text>
+                <MerticalIcon name="chevron-down" size={20} color="#075cab" />
+              </TouchableOpacity>
             )}
 
-            <View style={styles.phoneInputFlex}>
+            <View style={styles.inputContainer}>
               {isPhoneLogin ? (
-                <MerticalIcon name="phone" size={25} color="black" opacity={0.8} />
+                <MerticalIcon name="phone" size={25} color="#075cab" opacity={0.8} />
               ) : (
-                <MerticalIcon name="email" size={25} color="black" opacity={0.8} />
+                <MerticalIcon name="email" size={25} color="#075cab" opacity={0.8} />
               )}
               <TextInput
                 style={styles.input}
-                placeholder={isPhoneLogin ? "Phone number" : "Enter your email"}
+                placeholder={isPhoneLogin ? 'Phone number' : 'Email address'}
+                keyboardType={isPhoneLogin ? 'numeric' : 'email-address'}
+                placeholderTextColor="#9e9e9e"
+                value={phone}
                 onChangeText={(text) => {
                   if (isPhoneLogin) {
-                    const formattedText = text.replace(/\D/g, '').slice(0, 10);
-                    setPhone(formattedText);
-
-                    if (formattedText.length === 10) {
-                      Keyboard.dismiss(); // Dismiss keyboard when 10 digits are entered
-                    }
+                    const formatted = text.replace(/\D/g, '').slice(0, 10);
+                    setPhone(formatted);
+                    if (formatted.length === 10) Keyboard.dismiss();
                   } else {
                     setPhone(text.trim());
                   }
                 }}
-                keyboardType={isPhoneLogin ? "numeric" : "email-address"}
-                placeholderTextColor="gray"
-                value={phone}
-                textContentType="oneTimeCode"
-                autoFocus
-
               />
-
-
             </View>
           </View>
 
-          {isPhoneLogin ? (
-            phoneError ? <Text style={styles.errorText}>{phoneError}</Text> : null
-          ) : (
-            emailError ? <Text style={styles.errorText}>{emailError}</Text> : null
+          {/* Error Messages */}
+          {!!phoneError && isPhoneLogin && (
+            <Text style={styles.errorText}>{phoneError}</Text>
+          )}
+          {!!emailError && !isPhoneLogin && (
+            <Text style={styles.errorText}>{emailError}</Text>
           )}
 
+          {/* Switch Login */}
           <TouchableOpacity
             onPress={handleLoginMethodSwitch}
-            style={{ alignSelf: 'center', }}>
-            <Text style={styles.buttonText1}>
+            style={styles.switchLoginButton}
+          >
+            <Text style={styles.switchLoginText}>
               Login with{' '}
-              <Text style={{ color: '#075cab' }}>
-                {isPhoneLogin ? 'Email' : 'phone number'}
+              <Text style={styles.switchLoginHighlight}>
+                {isPhoneLogin ? 'Phone number' : 'Email'}
               </Text>{' '}
               instead
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={sendOTPHandle} disabled={loading} style={{ alignSelf: 'center' }}>
-            <Text style={[styles.buttonText, loading && { opacity: 0.5 }]}>
+          {/* Send OTP */}
+          <TouchableOpacity
+            onPress={() => sendOTPHandle()}
+            disabled={loading}
+            style={[styles.sendOtpButton, loading && styles.disabledButton]}
+          >
+            <Text style={styles.sendOtpText}>
               {loading ? 'Sending...' : 'Send OTP'}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.registerButton} activeOpacity={1}>
-            <Text style={{ color: 'black', fontSize: 15 }}>
-              Don't have an account? <Text style={styles.registerText} onPress={() => navigation.navigate('Register')}>Register</Text>
+          {/* Register */}
+          <TouchableOpacity style={styles.registerButton} activeOpacity={0.9}>
+            <Text style={styles.registerText}>
+              Don’t have an account?{' '}
+              <Text
+                style={styles.registerLink}
+                onPress={() => navigation.navigate('Register')}
+              >
+                Register
+              </Text>
             </Text>
           </TouchableOpacity>
+        </View>
 
+        {/* Policy Links */}
+        <View style={styles.policyContainer}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <Text style={styles.policyText}>Privacy Policy</Text>
+          </TouchableOpacity>
 
+          <View style={styles.policyDivider} />
 
-          <View style={styles.policyContainer}>
-            <TouchableOpacity style={styles.policyButton} onPress={() => navigation.navigate('PrivacyPolicy')}>
-              <Text style={styles.policyText}>Privacy Policy</Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            <TouchableOpacity style={styles.policyButton} onPress={() => navigation.navigate('TermsAndConditions')}>
-              <Text style={styles.policyText}>Terms And Conditions</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('TermsAndConditions')}
+          >
+            <Text style={styles.policyText}>Terms & Conditions</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Country Picker Modal */}
+      <Modal
+        transparent
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <FlatList
+                data={CountryCodes}
+                keyExtractor={(item, index) => `${item.value}-${index}`}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.modalItem}
+                    onPress={() => handleCountrySelection(item)}
+                  >
+                    <Text style={styles.modalItemText}>
+                      {item.label} ({item.value})
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View>
   );
 
 };
 
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.primary,
   },
-  scrollContainer: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-  },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
-  },
-  policyContainer: {
-    flexDirection: 'row', // Arrange children in a row
-    justifyContent: 'center', // Center the buttons
-    alignItems: 'center', // Align vertically
-    marginVertical: 20, // Add vertical space
-  },
-  policyButton: {
-    paddingVertical: 10, // Vertical padding for better height
-    paddingHorizontal: 15, // Horizontal padding for balance
-    borderRadius: 5,
-    backgroundColor: 'transparent', // Use transparent for a cleaner look
-    alignItems: 'center', // Center text inside button
-  },
-  policyText: {
-    color: '#075cab', // Text color
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  divider: {
-    width: 1, // Width of the divider line
-    height: 30, // Adjusted height for better alignment
-    backgroundColor: '#075cab', // Divider color
-    marginHorizontal: 10, // Horizontal space around the divider
-  },
-  verticalContainer: {
-    flexDirection: 'column', // Stack children vertically
-    alignItems: 'center', // Center children horizontally
-    marginVertical: 20, // Add some vertical space around the buttons
-  },
-  registerButton1: {
-    marginVertical: 5, // Space between buttons
-    padding: 10,
-    backgroundColor: '#075cab', // Your button color
-    borderRadius: 10,
-    width: '80%', // Button width
-    alignItems: 'center', // Center text inside button
-  },
-  registerText1: {
-    color: '#fff', // Text color
-    fontSize: 16,
-    textAlign: 'center',
+    paddingTop: 40,
+    paddingBottom: 20,
+    backgroundColor: colors.primary,
   },
   logo: {
-    width: 200, // Adjust size of the image
-    height: 200, // Adjust size of the image
-    resizeMode: 'contain',
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+    backgroundColor: colors.text_white,
+    borderRadius: 60,
   },
-  formContainer: {
-    paddingHorizontal: 26,
+  headerTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
   },
-  title: {
-    color: '#075cab',
-    fontSize: 23,
-    fontWeight: '500',
-    textAlign: "center",
-    marginVertical: 10,
+  headerSubtitle: {
+    color: '#f1f1f1',
+    fontSize: 14,
+    marginTop: 4,
   },
-  phoneInputContainer: {
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 40,
+    marginTop: 10,
+  },
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    paddingVertical: 30,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    borderColor: '#dcdcdc',
     borderWidth: 1,
-    borderColor: '#075cab',
-    marginTop: 10,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
     height: 50,
+
   },
-  countryCodeContainer: {
-    width: '20%', // Adjust width as necessary
+  countrySelector: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRightColor: '#dcdcdc',
     borderRightWidth: 1,
-    borderRightColor: '#075cab',
-    height: '100%',
   },
   countryCodeText: {
     fontSize: 16,
-    color: 'black',
-    textAlign: 'center',
+    color: colors.primary,
+    marginRight: 4,
   },
-  phoneInputFlex: {
+  inputContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     paddingHorizontal: 10,
   },
   input: {
     flex: 1,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    height: '100%',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
-    color: 'black'
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    color: '#333',
+
   },
   errorText: {
-    color: "red",
-    textAlign: "center",
-    marginTop: 10,
+    color: 'red',
+    fontSize: 13,
+    marginTop: 6,
   },
-  buttonText: {
+  switchLoginButton: {
+    marginTop: 16,
+  },
+  switchLoginText: {
+    textAlign: 'center',
+    color: '#555',
+  },
+  switchLoginHighlight: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  sendOtpButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  sendOtpText: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: "500",
-    color: '#075cab',
-    padding: 14,
-    borderRadius: 10,
-    textAlign: 'center',
-    // marginVertical: 5,
-    alignSelf: 'center'
-  },
-  buttonText1: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: 'black',
-    marginTop: 20,
-    borderRadius: 10,
-    textAlign: 'center',
-    // marginVertical: 5,
-    alignSelf: 'center'
+    fontSize: 16,
+    fontWeight: '600',
   },
   registerButton: {
+    marginTop: 20,
     alignItems: 'center',
-    alignSelf: 'center'
   },
   registerText: {
-    color: '#075cab',
-    fontSize: 16,
+    color: '#555',
   },
-  countrySelector: {
-    width: '100%', // Full width for country selector
-    alignItems: 'center',
+  registerLink: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  policyContainer: {
+    flexDirection: 'row',
     justifyContent: 'center',
-
+    marginTop: 24,
+    alignItems: 'center',
   },
-  modalBackground: {
+  policyText: {
+    fontSize: 13,
+    color: '#777',
+  },
+  policyDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: '#ccc',
+    marginHorizontal: 10,
+  },
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    height: 200
+    paddingHorizontal: 30,
   },
-  modalContainer: {
-    width: '70%',
-    backgroundColor: 'white',
+  modalContent: {
+    backgroundColor: '#fff',
     borderRadius: 10,
-    height: 300
+    maxHeight: '70%',
   },
-  countryItem: {
-    paddingVertical: 10,
+  modalItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  countryItemText: {
-    fontSize: 16,
-    color: "black",
-    marginLeft: 5,
-    fontWeight: "400"
-
+  modalItemText: {
+    fontSize: 15,
+    color: '#333',
   },
 });
 

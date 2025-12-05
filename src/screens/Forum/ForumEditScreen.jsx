@@ -413,7 +413,7 @@ const ForumEditScreen = () => {
         </View>
       </View>
       <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal:5,paddingBottom:'40%' }}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
         onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -462,7 +462,7 @@ const ForumEditScreen = () => {
 
         </View>
 
-        <View style={styles.inputContainer}>
+
           <RichEditor
             ref={richText}
             useContainer={false}
@@ -516,7 +516,7 @@ const ForumEditScreen = () => {
             selectedButtonStyle={{ backgroundColor: "#eee" }}
 
           />
-        </View>
+   
 
 
         <PlayOverlayThumbnail
@@ -565,9 +565,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'whitesmoke',
-    marginHorizontal: 10
   },
-  
+
   profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -599,12 +598,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
 
   },
-  
-  
-  inputContainer: {
-    color: "black",
 
-  },
+
   disabledButton: {
     backgroundColor: '#ccc',
     opacity: 0.6,
@@ -625,11 +620,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: 10,
   },
-  
+
 
   buttonContainer: {
     width: 80,
-    paddingVertical: 10,
+    height: 35,
     borderRadius: 10,
     // backgroundColor: '#075CAB',
     alignItems: 'center',

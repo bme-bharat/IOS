@@ -1,21 +1,25 @@
 
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View,  Image, TouchableOpacity, TextInput, Keyboard, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, Keyboard, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import apiClient from '../ApiClient';
 import { useNetwork } from '../AppUtils/IdProvider';
 import { useConnection } from '../AppUtils/ConnectionProvider';
-import AppStyles from '../AppUtils/AppStyles';
+import AppStyles, { commonStyles } from '../AppUtils/AppStyles';
 import { generateAvatarFromName } from '../helperComponents/useInitialsAvatar';
 import { highlightMatch } from '../helperComponents/signedUrls';
-
+import ArrowLeftIcon from '../../assets/svgIcons/back.svg';
+import Search from '../../assets/svgIcons/search.svg';
+import Close from '../../assets/svgIcons/close.svg';
+import { colors, dimensions } from '../../assets/theme.jsx';
 
 const CompanyListJobCandidates = () => {
   const { myId, myData } = useNetwork();
   const { isConnected } = useConnection();
   const [posts, setPosts] = useState([]);
+
   const [imageUrls, setImageUrls] = useState({});
   const scrollViewRef = useRef(null)
   const navigation = useNavigation();
@@ -194,7 +198,15 @@ const CompanyListJobCandidates = () => {
       const jobs = Array.isArray(res.data.response) ? res.data.response : [];
 
       if (jobs.length > 0) {
-        setPosts((prevPosts) => [...prevPosts, ...jobs]);
+        setPosts((prevPosts) => {
+          const combined = [...prevPosts, ...jobs];
+          const deduped = combined.filter(
+            (job, index, self) =>
+              index === self.findIndex((j) => j.user_id === job.user_id)
+          );
+          return deduped;
+        });
+        
 
         // Reuse image fetching here
         fetchJobImageUrls(jobs);
@@ -253,7 +265,7 @@ const CompanyListJobCandidates = () => {
                   { color: imageUrls[item.user_id]?.textColor || '#000' },
                 ]}
               >
-                {imageUrls[item.user_id]?.initials || 'U'}
+                {imageUrls[item.user_id]?.initials }
               </Text>
             </View>
           )}
@@ -265,17 +277,17 @@ const CompanyListJobCandidates = () => {
           <Text numberOfLines={1} style={styles.name}>
             {highlightMatch(`${item.first_name || ""} ${item.last_name || ""}`, searchQuery)}
           </Text>
-          <View style={styles.detailContainer}>
-            <Text numberOfLines={1} style={styles.label}>Expert In</Text>
-            <Text numberOfLines={1} style={styles.value}>: {highlightMatch(item.expert_in || "", searchQuery)}</Text>
+          <View style={commonStyles.valContainer}>
+            <Text numberOfLines={1} style={commonStyles.label}>Expert In</Text>
+            <Text numberOfLines={1} style={commonStyles.value}>: {highlightMatch(item.expert_in || "", searchQuery)}</Text>
           </View>
-          <View style={styles.detailContainer}>
-            <Text style={styles.label}>Experience</Text>
-            <Text style={styles.value}>: {highlightMatch(item.work_experience || "", searchQuery)}</Text>
+          <View style={commonStyles.valContainer}>
+            <Text style={commonStyles.label}>Experience</Text>
+            <Text style={commonStyles.value}>: {highlightMatch(item.work_experience || "", searchQuery)}</Text>
           </View>
-          <View style={styles.detailContainer}>
-            <Text style={styles.label}>Preferred cities</Text>
-            <Text numberOfLines={1} style={styles.value}>: {highlightMatch(item.city || "", searchQuery)}</Text>
+          <View style={commonStyles.valContainer}>
+            <Text style={commonStyles.label}>Preferred cities</Text>
+            <Text numberOfLines={1} style={commonStyles.value}>: {highlightMatch(item.city || "", searchQuery)}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -288,7 +300,8 @@ const CompanyListJobCandidates = () => {
     <View style={styles.container}>
       <View style={AppStyles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color="#075cab" />
+          <ArrowLeftIcon width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
         </TouchableOpacity>
         <View style={AppStyles.searchContainer}>
           <View style={AppStyles.inputContainer}>
@@ -313,14 +326,16 @@ const CompanyListJobCandidates = () => {
                 }}
                 style={AppStyles.iconButton}
               >
-                <Icon name="close-circle" size={20} color="gray" />
+                <Close width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
 
                 style={AppStyles.searchIconButton}
               >
-                <Icon name="magnify" size={20} color="#075cab" />
+                <Search width={dimensions.icon.medium} height={dimensions.icon.medium} color={colors.primary} />
+
               </TouchableOpacity>
 
             )}
@@ -337,9 +352,10 @@ const CompanyListJobCandidates = () => {
             <RefreshControl refreshing={isRefreshing} onRefresh={handlerefresh} />
           }
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[AppStyles.scrollView,{paddingHorizontal:10, }]}
+          contentContainerStyle={[AppStyles.scrollView, { paddingHorizontal: 5, }]}
           renderItem={renderJob} // Use renderJob here
-          keyExtractor={(item, index) => `${item.user_id}-${index}`} // Ensure unique keys by combining user_id and index
+          keyExtractor={(item, index) => `${item.user_id}-${index}`}
+
           onEndReached={() => hasMoreJobs && fetchJobs(lastEvaluatedKey)}
           onEndReachedThreshold={0.5}
           ListFooterComponent={() =>
@@ -400,10 +416,10 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 10,
-    color: "black",
+    color: colors.text_primary,
     marginLeft: 10
   },
   loaderContainer: {
@@ -441,15 +457,15 @@ const styles = StyleSheet.create({
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf:'center'
+    alignSelf: 'center'
   },
   image: {
-    width:'100%',
-    height:'100%',
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 70,
-    
+
   },
   avatarText: {
     fontSize: 40,

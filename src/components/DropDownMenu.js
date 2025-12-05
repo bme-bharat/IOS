@@ -9,6 +9,9 @@ import {
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import ArrowDown from '../assets/svgIcons/arrow-down.svg';
+import ArrowUp from '../assets/svgIcons/arrow-up.svg';
+import { colors, dimensions } from '../assets/theme';
 
 const CustomDropdownList = ({ items, onSelect, itemTextStyle }) => {
   return (
@@ -34,6 +37,7 @@ const CustomDropDownMenu = ({
   itemTextStyle,
   placeholder,
   multiSelect = false,
+  
 }) => {
   const [visible, setVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -67,7 +71,20 @@ const CustomDropDownMenu = ({
             ? selectedItem.label
             : placeholder || 'Select'}
         </Text>
-        <Icon name={visible ? 'arrow-drop-up' : 'arrow-drop-down'} size={24} color="gray" />
+        {visible ? (
+          <ArrowUp
+            width={dimensions.icon.small}
+            height={dimensions.icon.small}
+            color={colors.primary}
+          />
+        ) : (
+          <ArrowDown
+            width={dimensions.icon.small}
+            height={dimensions.icon.small}
+            color={colors.primary}
+          />
+        )}
+
       </TouchableOpacity>
 
       <Modal transparent animationType="slide" visible={visible} onRequestClose={toggleDropdown}>
@@ -94,10 +111,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
     backgroundColor: '#f2f2f2',
     borderRadius: 8,
+    paddingHorizontal:10
   },
   buttonText: {
     fontSize: 16,
@@ -112,7 +128,7 @@ const styles = StyleSheet.create({
   dropdownSheet: {
     backgroundColor: '#fff',
     borderRadius: 10,
-    padding:15,
+    padding: 15,
     maxHeight: '50%',
     elevation: 5,
   },
@@ -123,7 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingVertical: 10,
-    fontWeight:'500'
+    fontWeight: '500'
   },
 });
 
